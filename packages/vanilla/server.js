@@ -4,7 +4,7 @@ import express from "express";
 // Constants
 const prod = process.env.NODE_ENV === "production";
 const port = process.env.PORT || 5173;
-const base = process.env.BASE || "/front_6th_chapter4-1/vanilla/";
+const base = process.env.BASE || (prod ? "/front_6th_chapter4-1/vanilla/" : "/");
 
 // Cached production assets
 const templateHtml = prod ? await fs.readFile("../../dist/vanilla/index.html", "utf-8") : "";
@@ -30,10 +30,20 @@ if (!prod) {
   app.use(base, sirv("../../dist/vanilla", { extensions: [] }));
 }
 
+// Root redirect for convenience
+if (prod && base !== "/") {
+  app.get("/", (req, res) => {
+    res.redirect(base);
+  });
+}
+
 // Serve HTML
 app.use("*all", async (req, res) => {
   try {
+    console.log("🔍 Request URL:", req.originalUrl);
+    console.log("🔍 Base:", base);
     const url = req.originalUrl.replace(base, "");
+    console.log("🔍 Processed URL:", url);
 
     /** @type {string} */
     let template;

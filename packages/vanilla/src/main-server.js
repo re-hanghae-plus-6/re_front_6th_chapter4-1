@@ -13,7 +13,7 @@ class ServerRouter {
 
   initRoutes() {
     this.addRoute("/", HomePage);
-    this.addRoute("/product/:id", ProductDetailPage);
+    this.addRoute("/product/:id/", ProductDetailPage);
     // 404는 마지막에 추가하고, 더 구체적인 패턴으로 변경
     this.addRoute("/.*", NotFoundPage);
   }
@@ -39,16 +39,33 @@ class ServerRouter {
   findRoute(url) {
     const pathname = new URL(url, "http://localhost").pathname;
 
+    // baseUrl이 있는 경우 pathname에서 제거
+    const cleanPathname = this.baseUrl
+      ? pathname.replace(new RegExp(`^${this.baseUrl.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`), "")
+      : pathname;
+    const targetPath = cleanPathname || "/";
+
     // 명시적 라우트들을 먼저 확인 (404 패턴 제외)
-    const specificRoutes = ["/", "/product/:id"];
+    const specificRoutes = ["/", "/product/:id/"];
 
     for (const routePath of specificRoutes) {
       if (this.routes.has(routePath)) {
         const route = this.routes.get(routePath);
-        const match = pathname.match(route.regex);
+        // baseUrl 없이 매칭할 수 있도록 정규식을 다시 생성
+        const paramNames = [];
+        const regexPath = routePath
+          .replace(/:\w+/g, (match) => {
+            paramNames.push(match.slice(1));
+            return "([^/]+)";
+          })
+          .replace(/\//g, "\\/");
+
+        const cleanRegex = new RegExp(`^${regexPath}$`);
+        const match = targetPath.match(cleanRegex);
+
         if (match) {
           const params = {};
-          route.paramNames.forEach((name, index) => {
+          paramNames.forEach((name, index) => {
             params[name] = match[index + 1];
           });
 
@@ -90,7 +107,7 @@ async function prefetchData(route, query, params) {
         categories,
         totalCount: productsData.pagination.total,
       };
-    } else if (route.path === "/product/:id") {
+    } else if (route.path === "/product/:id/") {
       // 상품 상세 페이지: 해당 상품 데이터 미리 로드
       const productId = params.id;
       const product = mockGetProduct(productId);
@@ -175,7 +192,7 @@ export async function render(url) {
     if (route.path === "/") {
       pageHtml = HomePage();
       pageTitle = "쇼핑몰 - 홈";
-    } else if (route.path === "/product/:id") {
+    } else if (route.path === "/product/:id/") {
       pageHtml = ProductDetailPage();
       const productName = initialData?.currentProduct?.title || "상품";
       pageTitle = `${productName} - 쇼핑몰`;

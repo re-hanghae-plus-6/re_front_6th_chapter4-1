@@ -8,19 +8,21 @@
   },
   "type": "module",
   "scripts": {
+    "dev": "pnpm -F @hanghae-plus/shopping dev",
     "build": "pnpm run -r build",
     "lint:fix": "pnpm run -r lint:fix",
     "tsc": "pnpm run -r tsc",
     "prettier:write": "prettier --write ./packages/*/src",
-    "serve:test": "pnpm -F @hanghae-plus/shopping-vanilla serve:test & pnpm -F @hanghae-plus/shopping-react serve:test",
-    "test:unit": "pnpm -F @hanghae-plus/lib test",
+    "preview": "pnpm -F @hanghae-plus/shopping preview",
+    "test": "pnpm -F @hanghae-plus/lib test",
+    "test:basic": "pnpm -F @hanghae-plus/lib test:basic",
+    "test:advanced": "pnpm -F @hanghae-plus/lib test:advanced",
     "test:e2e": "playwright test",
-    "test:e2e:basic": "playwright test 'basic'",
-    "test:e2e:advanced": "playwright test 'advanced'",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:report": "npx playwright show-report",
+    "test:generate": "playwright codegen localhost:5173",
     "prepare": "husky",
-    "gh-pages": "pnpm run build && gh-pages -d dist"
+    "gh-pages": "pnpm -F @hanghae-plus/shopping build && gh-pages -d dist"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
