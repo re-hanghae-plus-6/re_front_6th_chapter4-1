@@ -51,9 +51,15 @@ app.use("*all", async (req, res) => {
 
     const rendered = await render(url);
 
+    // 서버 데이터를 클라이언트로 전달하기 위한 스크립트 생성
+    const initialDataScript = rendered.initialData
+      ? `<script>window.__INITIAL_DATA__ = ${JSON.stringify(rendered.initialData)};</script>`
+      : "";
+
     const html = template
       .replace(`<!--app-head-->`, rendered.head ?? "")
-      .replace(`<!--app-html-->`, rendered.html ?? "");
+      .replace(`<!--app-html-->`, rendered.html ?? "")
+      .replace(`</head>`, `${initialDataScript}</head>`);
 
     res.status(200).set({ "Content-Type": "text/html" }).send(html);
   } catch (e) {

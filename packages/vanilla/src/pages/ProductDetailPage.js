@@ -238,7 +238,13 @@ export const ProductDetailPage = withLifecycle(
   {
     onMount: () => {
       const currentRouter = typeof window === "undefined" ? global.router : router;
-      loadProductDetailForPage(currentRouter.params.id);
+      const currentState = productStore.getState();
+
+      // 서버에서 하이드레이션된 데이터가 있고, 같은 상품이면 로딩하지 않음
+      const isSameProduct = currentState.currentProduct?.productId === currentRouter.params.id;
+      if (!isSameProduct || !currentState.currentProduct) {
+        loadProductDetailForPage(currentRouter.params.id);
+      }
     },
     watches: [
       () => {

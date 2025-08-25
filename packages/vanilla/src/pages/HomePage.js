@@ -7,7 +7,19 @@ import { PageWrapper } from "./PageWrapper.js";
 export const HomePage = withLifecycle(
   {
     onMount: () => {
-      loadProductsAndCategories();
+      // 서버에서 하이드레이션된 데이터가 있으면 로딩하지 않음
+      const currentState = productStore.getState();
+      console.log("🏠 HomePage onMount:", {
+        productsLength: currentState.products.length,
+        status: currentState.status,
+      });
+
+      if (currentState.products.length === 0 || currentState.status !== "done") {
+        console.log("📡 새로운 데이터 로드 시작");
+        loadProductsAndCategories();
+      } else {
+        console.log("✅ 서버 데이터 재사용");
+      }
     },
     watches: [
       () => {
