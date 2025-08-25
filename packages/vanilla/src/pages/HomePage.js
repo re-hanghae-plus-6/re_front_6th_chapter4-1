@@ -19,8 +19,18 @@ export const HomePage = withLifecycle(
   },
   () => {
     const productState = productStore.getState();
-    const { search: searchQuery, limit, sort, category1, category2 } = router.query;
-    const { products, loading, error, totalCount, categories } = productState;
+
+    // SSR 환경에서는 global.router 사용, 브라우저에서는 router 모듈 사용
+    const currentRouter = typeof window === "undefined" ? global.router : router;
+    const {
+      search: searchQuery = "",
+      limit = "10",
+      sort = "recent",
+      category1 = "",
+      category2 = "",
+    } = currentRouter?.query || {};
+
+    const { products = [], loading = false, error = null, totalCount = 0, categories = [] } = productState;
     const category = { category1, category2 };
     const hasMore = products.length < totalCount;
 

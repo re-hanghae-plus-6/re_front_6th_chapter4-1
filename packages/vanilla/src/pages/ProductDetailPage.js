@@ -237,12 +237,27 @@ function ProductDetail({ product, relatedProducts = [] }) {
 export const ProductDetailPage = withLifecycle(
   {
     onMount: () => {
-      loadProductDetailForPage(router.params.id);
+      const currentRouter = typeof window === "undefined" ? global.router : router;
+      loadProductDetailForPage(currentRouter.params.id);
     },
-    watches: [() => [router.params.id], () => loadProductDetailForPage(router.params.id)],
+    watches: [
+      () => {
+        const currentRouter = typeof window === "undefined" ? global.router : router;
+        return [currentRouter.params.id];
+      },
+      () => {
+        const currentRouter = typeof window === "undefined" ? global.router : router;
+        loadProductDetailForPage(currentRouter.params.id);
+      },
+    ],
   },
   () => {
-    const { currentProduct: product, relatedProducts = [], error, loading } = productStore.getState();
+    const {
+      currentProduct: product = null,
+      relatedProducts = [],
+      error = null,
+      loading = false,
+    } = productStore.getState();
 
     return PageWrapper({
       headerLeft: `
@@ -260,7 +275,9 @@ export const ProductDetailPage = withLifecycle(
         ? loadingContent
         : error && !product
           ? ErrorContent({ error })
-          : ProductDetail({ product, relatedProducts }),
+          : product
+            ? ProductDetail({ product, relatedProducts })
+            : ErrorContent({ error: "상품을 불러올 수 없습니다." }),
     });
   },
 );
