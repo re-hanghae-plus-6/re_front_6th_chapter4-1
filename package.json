@@ -22,7 +22,7 @@
     "test:e2e:report": "npx playwright show-report",
     "test:generate": "playwright codegen localhost:5173",
     "prepare": "husky",
-    "gh-pages": "pnpm -F @hanghae-plus/shopping build && gh-pages -d dist"
+    "gh-pages": "pnpm run build && gh-pages -d dist"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
