@@ -8,6 +8,13 @@ const createErrorMessage = (error: unknown, defaultMessage = "알 수 없는 오
   error instanceof Error ? error.message : defaultMessage;
 
 export const loadProductsAndCategories = async () => {
+  // 서버 데이터가 이미 있는지 확인 (하이드레이션 완료된 경우)
+  const currentState = productStore.getState();
+  if (currentState.products.length > 0 && currentState.categories && Object.keys(currentState.categories).length > 0) {
+    console.log("🔄 서버 데이터가 이미 존재함. API 호출 생략");
+    return;
+  }
+
   router.query = { current: undefined }; // 항상 첫 페이지로 초기화
   productStore.dispatch({
     type: PRODUCT_ACTIONS.SETUP,
@@ -104,7 +111,19 @@ export const setLimit = (limit: number) => {
 
 export const loadProductDetailForPage = async (productId: string) => {
   try {
-    const currentProduct = productStore.getState().currentProduct;
+    const currentState = productStore.getState();
+
+    // 서버 데이터가 이미 있는지 확인 (하이드레이션 완료된 경우)
+    if (
+      currentState.currentProduct?.productId === productId &&
+      currentState.relatedProducts &&
+      currentState.relatedProducts.length > 0
+    ) {
+      console.log("🔄 상품 상세 서버 데이터가 이미 존재함. API 호출 생략");
+      return;
+    }
+
+    const currentProduct = currentState.currentProduct;
     if (productId === currentProduct?.productId) {
       // 관련 상품 로드 (같은 category2 기준)
       if (currentProduct.category2) {

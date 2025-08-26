@@ -25,25 +25,29 @@ export class Router<Handler extends (...args: any[]) => any> {
     this.#route = null;
     this.#baseUrl = baseUrl.replace(/\/$/, "");
 
-    window.addEventListener("popstate", () => {
-      this.#route = this.#findRoute();
-      this.#observer.notify();
-    });
+    // SSR 환경에서는 window/document 이벤트 리스너 추가하지 않음
+    if (typeof window !== "undefined") {
+      window.addEventListener("popstate", () => {
+        this.#route = this.#findRoute();
+        this.#observer.notify();
+      });
 
-    document.addEventListener("click", (e) => {
-      const target = e.target as HTMLElement;
-      if (!target?.closest("[data-link]")) {
-        return;
-      }
-      e.preventDefault();
-      const url = target.getAttribute("href") ?? target.closest("[data-link]")?.getAttribute("href");
-      if (url) {
-        this.push(url);
-      }
-    });
+      document.addEventListener("click", (e) => {
+        const target = e.target as HTMLElement;
+        if (!target?.closest("[data-link]")) {
+          return;
+        }
+        e.preventDefault();
+        const url = target.getAttribute("href") ?? target.closest("[data-link]")?.getAttribute("href");
+        if (url) {
+          this.push(url);
+        }
+      });
+    }
   }
 
   get query(): StringRecord {
+    if (typeof window === "undefined") return {};
     return Router.parseQuery(window.location.search);
   }
 
@@ -85,8 +89,20 @@ export class Router<Handler extends (...args: any[]) => any> {
     });
   }
 
-  #findRoute(url = window.location.pathname) {
-    const { pathname } = new URL(url, window.location.origin);
+  #findRoute(url?: string) {
+    if (typeof window === "undefined") {
+      // SSR에서는 빈 경로 또는 전달된 URL 사용
+      if (!url) return null;
+      const pathname = url.split("?")[0];
+      return this.#findRouteByPathname(pathname);
+    }
+
+    const actualUrl = url || window.location.pathname;
+    const { pathname } = new URL(actualUrl, window.location.origin);
+    return this.#findRouteByPathname(pathname);
+  }
+
+  #findRouteByPathname(pathname: string) {
     for (const [routePath, route] of this.#routes) {
       const match = pathname.match(route.regex);
       if (match) {
@@ -106,7 +122,19 @@ export class Router<Handler extends (...args: any[]) => any> {
     return null;
   }
 
+  // SSR 전용 메소드 - URL을 설정하고 라우트 찾기
+  navigate(url: string) {
+    if (typeof window === "undefined") {
+      this.#route = this.#findRoute(url);
+      return;
+    }
+
+    this.push(url);
+  }
+
   push(url: string) {
+    if (typeof window === "undefined") return;
+
     try {
       // baseUrl이 없으면 자동으로 붙여줌
       const fullUrl = url.startsWith(this.#baseUrl) ? url : this.#baseUrl + (url.startsWith("/") ? url : "/" + url);
@@ -130,8 +158,9 @@ export class Router<Handler extends (...args: any[]) => any> {
     this.#observer.notify();
   }
 
-  static parseQuery = (search = window.location.search) => {
-    const params = new URLSearchParams(search);
+  static parseQuery = (search?: string) => {
+    const actualSearch = search ?? (typeof window !== "undefined" ? window.location.search : "");
+    const params = new URLSearchParams(actualSearch);
     const query: StringRecord = {};
     for (const [key, value] of params) {
       query[key] = value;
@@ -161,6 +190,7 @@ export class Router<Handler extends (...args: any[]) => any> {
     });
 
     const queryString = Router.stringifyQuery(updatedQuery);
-    return `${baseUrl}${window.location.pathname.replace(baseUrl, "")}${queryString ? `?${queryString}` : ""}`;
+    const pathname = typeof window !== "undefined" ? window.location.pathname : "/";
+    return `${baseUrl}${pathname.replace(baseUrl, "")}${queryString ? `?${queryString}` : ""}`;
   };
 }
