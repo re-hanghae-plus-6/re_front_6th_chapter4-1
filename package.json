@@ -9,7 +9,8 @@
   "type": "module",
   "scripts": {
     "dev": "pnpm -F @hanghae-plus/shopping dev",
-    "build": "pnpm run -r build",
+    "clean": "rm -rf ./dist",
+    "build": "pnpm run clean && pnpm run -r build",
     "lint:fix": "pnpm run -r lint:fix",
     "tsc": "pnpm run -r tsc",
     "prettier:write": "prettier --write ./packages/*/src",

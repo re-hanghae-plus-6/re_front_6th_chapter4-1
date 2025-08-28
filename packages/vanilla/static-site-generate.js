@@ -9,7 +9,7 @@ process.env.NODE_ENV = "development";
 
 // Constants
 const DIST_DIR = path.resolve(__dirname, "../../dist/vanilla");
-const SSR_DIR = path.resolve(__dirname, "../../dist/vanilla-ssr");
+const SSR_DIR = path.resolve(__dirname, "./dist/vanilla-ssr");
 
 async function generateStaticSite() {
   console.log("🚀 Static Site Generation 시작...");

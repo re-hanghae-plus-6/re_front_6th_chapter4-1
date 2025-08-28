@@ -82,7 +82,6 @@ export abstract class BaseRouter<Handler extends AnyFunction> {
 
     for (const [routePath, route] of this.#routes) {
       const match = targetPathname.match(route.regex);
-      console.log(route.regex, targetPathname);
       if (!match) {
         continue;
       }

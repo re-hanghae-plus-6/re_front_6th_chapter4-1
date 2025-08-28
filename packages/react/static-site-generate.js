@@ -4,44 +4,36 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// NODE_ENV을 development로 설정 (BASE_URL을 빈 문자열로 사용하기 위해)
-process.env.NODE_ENV = "development";
+// Production 환경에서 SSG 실행
+process.env.NODE_ENV = "production";
 
 // Constants
 const DIST_DIR = path.resolve(__dirname, "../../dist/react");
-const SSR_DIR = path.resolve(__dirname, "../../dist/react-ssr");
 
 async function generateStaticSite() {
-  console.log("🚀 React Static Site Generation 시작...");
-
   try {
     // 1. 템플릿 HTML 로드
     const templatePath = path.join(DIST_DIR, "index.html");
     const template = await fs.readFile(templatePath, "utf-8");
-    console.log("📄 템플릿 로드 완료");
 
     // 2. SSR 렌더 함수 로드
-    const ssrModulePath = path.join(SSR_DIR, "main-server.js");
-    console.log("SSR 모듈 경로:", ssrModulePath);
-
-    const ssrModule = await import(`file://${ssrModulePath}`);
+    const ssrModule = await import("./dist/react-ssr/main-server.js");
     const { render } = ssrModule;
 
     if (!render) {
       throw new Error("render 함수를 찾을 수 없습니다");
     }
-    console.log("⚙️ SSR 모듈 로드 완료");
 
     // 3. 생성할 페이지 목록 정의
     const pagesToGenerate = await getPages();
-    console.log(`📝 생성할 페이지 수: ${pagesToGenerate.length}`);
 
     // 4. 각 페이지별로 HTML 생성
-    for (const page of pagesToGenerate) {
-      console.log(`📄 생성 중: ${page.url}`);
+    console.log(`📄 ${pagesToGenerate.length}개 페이지 생성 시작...`);
 
+    for (const page of pagesToGenerate) {
       try {
-        const rendered = await render(page.url);
+        console.log(`🔄 생성 중: ${page.url}`);
+        const rendered = await render(page.url, {});
 
         // 서버 데이터를 클라이언트로 전달하기 위한 스크립트 생성
         const initialDataScript = rendered.initialData
@@ -55,13 +47,14 @@ async function generateStaticSite() {
 
         // HTML 파일 저장
         await saveHtmlFile(page.filePath, html);
-        console.log(`✅ 생성 완료: ${page.filePath}`);
+        console.log(`✅ 생성 완료: ${page.url} -> ${page.filePath}`);
       } catch (error) {
         console.error(`❌ ${page.url} 생성 실패:`, error.message);
+        console.error(`   Error stack:`, error.stack);
       }
     }
 
-    console.log("🎉 React Static Site Generation 완료!");
+    console.log(`🎉 SSG 완료!`);
   } catch (error) {
     console.error("💥 SSG 실패:", error);
     process.exit(1);
@@ -70,36 +63,32 @@ async function generateStaticSite() {
 
 async function getPages() {
   const pages = [];
+  const baseUrl = "/front_6th_chapter4-1/react/";
 
   // 홈페이지
   pages.push({
-    url: "/",
+    url: baseUrl,
     filePath: path.join(DIST_DIR, "index.html"),
   });
 
   // 404 페이지
   pages.push({
-    url: "/404",
+    url: `${baseUrl}404`,
     filePath: path.join(DIST_DIR, "404.html"),
   });
 
   // 상품 상세 페이지들
   try {
-    // React 앱의 mock 데이터 가져오기
-    const mockPath = path.join(__dirname, "src", "mocks", "handlers.ts");
-    console.log("Mock 데이터 경로:", mockPath);
-
     // 임시로 몇 개 상품 ID만 생성 (나중에 실제 데이터로 교체)
-    const sampleProductIds = ["1", "2", "3", "4", "5"];
+    const { mockGetProducts } = await import("./src/mocks/server.js");
+    const productsData = mockGetProducts({ limit: 20 }); // 20개의 상품 가져오기
 
-    for (const productId of sampleProductIds) {
+    for (const { productId } of productsData.products) {
       pages.push({
-        url: `/product/${productId}`,
+        url: `${baseUrl}product/${productId}/`,
         filePath: path.join(DIST_DIR, "product", productId, "index.html"),
       });
     }
-
-    console.log(`🛍️ 상품 페이지 ${sampleProductIds.length}개 추가됨`);
   } catch (error) {
     console.error("상품 목록 로드 실패:", error);
   }

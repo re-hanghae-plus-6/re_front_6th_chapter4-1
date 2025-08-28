@@ -3,7 +3,7 @@ import { defineConfig } from "vite";
 export default defineConfig({
   build: {
     ssr: true,
-    outDir: "../../dist/vanilla-ssr",
+    outDir: "./dist/vanilla-ssr",
     rollupOptions: {
       input: "./src/main-server.js",
       output: {
