@@ -6,8 +6,6 @@ const prod = process.env.NODE_ENV === "production";
 const port = process.env.PORT || 5174; // React용 포트 (vanilla과 구분)
 const base = process.env.BASE || (prod ? "/front_6th_chapter4-1/react/" : "/");
 
-console.log({ base });
-
 // Cached production assets
 const templateHtml = prod ? await fs.readFile("../../dist/react/index.html", "utf-8") : "";
 
@@ -42,18 +40,8 @@ if (prod && base !== "/") {
 // Serve HTML
 app.use(async (req, res) => {
   try {
-    console.log("🔍 Request URL:", req.originalUrl);
-    console.log("🔍 Base:", base);
-    let url = req.originalUrl;
-    // base를 제거하되, 결과가 빈 문자열이면 "/"로 설정
-    if (base !== "/") {
-      url = req.originalUrl.replace(base, "") || "/";
-    }
-    // URL이 "/"로 시작하지 않으면 "/"를 붙임
-    if (!url.startsWith("/")) {
-      url = "/" + url;
-    }
-    console.log("🔍 Processed URL:", url);
+    const url = req.originalUrl;
+    const query = req.query;
 
     /** @type {string} */
     let template;
@@ -66,10 +54,10 @@ app.use(async (req, res) => {
       render = (await vite.ssrLoadModule("/src/main-server.tsx")).render;
     } else {
       template = templateHtml;
-      render = (await import("../../dist/react-ssr/main-server.js")).render;
+      render = (await import("./dist/react-ssr/main-server.js")).render;
     }
 
-    const rendered = await render(url);
+    const rendered = await render(url, query);
 
     // 서버 데이터를 클라이언트로 전달하기 위한 스크립트 생성
     const initialDataScript = rendered.initialData

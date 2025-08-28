@@ -5,6 +5,7 @@ import { loadProducts } from "../../productUseCase";
 export const useProductFilter = () => {
   const { search: searchQuery, limit, sort, category1, category2 } = useRouterQuery();
   const category = { category1, category2 };
+  console.log({ category });
 
   useEffect(() => {
     loadProducts(true);

@@ -11,7 +11,6 @@ export const loadProductsAndCategories = async () => {
   // 서버 데이터가 이미 있는지 확인 (하이드레이션 완료된 경우)
   const currentState = productStore.getState();
   if (currentState.products.length > 0 && currentState.categories && Object.keys(currentState.categories).length > 0) {
-    console.log("🔄 서버 데이터가 이미 존재함. API 호출 생략");
     return;
   }
 
@@ -119,7 +118,6 @@ export const loadProductDetailForPage = async (productId: string) => {
       currentState.relatedProducts &&
       currentState.relatedProducts.length > 0
     ) {
-      console.log("🔄 상품 상세 서버 데이터가 이미 존재함. API 호출 생략");
       return;
     }
 

@@ -3,20 +3,16 @@ import { App } from "./App";
 import { router } from "./router";
 import { loadHomePageData, loadProductDetailData } from "./services/ssr-data";
 import { PRODUCT_ACTIONS, productStore } from "./entities";
+import { HomePage, ProductDetailPage } from "./pages";
+import type { QueryPayload } from "@hanghae-plus/lib";
 
-export const render = async (url: string) => {
+export const render = async (url: string, query: QueryPayload) => {
   // URL 보정: 빈 문자열인 경우 "/", "/"로 시작하지 않으면 "/" 추가
-  let actualUrl = url || "/";
-  if (!actualUrl.startsWith("/")) {
-    actualUrl = "/" + actualUrl;
-  }
-
-  console.log("🚀 SSR 렌더링 시작:", actualUrl);
+  const actualUrl = url;
 
   // SSR에서도 라우터 시작 (start 메소드는 SSR 안전하게 수정됨)
-  if (typeof window === "undefined") {
-    router.navigate(actualUrl); // SSR에서는 navigate 직접 호출
-  }
+  router.push(url);
+  router.query = { ...query };
 
   // URL에 따라 필요한 데이터 미리 로드
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -24,9 +20,8 @@ export const render = async (url: string) => {
 
   try {
     // URL 패턴에 따라 데이터 로드
-    if (actualUrl === "/" || actualUrl.startsWith("/?")) {
+    if (router.target === HomePage) {
       // 홈페이지 - 상품 목록 데이터 로드
-      console.log("🏠 홈페이지 데이터 로딩");
       const homeData = await loadHomePageData(actualUrl);
       if (homeData) {
         initialData = homeData;
@@ -43,12 +38,10 @@ export const render = async (url: string) => {
             error: null,
           },
         });
-        console.log("🔄 SSR 스토어 초기화 완료: 홈페이지");
       }
-    } else if (actualUrl.startsWith("/product/")) {
+    } else if (router.target === ProductDetailPage) {
       // 상품 상세 페이지 - 해당 상품 데이터 로드
-      const productId = actualUrl.split("/product/")[1];
-      console.log("📦 상품 상세 데이터 로딩:", productId);
+      const productId = router.params.id;
       const productData = await loadProductDetailData(productId);
       if (productData) {
         initialData = productData;
@@ -65,11 +58,8 @@ export const render = async (url: string) => {
             payload: productData.relatedProducts,
           });
         }
-        console.log("🔄 SSR 스토어 초기화 완료: 상품 상세");
       }
     }
-
-    console.log("📊 초기 데이터 로드 완료:", Object.keys(initialData));
 
     // 실제 App 컴포넌트를 SSR로 렌더링
     const html = renderToString(<App />);

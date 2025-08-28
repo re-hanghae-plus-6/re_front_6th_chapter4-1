@@ -107,7 +107,8 @@ async function getProductSSR(productId: string) {
   }
 
   // 상세 정보에 추가 데이터 포함
-  const detailProduct = {
+
+  return {
     ...product,
     description: `${product.title}에 대한 상세 설명입니다. ${product.brand} 브랜드의 우수한 품질을 자랑하는 상품으로, 고객 만족도가 높은 제품입니다.`,
     rating: Math.floor(Math.random() * 2) + 4, // 4~5점 랜덤
@@ -115,8 +116,6 @@ async function getProductSSR(productId: string) {
     stock: Math.floor(Math.random() * 100) + 10, // 10~110개 랜덤
     images: [product.image, product.image.replace(".jpg", "_2.jpg"), product.image.replace(".jpg", "_3.jpg")],
   };
-
-  return detailProduct;
 }
 
 async function getCategoriesSSR() {
@@ -140,11 +139,7 @@ export async function loadHomePageData(url: string) {
     if (!params.limit) params.limit = "20";
     if (!params.sort) params.sort = "price_asc";
 
-    console.log("🏠 홈페이지 데이터 로드 시작:", params);
-
     const [productsResponse, categories] = await Promise.all([getProductsSSR(params), getCategoriesSSR()]);
-
-    console.log("✅ 홈페이지 데이터 로드 완료:", productsResponse.products.length, "개 상품");
 
     return {
       products: productsResponse.products,
@@ -162,8 +157,6 @@ export async function loadHomePageData(url: string) {
 // 상품 상세 페이지용 데이터 로드
 export async function loadProductDetailData(productId: string) {
   try {
-    console.log("📦 상품 상세 데이터 로드 시작:", productId);
-
     const currentProduct = await getProductSSR(productId);
 
     // 관련 상품 로드 (같은 category2의 다른 상품들)
@@ -178,8 +171,6 @@ export async function loadProductDetailData(productId: string) {
       // 현재 상품 제외
       relatedProducts = relatedResponse.products.filter((product) => product.productId !== currentProduct.productId);
     }
-
-    console.log("✅ 상품 상세 데이터 로드 완료:", currentProduct.title);
 
     return {
       currentProduct,

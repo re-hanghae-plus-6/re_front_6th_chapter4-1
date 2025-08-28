@@ -9,8 +9,8 @@
   "scripts": {
     "dev": "vite",
     "dev:ssr": "node server.js",
-    "build:csr": "vite build && cp ../../dist/react/index.html ../../dist/react/404.html",
-    "build:ssr": "BUILD_SSR=true vite build --ssr",
+    "build:csr": "vite build --outDir ../../dist/react && cp ../../dist/react/index.html ../../dist/react/404.html",
+    "build:ssr": "vite build --outDir ./dist/react-ssr --ssr src/main-server.tsx",
     "build": "npm run build:csr && npm run build:ssr",
     "generate": "npm run build:all && node static-site-generate.js",
     "preview": "vite preview",
