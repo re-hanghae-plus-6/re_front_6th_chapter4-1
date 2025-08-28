@@ -6,8 +6,8 @@
   "scripts": {
     "dev": "vite",
     "dev:ssr": "node server.js",
-    "build:client": "vite build && cp ../../dist/vanilla/index.html ../../dist/vanilla/404.html",
-    "build:server": "vite build --config vite.config.ssr.js",
+    "build:client": "vite build --outDir ../../dist/vanilla && cp ../../dist/vanilla/index.html ../../dist/vanilla/404.html",
+    "build:server": "vite build --outDir ./dist/vanilla-ssr --ssr src/main-server.js",
     "build:ssg": "node static-site-generate.js",
     "build": "pnpm run build:client && pnpm run build:server && pnpm run build:ssg",
     "lint:fix": "eslint --fix",
@@ -16,6 +16,7 @@
     "preview:ssr": "NODE_ENV=production node server.js",
     "preview:ssr-with-build": "pnpm run build:client && pnpm run build:server && NODE_ENV=production node server.js",
     "preview:ssg": "vite preview --outDir ../../dist/vanilla",
+    "preview:ssg-with-build": "pnpm run build && pnpm run preview:ssg",
     "test": "vitest",
     "prepare": "husky"
   },

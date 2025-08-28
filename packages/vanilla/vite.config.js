@@ -4,26 +4,7 @@ import { defineConfig } from "vite";
 const base = process.env.NODE_ENV === "production" ? "/front_6th_chapter4-1/vanilla/" : "";
 
 export default mergeConfig(
-  defineConfig({
-    base,
-    build: {
-      outDir: "../../dist/vanilla",
-      rollupOptions: {
-        input: {
-          main: "./index.html",
-          server: "./src/main-server.js",
-        },
-        output: {
-          entryFileNames: (chunkInfo) => {
-            return chunkInfo.name === "server" ? "../vanilla-ssr/[name].js" : "assets/[name]-[hash].js";
-          },
-        },
-      },
-    },
-    ssr: {
-      noExternal: ["express"],
-    },
-  }),
+  defineConfig({ base }),
   defineTestConfig({
     test: {
       globals: true,

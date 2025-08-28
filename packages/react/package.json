@@ -16,6 +16,8 @@
     "preview": "vite preview",
     "preview:ssr": "NODE_ENV=production node server.js",
     "preview:ssr-with-build": "pnpm run build:csr && pnpm run build:ssr && pnpm run preview:ssr",
+    "preview:ssg": "NODE_ENV=production vite preview --outDir ../../dist/react",
+    "preview:ssg-with-build": "pnpm run build && pnpm run preview:ssg",
     "tsc": "tsc --noEmit",
     "lint:fix": "eslint --fix",
     "prettier:write": "prettier --write ./src"
