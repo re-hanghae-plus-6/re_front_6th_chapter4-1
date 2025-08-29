@@ -17,7 +17,6 @@
     "preview:ssr-with-build": "pnpm run build:client && pnpm run build:server && NODE_ENV=production node server.js",
     "preview:ssg": "vite preview --outDir ../../dist/vanilla",
     "preview:ssg-with-build": "pnpm run build && pnpm run preview:ssg",
-    "test": "vitest",
     "prepare": "husky"
   },
   "lint-staged": {
