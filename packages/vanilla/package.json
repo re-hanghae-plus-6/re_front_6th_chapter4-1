@@ -12,7 +12,7 @@
     "build": "pnpm run build:client && pnpm run build:server && pnpm run build:ssg",
     "lint:fix": "eslint --fix",
     "prettier:write": "prettier --write ./src",
-    "preview:csr": "vite preview",
+    "preview:csr": "vite preview --outDir ../../dist/vanilla",
     "preview:ssr": "NODE_ENV=production node server.js",
     "preview:ssr-with-build": "pnpm run build:client && pnpm run build:server && NODE_ENV=production node server.js",
     "preview:ssg": "vite preview --outDir ../../dist/vanilla",

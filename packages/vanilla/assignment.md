@@ -19,7 +19,7 @@
 - **라이프사이클 관리**: `withLifecycle` HOC를 통한 컴포넌트 생명주기 관리
 - **라우트 구조**:
   - `/`: 홈페이지 (상품 목록)
-  - `/products/:id`: 상품 상세 페이지
+  - `/products/:id/`: 상품 상세 페이지
 
 ### 렌더링 전략
 - **CSR (Client-Side Rendering)**: 기본 클라이언트 렌더링
