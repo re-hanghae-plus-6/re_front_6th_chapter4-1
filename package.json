@@ -17,7 +17,6 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:report": "npx playwright show-report",
-    "test:e2e:cleanup": "pkill -f 'PORT=4173' || true; pkill -f 'PORT=4174' || true; pkill -f 'node.*4173' || true; pkill -f 'node.*4174' || true; pkill -f 'vite.*4173' || true; pkill -f 'vite.*4174' || true",
     "prepare": "husky",
     "gh-pages": "pnpm run build && gh-pages -d dist"
   },

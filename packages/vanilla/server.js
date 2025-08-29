@@ -7,7 +7,7 @@ const port = process.env.PORT || 5173;
 const base = process.env.BASE || (prod ? "/front_6th_chapter4-1/vanilla/" : "/");
 
 // Cached production assets
-const templateHtml = prod ? await fs.readFile("../../dist/vanilla/index.html", "utf-8") : "";
+const templateHtml = prod ? await fs.readFile("./dist/vanilla/index.html", "utf-8") : "";
 
 // Create http server
 const app = express();
@@ -27,7 +27,7 @@ if (!prod) {
   const compression = (await import("compression")).default;
   const sirv = (await import("sirv")).default;
   app.use(compression());
-  app.use(base, sirv("../../dist/vanilla", { extensions: [] }));
+  app.use(base, sirv("./dist/vanilla", { extensions: [] }));
 }
 
 // Root redirect for convenience

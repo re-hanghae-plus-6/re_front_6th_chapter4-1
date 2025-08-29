@@ -7,7 +7,7 @@ const port = process.env.PORT || 5174; // React용 포트 (vanilla과 구분)
 const base = process.env.BASE || (prod ? "/front_6th_chapter4-1/react/" : "/");
 
 // Cached production assets
-const templateHtml = prod ? await fs.readFile("../../dist/react/index.html", "utf-8") : "";
+const templateHtml = prod ? await fs.readFile("./dist/react/index.html", "utf-8") : "";
 
 // Create http server
 const app = express();
@@ -27,7 +27,7 @@ if (!prod) {
   const compression = (await import("compression")).default;
   const sirv = (await import("sirv")).default;
   app.use(compression());
-  app.use(base, sirv("../../dist/react", { extensions: [] }));
+  app.use(base, sirv("./dist/react", { extensions: [] }));
 }
 
 // Root redirect for convenience
