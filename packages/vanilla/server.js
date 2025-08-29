@@ -40,10 +40,7 @@ if (prod && base !== "/") {
 // Serve HTML
 app.use("*all", async (req, res) => {
   try {
-    console.log("🔍 Request URL:", req.originalUrl);
-    console.log("🔍 Base:", base);
     const url = req.originalUrl.replace(base, "");
-    console.log("🔍 Processed URL:", url);
 
     /** @type {string} */
     let template;

@@ -162,10 +162,6 @@ export async function render(url) {
     const serverRouter = new ServerRouter(baseUrl);
     const route = serverRouter.findRoute(url);
 
-    console.log("Requested URL:", url);
-    console.log("Base URL:", baseUrl);
-    console.log("Found route:", route);
-
     if (!route) {
       return {
         html: NotFoundPage(),
