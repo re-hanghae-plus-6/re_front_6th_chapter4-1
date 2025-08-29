@@ -64,9 +64,20 @@ export const render = async (url: string, query: QueryPayload) => {
     // 실제 App 컴포넌트를 SSR로 렌더링
     const html = renderToString(<App />);
 
+    // 페이지별 meta title 생성
+    let pageTitle = "React Shopping App";
+    if (router.target === HomePage) {
+      pageTitle = "쇼핑몰 - 홈";
+    } else if (router.target === ProductDetailPage) {
+      const productName = initialData?.currentProduct?.title || "상품";
+      pageTitle = `${productName} - 쇼핑몰`;
+    } else if (!router.target) {
+      pageTitle = "404 - Page Not Found";
+    }
+
     return {
       html,
-      head: `<title>React Shopping App</title>`,
+      head: `<title>${pageTitle}</title>`,
       initialData,
     };
   } catch (error) {

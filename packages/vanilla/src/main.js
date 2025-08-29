@@ -4,7 +4,7 @@ import { registerAllEvents } from "./events";
 import { loadCartFromStorage } from "./services";
 import { router } from "./router";
 import { BASE_URL } from "./constants.js";
-import { productStore, PRODUCT_ACTIONS } from "./stores";
+import { PRODUCT_ACTIONS, productStore } from "./stores";
 
 const enableMocking = () =>
   import("./mocks/browser.js").then(({ worker }) =>
@@ -60,6 +60,7 @@ function hydrateWithServerData() {
 }
 
 function main() {
+  console.log("main");
   registerAllEvents();
   registerGlobalEvents();
   loadCartFromStorage();
@@ -71,8 +72,4 @@ function main() {
   router.start();
 }
 
-if (import.meta.env.MODE !== "test") {
-  enableMocking().then(main);
-} else {
-  main();
-}
+enableMocking().then(main);
