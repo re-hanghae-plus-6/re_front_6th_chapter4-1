@@ -6,11 +6,27 @@ import { PageWrapper } from "./PageWrapper.js";
 import { withServer } from "../router/withServer.js";
 import { getCategories, getProducts } from "../api/productApi.js";
 
+const ssrFetcher = async ({ query }) => {
+  const [
+    {
+      products,
+      pagination: { total },
+    },
+    categories,
+  ] = await Promise.all([getProducts(query), getCategories()]);
+
+  return {
+    products,
+    categories,
+    totalCount: total,
+    loading: false,
+    status: "done",
+  };
+};
+
 export const HomePage = withServer(
   {
-    ssr: async ({ query }) => {
-      return await Promise.all([getProducts(query), getCategories()]);
-    },
+    ssr: ssrFetcher,
   },
   withLifecycle(
     {
