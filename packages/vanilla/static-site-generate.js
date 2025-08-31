@@ -1,7 +1,7 @@
 import fs from "fs";
 
 const render = () => {
-  return `<div>안녕하세요</div>`;
+  return `<div>안녕하세요 SSG</div>`;
 };
 
 async function generateStaticSite() {
