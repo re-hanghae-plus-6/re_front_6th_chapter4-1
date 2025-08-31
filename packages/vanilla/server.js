@@ -1,10 +1,8 @@
-import compression from "compression";
 import express from "express";
 import fs from "fs";
 import { dirname, join } from "path";
 import sirv from "sirv";
 import { fileURLToPath } from "url";
-import { createServer } from "vite";
 
 import { setupServerJsdom } from "./src/utils/setupJsDom.js";
 
@@ -25,10 +23,15 @@ let vite;
 if (prod) {
   // 프로덕션: 빌드된 정적 파일 서빙
   // compression + sirv 사용
+  const compression = (await import("compression")).default;
+  const sirv = (await import("sirv")).default;
+
   app.use(compression());
-  app.use(base, sirv("dist/vanilla", { dev: false }));
+  app.use(base, sirv("./dist/vanilla", { extensions: [] }));
 } else {
   // Vite dev server + middleware 사용
+  const { createServer } = await import("vite");
+
   vite = await createServer({
     server: { middlewareMode: true },
     appType: "custom",
@@ -59,7 +62,10 @@ const getTemplate = async () => {
   if (prod) {
     return fs.readFileSync(join(__dirname, "dist/vanilla/index.html"), "utf-8");
   } else {
-    return fs.readFileSync("./dist/vanilla/index.html", "utf-8");
+    // ! dev에서는 개발에서 사용하는 index.html을 사용
+    // return fs.readFileSync("./dist/vanilla/index.html", "utf-8");
+    let template = fs.readFileSync("./index.html", "utf-8");
+    return await vite.transformIndexHtml("/*", template);
   }
 };
 
@@ -74,6 +80,7 @@ if (prod) {
 app.use("*all", async (req, res) => {
   try {
     const url = req.originalUrl.replace(base, "");
+
     const { html, head, initialData } = await render(url);
 
     const template = await getTemplate();
@@ -89,8 +96,9 @@ app.use("*all", async (req, res) => {
 
     res.status(200).set({ "Content-Type": "text/html" }).end(finalHtml);
   } catch (error) {
-    console.error("Server error:", error);
-    res.status(500).end("Internal Server Error");
+    vite?.ssrFixStacktrace(error);
+    console.log(error.stack);
+    res.status(500).end(error.stack);
   }
 });
 

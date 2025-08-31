@@ -7,24 +7,6 @@ import { cartStore } from "./stores/cartStore.js";
 import { productStore } from "./stores/productStore.js";
 import { uiStore } from "./stores/uiStore.js";
 
-/**
- * route 구조
- * {
- *   regex: /^\/$/,
- *   paramNames: [],
- *   handler: () => {
- *     return { page: HomePage };
- *   }
- * }
- *
- * {
- *   regex: /^\/product\/(\d+)$/,
- *   paramNames: ["id"],
- *   handler: (params) => {
- *     return { page: ProductDetailPage, product: params.id };
- *   }
- * }
- */
 class ServerRouter {
   constructor() {
     this.routes = new Map();
@@ -72,7 +54,7 @@ class ServerRouter {
 // 서버 라우터 인스턴스 생성
 const serverRouter = new ServerRouter();
 
-// 라우트 등록
+// 라우트 등록 + 데이터 프리페칭
 serverRouter.addRoute("/", async () => {
   // 홈페이지 - 상품 목록
   const products = await getProducts({ limit: 20 });
@@ -120,7 +102,7 @@ export async function render(url) {
     const route = serverRouter.findRoute(url);
 
     if (!route) {
-      // 404 처리
+      // route 자체가 null일 때 404 처리 (분해구조할당 불가)
       const notFoundRoute = serverRouter.findRoute("/404");
       const result = await prefetchData(notFoundRoute, {});
       const html = await result.page();
