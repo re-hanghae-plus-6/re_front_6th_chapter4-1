@@ -7,19 +7,40 @@ import { PageWrapper } from "./PageWrapper.js";
 export const HomePage = withLifecycle(
   {
     onMount: () => {
-      loadProductsAndCategories();
+      if (typeof window !== "undefined") {
+        loadProductsAndCategories();
+      }
     },
     watches: [
       () => {
-        const { search, limit, sort, category1, category2 } = router.query;
-        return [search, limit, sort, category1, category2];
+        if (typeof window !== "undefined") {
+          const { search, limit, sort, category1, category2 } = router.query;
+          return [search, limit, sort, category1, category2];
+        }
+        return [];
       },
-      () => loadProducts(true),
+      () => {
+        if (typeof window !== "undefined") {
+          loadProducts(true);
+        }
+      },
     ],
   },
-  () => {
-    const productState = productStore.getState();
+  ({ initialData } = {}) => {
+    // SSR - initialData, CSR - store
+    const productState =
+      typeof window === "undefined"
+        ? {
+            products: initialData?.products ?? [],
+            categories: initialData?.categories ?? [],
+            loading: false,
+            error: initialData?.error ?? null,
+            totalCount: initialData?.totalCount ?? 0,
+          }
+        : productStore.getState();
+
     const { search: searchQuery, limit, sort, category1, category2 } = router.query;
+
     const { products, loading, error, totalCount, categories } = productState;
     const category = { category1, category2 };
     const hasMore = products.length < totalCount;

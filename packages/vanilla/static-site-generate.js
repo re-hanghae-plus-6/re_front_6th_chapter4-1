@@ -1,8 +1,5 @@
 import fs from "fs";
-
-const render = () => {
-  return `<div>안녕하세요</div>`;
-};
+import { render } from "./dist/vanilla-ssr/main-server.js";
 
 async function generateStaticSite() {
   // HTML 템플릿 읽기
