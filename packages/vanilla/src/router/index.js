@@ -1,2 +1,2 @@
+export * from "./withLifecycle";
 export * from "./router";
-export * from "./withLifecycle.js";
