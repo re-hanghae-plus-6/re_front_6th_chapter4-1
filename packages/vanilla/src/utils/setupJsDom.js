@@ -67,11 +67,16 @@ export function setupServerJsdom() {
       globalThis.fetch = globalThis.fetch || require("node-fetch");
     } catch {
       console.warn("fetch API not available, using mock fetch");
+
       globalThis.fetch = async () => {
         // Mock fetch for development
         return {
           ok: true,
-          json: async () => ({ products: [], categories: [] }),
+          json: async () => ({
+            products: [],
+            categories: [],
+            pagination: { total: 0 },
+          }),
           text: async () => "{}",
         };
       };
