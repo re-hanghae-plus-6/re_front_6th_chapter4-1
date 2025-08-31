@@ -2,7 +2,7 @@ import { registerGlobalEvents } from "./utils";
 import { initRender } from "./render";
 import { registerAllEvents } from "./events";
 import { loadCartFromStorage } from "./services";
-import { router } from "./router";
+import { router } from "./router/router.js";
 import { BASE_URL } from "./constants.js";
 
 const enableMocking = () =>

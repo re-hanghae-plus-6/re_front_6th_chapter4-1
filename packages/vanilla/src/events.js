@@ -1,5 +1,5 @@
 import { addEvent, isNearBottom } from "./utils";
-import { router } from "./router";
+import { router } from "./router/router";
 import {
   addToCart,
   clearCart,

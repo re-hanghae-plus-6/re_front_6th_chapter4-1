@@ -1,5 +1,5 @@
 import { cartStore, productStore, uiStore } from "./stores";
-import { router } from "./router";
+import { router } from "./router/router";
 import { withBatch } from "./utils";
 
 /**
