@@ -14,6 +14,14 @@ mswServer.listen({
   onUnhandledRequest: "bypass",
 });
 
+// 불필요한 요청 무시
+app.get("/favicon.ico", (_, res) => {
+  res.status(204).end();
+});
+app.get("/.well-known/appspecific/com.chrome.devtools.json", (_, res) => {
+  res.status(204).end();
+});
+
 // Add Vite or respective production middlewares
 /** @type {import('vite').ViteDevServer | undefined} */
 let vite;
