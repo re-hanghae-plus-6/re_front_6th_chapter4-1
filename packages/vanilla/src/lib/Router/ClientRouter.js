@@ -9,10 +9,14 @@ export class ClientRouter {
   #observer = createObserver();
   #baseUrl;
 
-  constructor(baseUrl = "") {
+  constructor(baseUrl, routerMatches) {
     this.#routes = new Map();
     this.#route = null;
     this.#baseUrl = baseUrl.replace(/\/$/, "");
+
+    Object.entries(routerMatches).forEach(([pathname, page]) => {
+      this.addRoute(pathname, page);
+    });
 
     window.addEventListener("popstate", () => {
       this.#route = this.#findRoute();
