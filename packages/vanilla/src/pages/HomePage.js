@@ -1,7 +1,7 @@
 import { ProductList, SearchBar } from "../components";
 import { productStore } from "../stores";
 import { router, withLifecycle } from "../router";
-import { loadProducts, setupProductsAndCategories } from "../services";
+import { loadProducts, loadProductsAndCategories, setupProductsAndCategories } from "../services";
 import { PageWrapper } from "./PageWrapper.js";
 import { withServer } from "../router/withServer.js";
 import { getCategories, getProducts } from "../api/productApi.js";
@@ -14,6 +14,9 @@ export const HomePage = withServer(
   },
   withLifecycle(
     {
+      onMount: () => {
+        loadProductsAndCategories();
+      },
       watches: [
         () => {
           const { search, limit, sort, category1, category2 } = router.query;

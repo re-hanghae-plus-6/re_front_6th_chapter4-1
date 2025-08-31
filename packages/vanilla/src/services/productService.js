@@ -1,18 +1,20 @@
-import { getProduct, getProducts } from "../api/productApi";
-import { productStore, PRODUCT_ACTIONS } from "../stores";
+import { getCategories, getProduct, getProducts } from "../api/productApi";
+import { productStore, PRODUCT_ACTIONS, initialProductState } from "../stores";
 import { router } from "../router";
 
 // 상품 목록 초기 설정
-export const setupProductsAndCategories = async ([
-  {
-    products,
-    pagination: { total },
-  },
-  categories,
-]) => {
-  if (productStore.getState().status === "done") {
+export const setupProductsAndCategories = async (data) => {
+  if (!data || productStore.getState().status === "done") {
     return;
   }
+
+  const [
+    {
+      products,
+      pagination: { total },
+    },
+    categories,
+  ] = data;
 
   productStore.dispatch({
     type: PRODUCT_ACTIONS.SETUP,
@@ -24,6 +26,50 @@ export const setupProductsAndCategories = async ([
       status: "done",
     },
   });
+};
+
+export const loadProductsAndCategories = async () => {
+  if (productStore.getState().status === "done") {
+    return;
+  }
+
+  router.query = { current: undefined }; // 항상 첫 페이지로 초기화
+  productStore.dispatch({
+    type: PRODUCT_ACTIONS.SETUP,
+    payload: {
+      ...initialProductState,
+      loading: true,
+      status: "pending",
+    },
+  });
+
+  try {
+    const [
+      {
+        products,
+        pagination: { total },
+      },
+      categories,
+    ] = await Promise.all([getProducts(router.query), getCategories()]);
+
+    // 페이지 리셋이면 새로 설정, 아니면 기존에 추가
+    productStore.dispatch({
+      type: PRODUCT_ACTIONS.SETUP,
+      payload: {
+        products,
+        categories,
+        totalCount: total,
+        loading: false,
+        status: "done",
+      },
+    });
+  } catch (error) {
+    productStore.dispatch({
+      type: PRODUCT_ACTIONS.SET_ERROR,
+      payload: error.message,
+    });
+    throw error;
+  }
 };
 
 /**
