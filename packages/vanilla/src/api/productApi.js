@@ -1,5 +1,7 @@
+import { isServer } from "../utils";
+
 const withBaseUrl = (url) => {
-  return typeof window === "undefined" ? new URL(url, `http://localhost:${process.env.PORT}`) : url;
+  return isServer ? new URL(url, `http://localhost:${process.env.PORT}`) : url;
 };
 
 export async function getProducts(params = {}) {
