@@ -7,7 +7,7 @@ const base = process.env.BASE || (prod ? "/front_6th_chapter4-1/vanilla/" : "/")
 
 const app = express();
 
-const templateHtml = prod ? fs.readFileSync("./dist/vanilla-ssr/index.html", "utf-8") : "";
+const templateHtml = prod ? fs.readFileSync("./dist/vanilla/index.html", "utf-8") : "";
 
 let vite;
 if (!prod) {
@@ -51,9 +51,7 @@ app.use("*all", async (req, res) => {
     // 포트로 SSR/CSR 결정: 4173 → SSR, 5173 → CSR (그 외는 SSR)
     const hostHeader = req.headers.host || "";
     const reqPort = Number(hostHeader.split(":")[1] || (req.socket?.localPort ?? 0));
-    const mode = urlObj.searchParams.get("mode"); // ?mode=csr / ?mode=ssr 강제
-    const doSSR =
-      mode === "csr" ? false : mode === "ssr" ? true : reqPort === 4173 ? true : reqPort === 5173 ? false : true;
+    const doSSR = !["5173", "4173"].includes(reqPort);
 
     // 서버에서 필요한 데이터 미리 로드
     const initialData = {
@@ -72,16 +70,11 @@ app.use("*all", async (req, res) => {
         // 기존 API 함수들 import (서버에서도 작동하도록 수정된 버전)
         const { getProducts, getCategories, getProduct } = await vite.ssrLoadModule("./src/api/productApi.js");
 
-        if (url === "" || url === "/" || url.startsWith("/?") || url.startsWith("?")) {
-          // 홈페이지: 상품 목록과 카테고리 로드
-          const [productsData, categoriesData] = await Promise.all([getProducts(query), getCategories()]);
+        const splitUrl = url.split("/");
 
-          initialData.products = productsData.products;
-          initialData.categories = categoriesData;
-          initialData.totalCount = productsData.pagination.total;
-        } else if (url.match(/^\/product\/([^/]+)\/?$/)) {
+        if (splitUrl?.[0] === "product") {
           // 상품 상세 페이지: 상품 상세와 관련 상품 로드
-          const productId = url.match(/^\/product\/([^/]+)\/?$/)[1];
+          const productId = splitUrl[1];
 
           const product = await getProduct(productId);
           initialData.currentProduct = product;
@@ -97,6 +90,13 @@ app.use("*all", async (req, res) => {
 
           const categoriesData = await getCategories();
           initialData.categories = categoriesData;
+        } else if (url === "" || url === "/" || url.startsWith("/?") || url.startsWith("?")) {
+          // 홈페이지: 상품 목록과 카테고리 로드
+          const [productsData, categoriesData] = await Promise.all([getProducts(query), getCategories()]);
+
+          initialData.products = productsData.products;
+          initialData.categories = categoriesData;
+          initialData.totalCount = productsData.pagination.total;
         }
       }
     } catch (error) {
