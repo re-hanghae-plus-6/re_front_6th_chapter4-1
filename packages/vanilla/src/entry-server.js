@@ -1,17 +1,12 @@
-import { items } from "./mocks/shared";
 import { safeSerialize } from "./utils";
 
-import {
-  HomePage,
-  renderHomePageForServer,
-  getServerSideProps as getHomePageServerSideProps,
-} from "./pages/HomePage.js";
-import { NotFoundPage } from "./pages/NotFoundPage.js";
+import { HomePage, renderHomePageForServer, getServerSideProps as getHomePageServerSideProps } from "./pages/index";
+import { NotFoundPage } from "./pages/not-found";
 import {
   ProductDetailPage,
   renderProductDetailPageForServer,
   getServerSideProps as getProductDetailPageServerSideProps,
-} from "./pages/ProductDetailPage.js";
+} from "./pages/product/[id]";
 
 function renderHead(title = "쇼핑몰 - 홈") {
   return `<title>${title}</title>`;
@@ -46,9 +41,8 @@ export const render = async (url) => {
       initialDataScript = wrappingInitialDataScript(initialData);
     } else if (context.path === "/product/:id/") {
       const { id } = context.params || {};
-      const product = items.find((p) => p.productId === id);
 
-      if (!product) {
+      if (!id) {
         throw notFound();
       }
 

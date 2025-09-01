@@ -3,12 +3,17 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createServer as createViteServer } from "vite";
+import { server } from "./src/mocks/server.js";
 
 const prod = process.env.NODE_ENV === "production";
 const port = process.env.PORT || 5173;
 const base = process.env.BASE || (prod ? "/front_6th_chapter4-1/vanilla/" : "/");
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+server.listen({
+  onUnhandledRequest: "bypass",
+});
 
 async function createServer() {
   const app = express();
