@@ -1,34 +1,27 @@
+import compression from "compression";
 import express from "express";
+import * as fs from "fs";
+import sirv from "sirv";
 
-const prod = process.env.NODE_ENV === "production";
 const port = process.env.PORT || 5173;
-const base = process.env.BASE || (prod ? "/front_6th_chapter4-1/vanilla/" : "/");
+const base = process.env.BASE || "/front_6th_chapter4-1/vanilla/";
+
+const render = () => {
+  const html = fs.readFileSync("./dist/vanilla/index.html", "utf-8");
+  return html.replace("<!--app-html-->", /* HTML */ `<div>SSR 테스트</div>`);
+};
 
 const app = express();
 
-const render = () => {
-  return `<div>안녕하세요</div>`;
-};
+app.use(compression());
+app.use(base, sirv("./dist/vanilla", { extensions: [] }));
 
-app.get("*all", (req, res) => {
-  res.send(
-    `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Vanilla Javascript SSR</title>
-</head>
-<body>
-<div id="app">${render()}</div>
-</body>
-</html>
-  `.trim(),
-  );
+app.get("*all", async (_, res) => {
+  const html = render();
+  res.status(200).set({ "Content-Type": "text/html" }).send(html);
 });
 
 // Start http server
 app.listen(port, () => {
-  console.log(`React Server started at http://localhost:${port}`);
+  console.log(`Vanilla Server started at http://localhost:${port}`);
 });
