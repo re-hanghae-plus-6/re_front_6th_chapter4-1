@@ -11,17 +11,17 @@ export async function getProducts(params = {}) {
     sort,
   });
 
-  const response = await fetch(`/api/products?${searchParams}`);
+  const response = await fetch(`https://api-server/api/products?${searchParams}`);
 
   return await response.json();
 }
 
 export async function getProduct(productId) {
-  const response = await fetch(`/api/products/${productId}`);
+  const response = await fetch(`https://api-server/api/products/${productId}`);
   return await response.json();
 }
 
 export async function getCategories() {
-  const response = await fetch("/api/categories");
+  const response = await fetch("https://api-server/api/categories");
   return await response.json();
 }
