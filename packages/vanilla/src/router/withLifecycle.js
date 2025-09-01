@@ -84,20 +84,22 @@ export const withIsomorphicLifecycle = ({ onMount, onUnmount, watches, initStore
     pageState.previous = pageState.current;
     pageState.current = page;
 
-    // 새 페이지면 마운트, 기존 페이지면 업데이트
-    if (wasNewPage) {
-      mount(page, ...args);
-    } else if (lifecycle.watches) {
-      lifecycle.watches.forEach(([getDeps, callback], index) => {
-        const newDeps = getDeps(...args);
+    if (isClient) {
+      // 새 페이지면 마운트, 기존 페이지면 업데이트
+      if (wasNewPage) {
+        mount(page, ...args);
+      } else if (lifecycle.watches) {
+        lifecycle.watches.forEach(([getDeps, callback], index) => {
+          const newDeps = getDeps(...args);
 
-        if (depsChanged(newDeps, lifecycle.deps[index])) {
-          callback(...args);
-        }
+          if (depsChanged(newDeps, lifecycle.deps[index])) {
+            callback(...args);
+          }
 
-        // deps 업데이트 (이 부분이 중요!)
-        lifecycle.deps[index] = Array.isArray(newDeps) ? [...newDeps] : [];
-      });
+          // deps 업데이트 (이 부분이 중요!)
+          lifecycle.deps[index] = Array.isArray(newDeps) ? [...newDeps] : [];
+        });
+      }
     }
 
     // 페이지 함수 실행
