@@ -2,12 +2,17 @@ import express from "express";
 import fs from "fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { mswServer } from "./src/mocks/server.js";
 
 //핵심 키워드: middleware, template, render, hydration
 
 const prod = process.env.NODE_ENV === "production";
 const port = process.env.PORT || 5173;
 const base = process.env.BASE || (prod ? "/front_6th_chapter4-1/vanilla/" : "/");
+
+mswServer.listen({
+  onUnhandledRequest: "bypass",
+});
 
 // Create http server
 const app = express();
@@ -80,7 +85,7 @@ app.use("*all", async (req, res) => {
     // 4. 앱의 HTML을 렌더링합니다.
     //    이는 entry-server.js에서 내보낸(Export) `render` 함수가
     //    ReactDOMServer.renderToString()과 같은 적절한 프레임워크의 SSR API를 호출한다고 가정합니다.
-    const rendered = await render(url);
+    const rendered = await render(url.originalUrl, req.query);
 
     // 5. 렌더링된 HTML을 템플릿에 주입합니다.
     const html = template
