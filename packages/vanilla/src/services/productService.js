@@ -15,7 +15,7 @@ export const initProductsAndCategories = async (data) => {
 };
 
 export const loadProductsAndCategories = async () => {
-  if (productStore.getState().status === "done") {
+  if (productStore.getState().products.length) {
     return;
   }
 
