@@ -8,11 +8,17 @@ export class Router {
   #route;
   #observer = createObserver();
   #baseUrl;
+  #notFoundHandler;
 
-  constructor(baseUrl = "") {
+  constructor(baseUrl = "", routes = null) {
     this.#routes = new Map();
     this.#route = null;
     this.#baseUrl = baseUrl.replace(/\/$/, "");
+    this.#notFoundHandler = null;
+
+    if (routes) {
+      this.addRoutes(routes);
+    }
 
     window.addEventListener("popstate", () => {
       this.#route = this.#findRoute();
@@ -50,6 +56,20 @@ export class Router {
   }
 
   /**
+   * routes 객체를 한 번에 등록
+   * @param {Object} routes - 라우트 객체 { "/path": handler, "/product/:id": handler, "*": notFoundHandler }
+   */
+  addRoutes(routes) {
+    for (const [path, handler] of Object.entries(routes)) {
+      if (path === "*") {
+        this.#notFoundHandler = handler;
+      } else {
+        this.addRoute(path, handler);
+      }
+    }
+  }
+
+  /**
    * 라우트 등록
    * @param {string} path - 경로 패턴 (예: "/product/:id")
    * @param {Function} handler - 라우트 핸들러
@@ -75,6 +95,7 @@ export class Router {
 
   #findRoute(url = window.location.pathname) {
     const { pathname } = new URL(url, window.location.origin);
+
     for (const [routePath, route] of this.#routes) {
       const match = pathname.match(route.regex);
       if (match) {
@@ -91,6 +112,17 @@ export class Router {
         };
       }
     }
+
+    if (this.#notFoundHandler) {
+      return {
+        handler: this.#notFoundHandler,
+        params: {},
+        path: "*",
+        regex: null,
+        paramNames: [],
+      };
+    }
+
     return null;
   }
 

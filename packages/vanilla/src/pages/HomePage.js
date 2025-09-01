@@ -1,6 +1,7 @@
 import { ProductList, SearchBar } from "../components";
 import { productStore } from "../stores";
-import { router, withLifecycle } from "../router";
+import { router } from "../router";
+import { withLifecycle } from "../router/withLifecycle.js";
 import { loadProducts, loadProductsAndCategories } from "../services";
 import { PageWrapper } from "./PageWrapper.js";
 
