@@ -62,6 +62,7 @@ export const withLifecycle = ({ onMount, onUnmount, watches } = {}, page) => {
     lifecycle.watches = typeof watches[0] === "function" ? [watches] : watches;
   }
 
+  // ex) Homepage(args: { query })
   return (...args) => {
     const wasNewPage = pageState.current !== page;
 
@@ -79,10 +80,10 @@ export const withLifecycle = ({ onMount, onUnmount, watches } = {}, page) => {
       mount(page);
     } else if (lifecycle.watches) {
       lifecycle.watches.forEach(([getDeps, callback], index) => {
-        const newDeps = getDeps();
+        const newDeps = getDeps(...args);
 
         if (depsChanged(newDeps, lifecycle.deps[index])) {
-          callback();
+          callback(...args);
         }
 
         // deps 업데이트 (이 부분이 중요!)
