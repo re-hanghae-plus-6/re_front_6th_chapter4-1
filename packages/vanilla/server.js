@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import express from "express";
 import { mswServer } from "./src/mocks/node.js";
-import { normalize } from "node:path";
+import path from "node:path";
 
 const prod = process.env.NODE_ENV === "production";
 const port = process.env.PORT || 5173;
@@ -45,7 +45,7 @@ if (!prod) {
 app.use("*all", async (req, res) => {
   try {
     const url = req.originalUrl.replace(base, "");
-    const pathname = normalize(`/${url.split("?")[0]}`);
+    const pathname = path.normalize(`/${url.split("?")[0]}`);
 
     /** @type {string} */
     let template;
