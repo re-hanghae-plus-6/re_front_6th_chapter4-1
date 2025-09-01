@@ -1,6 +1,6 @@
 import { getCategories, getProduct, getProducts } from "../api/productApi";
-import { initialProductState, productStore, PRODUCT_ACTIONS } from "../stores";
 import { router } from "../router";
+import { initialProductState, PRODUCT_ACTIONS, productStore } from "../stores";
 
 export const loadProductsAndCategories = async () => {
   router.query = { current: undefined }; // 항상 첫 페이지로 초기화
@@ -26,6 +26,7 @@ export const loadProductsAndCategories = async () => {
     productStore.dispatch({
       type: PRODUCT_ACTIONS.SETUP,
       payload: {
+        // 이 값을 서버에서 똑같이 생성해서 hompage 에 인자로 넣는다.
         products,
         categories,
         totalCount: total,

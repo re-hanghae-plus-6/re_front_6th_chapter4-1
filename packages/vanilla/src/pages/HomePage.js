@@ -1,7 +1,7 @@
 import { ProductList, SearchBar } from "../components";
-import { productStore } from "../stores";
 import { router, withLifecycle } from "../router";
 import { loadProducts, loadProductsAndCategories } from "../services";
+import { productStore } from "../stores";
 import { PageWrapper } from "./PageWrapper.js";
 
 export const HomePage = withLifecycle(
@@ -17,9 +17,15 @@ export const HomePage = withLifecycle(
       () => loadProducts(true),
     ],
   },
-  () => {
-    const productState = productStore.getState();
-    const { search: searchQuery, limit, sort, category1, category2 } = router.query;
+  (url, query, param) => {
+    const productState = typeof window !== "undefined" ? productStore.getState() : param;
+    const {
+      search: searchQuery,
+      limit,
+      sort,
+      category1,
+      category2,
+    } = typeof window !== "undefined" ? router.query : query;
     const { products, loading, error, totalCount, categories } = productState;
     const category = { category1, category2 };
     const hasMore = products.length < totalCount;
