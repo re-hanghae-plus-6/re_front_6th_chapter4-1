@@ -1,4 +1,3 @@
-import { addEvent, isNearBottom } from "./utils";
 import { router } from "./router/router";
 import {
   addToCart,
@@ -16,7 +15,8 @@ import {
   toggleCartSelect,
   updateCartQuantity,
 } from "./services";
-import { productStore, uiStore, UI_ACTIONS } from "./stores";
+import { productStore, UI_ACTIONS, uiStore } from "./stores";
+import { addEvent, isNearBottom } from "./utils";
 
 /**
  * 상품 관련 이벤트 등록

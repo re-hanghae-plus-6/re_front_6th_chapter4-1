@@ -1,11 +1,11 @@
-import { ProductList, SearchBar } from "../components";
-import { initialProductState, productStore } from "../stores";
-import { withIsomorphicLifecycle } from "../router/withLifecycle.js";
-import { loadProducts, loadProductsAndCategories, initProductsAndCategories } from "../services";
-import { PageWrapper } from "./PageWrapper.js";
 import { getCategories, getProducts } from "../api/productApi.js";
+import { ProductList, SearchBar } from "../components";
 import { router } from "../router/router.js";
+import { withIsomorphicLifecycle } from "../router/withLifecycle.js";
+import { initProductsAndCategories, loadProducts, loadProductsAndCategories } from "../services";
+import { initialProductState, productStore } from "../stores";
 import { isServer } from "../utils/runtime.js";
+import { PageWrapper } from "./PageWrapper.js";
 
 const ssrFetcher = async ({ query }) => {
   try {

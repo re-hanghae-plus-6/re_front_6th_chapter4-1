@@ -1,9 +1,9 @@
 // 글로벌 라우터 인스턴스
-import { ClientRouter, ServerRouter } from "../lib";
 import { BASE_URL } from "../constants.js";
+import { ClientRouter, ServerRouter } from "../lib";
 import { HomePage } from "../pages/HomePage.js";
-import { ProductDetailPage } from "../pages/ProductDetailPage.js";
 import { NotFoundPage } from "../pages/NotFoundPage.js";
+import { ProductDetailPage } from "../pages/ProductDetailPage.js";
 import { isServer } from "../utils/runtime.js";
 
 export const routerMatches = {

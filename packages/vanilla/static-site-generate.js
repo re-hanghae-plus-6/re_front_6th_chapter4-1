@@ -1,7 +1,7 @@
 import fs from "node:fs";
-import items from "./src/mocks/items.json" with { type: "json" };
-import { createServer } from "vite";
 import path from "node:path";
+import { createServer } from "vite";
+import items from "./src/mocks/items.json" with { type: "json" };
 import { mswServer } from "./src/mocks/node.js";
 
 mswServer.listen({

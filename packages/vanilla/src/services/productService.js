@@ -1,6 +1,6 @@
 import { getCategories, getProduct, getProducts } from "../api/productApi";
-import { productStore, PRODUCT_ACTIONS, initialProductState } from "../stores";
 import { router } from "../router/router";
+import { PRODUCT_ACTIONS, initialProductState, productStore } from "../stores";
 
 // 상품 목록 초기 설정
 export const initProductsAndCategories = async (data) => {

@@ -1,9 +1,9 @@
-import { initialProductState, productStore } from "../stores";
-import { loadProductDetailForPage } from "../services";
-import { PageWrapper } from "./PageWrapper.js";
 import { getProduct, getProducts } from "../api/productApi.js";
 import { withIsomorphicLifecycle } from "../router/withLifecycle.js";
+import { loadProductDetailForPage } from "../services";
+import { initialProductState, productStore } from "../stores";
 import { isServer } from "../utils/runtime.js";
+import { PageWrapper } from "./PageWrapper.js";
 
 const loadingContent = `
   <div class="min-h-screen bg-gray-50 flex items-center justify-center">
