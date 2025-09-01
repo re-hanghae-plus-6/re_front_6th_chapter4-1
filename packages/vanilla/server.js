@@ -48,13 +48,13 @@ app.use("*all", async (req, res) => {
 
     const rendered = await render(pathname, req.query);
 
+    const serialized = JSON.stringify(rendered.__INITIAL_DATA__).replace(/</g, "\\u003c");
+    const initialDataScript = `<script>window.__INITIAL_DATA__ = ${serialized};</script>`;
+
     const html = template
       .replace(`<!--app-head-->`, rendered.head ?? "")
       .replace(`<!--app-html-->`, rendered.html ?? "")
-      .replace(
-        `<!-- app-data -->`,
-        `<script>window.__INITIAL_DATA__ = ${JSON.stringify(rendered.__INITIAL_DATA__)};</script>`,
-      );
+      .replace(`<!-- app-data -->`, initialDataScript);
 
     res.status(200).set({ "Content-Type": "text/html" }).send(html);
   } catch (e) {
