@@ -30,7 +30,7 @@ try {
   console.error("MSW 서버 설정 실패:", error);
 }
 
-// 개발/프로덕션 환경 분기 (basic.md 가이드)
+// 개발/프로덕션 환경 분기
 if (!prod) {
   const { createServer } = await import("vite");
   vite = await createServer({
