@@ -1,5 +1,5 @@
-// 글로벌 라우터 인스턴스
-import { Router } from "../lib";
-import { BASE_URL } from "../constants.js";
+import { BASE_URL } from "../constants";
+import { Router, ServerRouter } from "../lib";
 
-export const router = new Router(BASE_URL);
+/** 글로벌 라우터 인스턴스 */
+export const router = typeof window === "undefined" ? new ServerRouter(BASE_URL) : new Router(BASE_URL);
