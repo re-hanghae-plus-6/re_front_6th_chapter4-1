@@ -2,9 +2,8 @@
  * 간단한 SPA 라우터
  */
 import { createObserver } from "./createObserver.js";
-import { isServer } from "../utils/isServer.js";
 
-export class Router {
+export class ServerRouter {
   #routes;
   #route;
   #observer = createObserver();
@@ -25,15 +24,8 @@ export class Router {
     return this.#baseUrl;
   }
 
-  get query() {
-    if (isServer) {
-      return "";
-    }
-    return Router.parseQuery(window.location.search);
-  }
-
   set query(newQuery) {
-    const newUrl = Router.getUrl(newQuery, this.#baseUrl);
+    const newUrl = ServerRouter.getUrl(newQuery, this.#baseUrl);
     this.push(newUrl);
   }
 
@@ -68,7 +60,7 @@ export class Router {
       })
       .replace(/\//g, "\\/");
 
-    const regex = new RegExp(`^${this.#baseUrl}${regexPath}$`);
+    const regex = new RegExp(`^${regexPath}$`);
 
     this.#routes.set(path, {
       regex,
@@ -77,8 +69,7 @@ export class Router {
     });
   }
 
-  #findRoute(url = window.location.pathname) {
-    const { pathname } = new URL(url, window.location.origin);
+  #findRoute(pathname) {
     for (const [routePath, route] of this.#routes) {
       const match = pathname.match(route.regex);
       if (match) {
@@ -96,29 +87,6 @@ export class Router {
       }
     }
     return null;
-  }
-
-  /**
-   * 네비게이션 실행
-   * @param {string} url - 이동할 경로
-   */
-  push(url) {
-    try {
-      // baseUrl이 없으면 자동으로 붙여줌
-      let fullUrl = url.startsWith(this.#baseUrl) ? url : this.#baseUrl + (url.startsWith("/") ? url : "/" + url);
-
-      const prevFullUrl = `${window.location.pathname}${window.location.search}`;
-
-      // 히스토리 업데이트
-      if (prevFullUrl !== fullUrl) {
-        window.history.pushState(null, "", fullUrl);
-      }
-
-      this.#route = this.#findRoute(fullUrl);
-      this.#observer.notify();
-    } catch (error) {
-      console.error("라우터 네비게이션 오류:", error);
-    }
   }
 
   /**
@@ -148,28 +116,4 @@ export class Router {
    * @param {Object} query - 쿼리 객체
    * @returns {string} 쿼리 문자열
    */
-  static stringifyQuery = (query) => {
-    const params = new URLSearchParams();
-    for (const [key, value] of Object.entries(query)) {
-      if (value !== null && value !== undefined && value !== "") {
-        params.set(key, String(value));
-      }
-    }
-    return params.toString();
-  };
-
-  static getUrl = (newQuery, baseUrl = "") => {
-    const currentQuery = Router.parseQuery();
-    const updatedQuery = { ...currentQuery, ...newQuery };
-
-    // 빈 값들 제거
-    Object.keys(updatedQuery).forEach((key) => {
-      if (updatedQuery[key] === null || updatedQuery[key] === undefined || updatedQuery[key] === "") {
-        delete updatedQuery[key];
-      }
-    });
-
-    const queryString = Router.stringifyQuery(updatedQuery);
-    return `${baseUrl}${window.location.pathname.replace(baseUrl, "")}${queryString ? `?${queryString}` : ""}`;
-  };
 }
