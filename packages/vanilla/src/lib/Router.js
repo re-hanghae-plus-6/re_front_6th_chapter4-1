@@ -2,22 +2,27 @@
  * 간단한 SPA 라우터
  */
 import { createObserver } from "./createObserver.js";
+import { isServer } from "../utils";
 
 export class Router {
   #routes;
   #route;
   #observer = createObserver();
   #baseUrl;
+  #isServer = isServer;
 
   constructor(baseUrl = "") {
     this.#routes = new Map();
     this.#route = null;
     this.#baseUrl = baseUrl.replace(/\/$/, "");
 
-    window.addEventListener("popstate", () => {
-      this.#route = this.#findRoute();
-      this.#observer.notify();
-    });
+    // SSR 환경에서는 브라우저 API 사용하지 않음
+    if (!this.#isServer) {
+      window.addEventListener("popstate", () => {
+        this.#route = this.#findRoute();
+        this.#observer.notify();
+      });
+    }
   }
 
   get baseUrl() {
@@ -25,10 +30,16 @@ export class Router {
   }
 
   get query() {
+    if (this.#isServer) {
+      return {};
+    }
     return Router.parseQuery(window.location.search);
   }
 
   set query(newQuery) {
+    if (this.#isServer) {
+      return;
+    }
     const newUrl = Router.getUrl(newQuery, this.#baseUrl);
     this.push(newUrl);
   }
@@ -73,8 +84,22 @@ export class Router {
     });
   }
 
-  #findRoute(url = window.location.pathname) {
-    const { pathname } = new URL(url, window.location.origin);
+  #findRoute(url) {
+    if (this.#isServer) {
+      // SSR에서는 기본 라우트 반환
+      const defaultRoute = this.#routes.get("/");
+      if (defaultRoute) {
+        return {
+          ...defaultRoute,
+          params: {},
+          path: "/",
+        };
+      }
+      return null;
+    }
+
+    const actualUrl = url || window.location.pathname;
+    const { pathname } = new URL(actualUrl, window.location.origin);
     for (const [routePath, route] of this.#routes) {
       const match = pathname.match(route.regex);
       if (match) {
@@ -99,6 +124,10 @@ export class Router {
    * @param {string} url - 이동할 경로
    */
   push(url) {
+    if (this.#isServer) {
+      return;
+    }
+
     try {
       // baseUrl이 없으면 자동으로 붙여줌
       let fullUrl = url.startsWith(this.#baseUrl) ? url : this.#baseUrl + (url.startsWith("/") ? url : "/" + url);
@@ -130,8 +159,13 @@ export class Router {
    * @param {string} search - location.search 또는 쿼리 문자열
    * @returns {Object} 파싱된 쿼리 객체
    */
-  static parseQuery = (search = window.location.search) => {
-    const params = new URLSearchParams(search);
+  static parseQuery = (search) => {
+    if (isServer) {
+      return {};
+    }
+
+    const actualSearch = search || window.location.search;
+    const params = new URLSearchParams(actualSearch);
     const query = {};
     for (const [key, value] of params) {
       query[key] = value;
@@ -155,6 +189,10 @@ export class Router {
   };
 
   static getUrl = (newQuery, baseUrl = "") => {
+    if (isServer) {
+      return "/";
+    }
+
     const currentQuery = Router.parseQuery();
     const updatedQuery = { ...currentQuery, ...newQuery };
 
