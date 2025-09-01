@@ -1,10 +1,25 @@
+/** @returns {Storage} */
+const createMemoryStorage = () => {
+  let value = {};
+
+  return {
+    getItem: (key) => (key in value ? value[key] : null),
+    setItem: (key, val) => (value[key] = val),
+    removeItem: (key) => delete value[key],
+    clear: () => (value = {}),
+  };
+};
+
 /**
  * 로컬스토리지 추상화 함수
  * @param {string} key - 스토리지 키
  * @param {Storage} storage - 기본값은 localStorage
  * @returns {Object} { get, set, reset }
  */
-export const createStorage = (key, storage = window.localStorage) => {
+export const createStorage = (
+  key,
+  storage = typeof window === "undefined" ? createMemoryStorage() : window.localStorage,
+) => {
   const get = () => {
     try {
       const item = storage.getItem(key);
