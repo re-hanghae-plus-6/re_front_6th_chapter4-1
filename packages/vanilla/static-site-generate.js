@@ -5,10 +5,17 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { createServer as createViteServer } from "vite";
 
 import { safeSerialize } from "./src/utils/safeSerialize.js";
+import { server } from "./src/mocks/server.js";
+
+import { getProducts } from "./src/api/productApi.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DIST_DIR = path.resolve(__dirname, "../../dist/vanilla");
 const SSR_DIR = path.resolve(__dirname, "./dist/vanilla-ssr");
+
+server.listen({
+  onUnhandledRequest: "bypass",
+});
 
 async function loadRender() {
   const builtEntry = path.join(SSR_DIR, "entry-server.js");
@@ -35,21 +42,13 @@ async function loadRender() {
 }
 
 async function getPages() {
-  const itemsPath = path.resolve(__dirname, "./src/mocks/items.json");
-  const raw = await fsp.readFile(itemsPath, "utf-8");
-  const items = JSON.parse(raw);
-
-  const pick = items.reduce((acc, it) => {
-    const id = String(it.productId);
-    if (!acc.some((x) => String(x.productId) === id)) acc.push(it);
-    return acc;
-  }, []);
+  const { products } = await getProducts();
 
   return [
     { url: "/", filePath: path.join(DIST_DIR, "index.html") },
     // 404.html은 존재하지 않는 상품 상세 경로를 렌더해 notFound 데이터를 생성하여 저장
     { url: "/product/__notfound__/", filePath: path.join(DIST_DIR, "404.html"), is404: true },
-    ...pick.map((p) => ({
+    ...products.map((p) => ({
       url: `/product/${p.productId}/`,
       filePath: path.join(DIST_DIR, "product", String(p.productId), "index.html"),
     })),
