@@ -1,9 +1,9 @@
-import { registerGlobalEvents } from "./utils";
-import { initRender } from "./render";
-import { registerAllEvents } from "./events";
-import { loadCartFromStorage } from "./services";
-import { router } from "./router";
 import { BASE_URL } from "./constants.js";
+import { registerAllEvents } from "./events";
+import { initRender } from "./render";
+import { router } from "./router/router.js";
+import { loadCartFromStorage } from "./services";
+import { registerGlobalEvents } from "./utils";
 
 const enableMocking = () =>
   import("./mocks/browser.js").then(({ worker }) =>

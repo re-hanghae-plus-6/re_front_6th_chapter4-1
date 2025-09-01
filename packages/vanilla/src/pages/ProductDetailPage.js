@@ -1,6 +1,8 @@
-import { productStore } from "../stores";
+import { getProduct, getProducts } from "../api/productApi.js";
+import { withIsomorphicLifecycle } from "../router/withLifecycle.js";
 import { loadProductDetailForPage } from "../services";
-import { router, withLifecycle } from "../router";
+import { initialProductState, productStore } from "../stores";
+import { isServer } from "../utils/runtime.js";
 import { PageWrapper } from "./PageWrapper.js";
 
 const loadingContent = `
@@ -231,18 +233,61 @@ function ProductDetail({ product, relatedProducts = [] }) {
   `;
 }
 
+const ssrFetcher = async ({ params }) => {
+  try {
+    const product = await getProduct(params.id);
+    let relatedProducts = [];
+
+    if (product.category2) {
+      const response = await getProducts({
+        category2: product.category,
+        limit: 20,
+        page: 1,
+      });
+      relatedProducts = response.products.filter((product) => product.productId !== params.id);
+    }
+
+    return {
+      currentProduct: product,
+      relatedProducts,
+      error: null,
+      loading: false,
+    };
+  } catch (error) {
+    return {
+      ...initialProductState,
+      error: error.message,
+      loading: false,
+    };
+  }
+};
+
 /**
  * 상품 상세 페이지 컴포넌트
  */
-export const ProductDetailPage = withLifecycle(
+export const ProductDetailPage = withIsomorphicLifecycle(
   {
-    onMount: () => {
-      loadProductDetailForPage(router.params.id);
+    ssr: ssrFetcher,
+    metadata: async ({ params }) => {
+      const product = await getProduct(params.id);
+
+      return {
+        title: `${product.title} - 쇼핑몰`,
+      };
     },
-    watches: [() => [router.params.id], () => loadProductDetailForPage(router.params.id)],
+    initStore: () => {},
+    onMount: ({ params }) => {
+      loadProductDetailForPage(params.id);
+    },
+    watches: [
+      ({ params }) => [params.id],
+      ({ params } = {}) => {
+        return loadProductDetailForPage(params.id);
+      },
+    ],
   },
-  () => {
-    const { currentProduct: product, relatedProducts = [], error, loading } = productStore.getState();
+  ({ data }) => {
+    const { currentProduct: product, relatedProducts = [], error, loading } = isServer ? data : productStore.getState();
 
     return PageWrapper({
       headerLeft: `
