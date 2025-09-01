@@ -1,4 +1,4 @@
-// import { PageWrapper } from "./pages/PageWrapper.js";
+import { PageWrapper } from "./pages/PageWrapper.js";
 import { SearchBar, ProductList } from "./components";
 import { ServerRouter } from "./lib/ServerRouter.js";
 
@@ -96,12 +96,7 @@ export async function render(pathname, query = {}) {
         </div>
       `.trim();
 
-    // NOTE: createStorage 관련 에러로 인해 임시 주석처리
-    // html = PageWrapper({ headerLeft, children });
-    html = `
-      ${headerLeft}
-      ${children}
-    `;
+    html = PageWrapper({ headerLeft, children });
   } else if (route.path === "/product/:id") {
     const product = data.currentProduct;
     html = `
