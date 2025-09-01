@@ -90,7 +90,7 @@ app.use("*all", async (req, res) => {
     const finalHtml = template
       .replace("<!--app-head-->", head || "")
       .replace("<!--app-html-->", html)
-      .replace("</head>", `${initialDataScript}</head>`);
+      .replace("<!--app-initial-data-->", initialDataScript);
 
     res.status(200).set({ "Content-Type": "text/html" }).end(finalHtml);
   } catch (e) {

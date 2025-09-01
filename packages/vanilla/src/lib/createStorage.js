@@ -1,10 +1,29 @@
+// 메모리 스토리지
+const createMemoryStorage = () => {
+  const storage = new Map();
+
+  return {
+    getItem: (key) => storage.get(key) || null,
+    setItem: (key, value) => storage.set(key, value),
+    removeItem: (key) => storage.delete(key),
+  };
+};
+
+// 환경에 따른 스토리지 선택
+const getDefaultStorage = () => {
+  if (typeof window !== "undefined" && window.localStorage) {
+    return window.localStorage;
+  }
+  return createMemoryStorage();
+};
+
 /**
  * 로컬스토리지 추상화 함수
  * @param {string} key - 스토리지 키
- * @param {Storage} storage - 기본값은 localStorage
+ * @param {Storage} storage - 기본값은 localStorage (브라우저) 또는 메모리스토리지 (서버)
  * @returns {Object} { get, set, reset }
  */
-export const createStorage = (key, storage = window.localStorage) => {
+export const createStorage = (key, storage = getDefaultStorage()) => {
   const get = () => {
     try {
       const item = storage.getItem(key);
