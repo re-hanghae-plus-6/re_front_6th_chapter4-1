@@ -7,7 +7,7 @@ import { fileURLToPath } from "url";
 const prod = process.env.NODE_ENV === "production";
 const port = process.env.PORT || 5173;
 const base = process.env.BASE || (prod ? "/front_6th_chapter4-1/vanilla/" : "/");
-
+console.log("port", port);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -46,12 +46,12 @@ if (!prod) {
   app.use(base, sirv("./dist/vanilla/", { extensions: [] }));
 }
 
-// 렌더링 파이프라인 (basic.md 예시)
+// 렌더링 파이프라인
 app.use("*all", async (req, res) => {
   try {
     const url = req.originalUrl.replace(base, "");
 
-    // 정적 파일은 SSR에서 제외 (API는 MSW가 처리)
+    // 정적 파일은 SSR에서 제외
     if (
       url.includes("favicon") ||
       url.includes("well-known") ||
@@ -101,7 +101,7 @@ app.use("*all", async (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`SSR server started at http://localhost:${port}${base}`);
+  console.log(`SSR server started at http://localhost:${port}`);
 });
 
 // const render = () => {

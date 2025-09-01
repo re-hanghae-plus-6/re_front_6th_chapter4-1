@@ -63,12 +63,19 @@ const createServerStore = (initialState) => ({
 });
 
 // 서버용 라우터 모킹
-const createServerRouter = (url, query = {}) => {
-  const pathname = new URL(url, "http://localhost").pathname;
+const createServerRouter = (url) => {
+  const urlObj = new URL(url, "http://localhost");
+  const pathname = urlObj.pathname;
   const productMatch = pathname.match(/^\/product\/([^/]+)\/?$/);
 
+  // 쿼리스트링 파싱
+  const query = {};
+  urlObj.searchParams.forEach((value, key) => {
+    query[key] = value;
+  });
+
   return {
-    query, // 쿼리스트링 넣을 자리 (?page=1 이런 부분들)
+    query, // 실제 URL에서 파싱된 쿼리스트링
     params: productMatch ? { id: productMatch[1] } : {}, // URL 파라미터
     baseUrl: "", // 여기서는 의미 없음 (CSR 라우터 호환용)
     target: null, // 필요시 라우트 대상 지정 가능
@@ -105,10 +112,24 @@ async function renderWithExistingComponents(url) {
   if (route.type === "home") {
     // 서버용 MSW를 통해 실제 API 호출로 데이터 가져오기
     try {
-      const [productsResponse, categoriesResponse] = await Promise.all([
-        fetch("/api/products?page=1&limit=20&sort=price_asc"),
-        fetch("/api/categories"),
-      ]);
+      // 서버용 router 설정하여 쿼리스트링 파싱
+      const serverRouter = createServerRouter(url);
+
+      // 쿼리스트링에서 파라미터 추출 (기본값 설정)
+      const page = serverRouter.query.page || "1";
+      const limit = serverRouter.query.limit || "20";
+      const sort = serverRouter.query.sort || "price_asc";
+      const category = serverRouter.query.category || "";
+      const search = serverRouter.query.search || "";
+
+      // 실제 쿼리스트링으로 API 호출
+      let apiUrl = `/api/products?page=${page}&limit=${limit}&sort=${sort}`;
+      if (category) apiUrl += `&category=${category}`;
+      if (search) apiUrl += `&search=${encodeURIComponent(search)}`;
+
+      console.log("🔍 서버에서 API 호출 URL:", apiUrl);
+
+      const [productsResponse, categoriesResponse] = await Promise.all([fetch(apiUrl), fetch("/api/categories")]);
 
       const productsData = await productsResponse.json();
       const categoriesData = await categoriesResponse.json();
@@ -126,9 +147,6 @@ async function renderWithExistingComponents(url) {
       });
 
       console.log("서버용 MSW를 통해 로드된 상품 수:", productsData.products?.length || 0);
-
-      // 서버용 router 설정
-      const serverRouter = createServerRouter(url, {});
 
       // 전역 store와 router를 서버용으로 설정
       global.productStore = serverProductStore;
@@ -184,8 +202,7 @@ async function renderWithExistingComponents(url) {
 
       console.log("🎯 서버용 MSW를 통해 로드된 상품:", product.title);
 
-      const serverRouter = createServerRouter(url, {});
-      serverRouter.params = { id: route.id };
+      const serverRouter = createServerRouter(url);
 
       global.productStore = serverProductStore;
       global.router = serverRouter;
