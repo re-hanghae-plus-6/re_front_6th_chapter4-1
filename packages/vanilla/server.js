@@ -5,6 +5,8 @@ const isProduction = process.env.NODE_ENV === "production";
 const port = process.env.PORT || 5173;
 const base = process.env.BASE || (isProduction ? "/front_6th_chapter4-1/vanilla/" : "/");
 
+const templateHtml = isProduction ? await fs.readFile("./dist/vanilla/index.html", "utf-8") : "";
+
 async function createServer() {
   const app = express();
 
@@ -23,7 +25,7 @@ async function createServer() {
     const compression = (await import("compression")).default;
     const sirv = (await import("sirv")).default;
     app.use(compression());
-    app.use(base, sirv("./dist/vanilla-ssr/client", { extensions: [] }));
+    app.use(base, sirv("./dist/vanilla", { extensions: [] }));
   }
 
   // issue: express 5.x 에서는 * 대신 {*splat} 사용
@@ -42,17 +44,19 @@ async function createServer() {
         template = await vite.transformIndexHtml(url, template);
         render = (await vite.ssrLoadModule("/src/main-server.js")).render;
       } else {
-        template = await fs.readFile("./dist/vanilla-ssr/client/index.html", "utf-8");
-        render = (await import("./dist/vanilla-ssr/server/main-server.js")).render;
+        template = templateHtml;
+        render = (await import("./dist/vanilla-ssr/main-server.js")).render;
       }
 
       const rendered = await render(url);
 
       const html = template
         .replace(`<!--app-head-->`, rendered.head ?? "")
-        .replace(`<!--app-html-->`, rendered.html ?? "");
-
-      console.log("[html]", html);
+        .replace(`<!--app-html-->`, rendered.html ?? "")
+        .replace(
+          `</head>`,
+          `<script>window.__INITIAL_DATA__ = ${JSON.stringify(rendered.initialData ?? {})}</script></head>`,
+        );
 
       res.status(200).set({ "Content-Type": "text/html" }).send(html);
     } catch (e) {

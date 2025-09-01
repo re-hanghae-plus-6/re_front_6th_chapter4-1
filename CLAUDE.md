@@ -7,8 +7,9 @@
 쇼핑 애플리케이션을 다양한 렌더링 전략(CSR, SSR, SSG)으로 구현한 모노레포입니다. 바닐라 자바스크립트와 React 구현으로 나뉘어 있으며, 공유 라이브러리와 별도 패키지로 모듈화된 구조를 따릅니다.
 
 ## 주요 구현 목표
+
 - **Express SSR 서버 구현**: 미들웨어 기반 서버와 개발/프로덕션 환경 분기
-- **Static Site Generation**: 빌드 타임 페이지 생성 및 동적 라우트 처리  
+- **Static Site Generation**: 빌드 타임 페이지 생성 및 동적 라우트 처리
 - **서버/클라이언트 데이터 공유**: `window.__INITIAL_DATA__`를 통한 하이드레이션
 
 ## 워크스페이스 구조
@@ -21,6 +22,7 @@
 ## 주요 명령어
 
 ### 개발
+
 ```bash
 # 의존성 설치
 pnpm install
@@ -39,6 +41,7 @@ pnpm run prettier:write
 ```
 
 ### 테스트
+
 ```bash
 # 단위 테스트 (lib 패키지만)
 pnpm run test:unit
@@ -57,6 +60,7 @@ pnpm -F @hanghae-plus/lib test:advanced
 ```
 
 ### 모든 서버 동시 실행 (테스트용)
+
 ```bash
 # 모든 렌더링 방식 서버를 한 번에 실행
 pnpm run serve:test
@@ -65,6 +69,7 @@ pnpm run serve:test
 ### 패키지별 명령어
 
 #### 바닐라 패키지 (@hanghae-plus/shopping-vanilla)
+
 ```bash
 # 개발 서버
 pnpm -F @hanghae-plus/shopping-vanilla dev          # CSR 개발서버 (포트 5173)
@@ -92,6 +97,7 @@ pnpm -F @hanghae-plus/shopping-vanilla serve:test
 ```
 
 #### 리액트 패키지 (@hanghae-plus/shopping-react)
+
 ```bash
 # 개발 서버
 pnpm -F @hanghae-plus/shopping-react dev          # CSR 개발서버 (포트 5175)
@@ -121,6 +127,7 @@ pnpm -F @hanghae-plus/shopping-react serve:test
 ## 아키텍처
 
 ### 핵심 라이브러리 (@hanghae-plus/lib)
+
 - **커스텀 React-like 훅**: `useCallback`, `useMemo`, `useRef`, `useStore` 등
 - **상태 관리**: 구독 패턴을 가진 `createStore`, `createObserver`
 - **라우팅**: 파라미터 추출과 네비게이션을 지원하는 커스텀 `Router` 클래스
@@ -129,7 +136,9 @@ pnpm -F @hanghae-plus/shopping-react serve:test
 - **고차 컴포넌트**: 성능 최적화를 위한 `memo`, `deepMemo`
 
 ### 렌더링 전략
+
 바닐라와 React 패키지 모두 지원:
+
 - **CSR (Client-Side Rendering)**: 표준 SPA 동작
 - **SSR (Server-Side Rendering)**: 하이드레이션을 포함한 Express 기반 서버
 - **SSG (Static Site Generation)**: 빌드 타임에 미리 생성된 정적 페이지
@@ -137,30 +146,68 @@ pnpm -F @hanghae-plus/shopping-react serve:test
 ### 핵심 구현 패턴
 
 #### 1. Express 서버 (server.js)
-**핵심 키워드**: middleware, template, render, hydration
+
+**핵심 키워드**: Express 5.x, dynamic import, JSDoc types, SSR
 
 ```javascript
-// 환경 분기
-if (!prod) {
-  // Vite dev server + middleware
-} else {
-  // compression + sirv
+const isProduction = process.env.NODE_ENV === "production";
+
+async function createServer() {
+  const app = express();
+
+  /** @type {import('vite').ViteDevServer | undefined} */
+  let vite;
+
+  // 환경별 미들웨어 설정
+  if (!isProduction) {
+    const { createServer } = await import("vite");
+    vite = await createServer({
+      server: { middlewareMode: true },
+      appType: "custom",
+      base,
+    });
+    app.use(vite.middlewares);
+  } else {
+    const compression = (await import("compression")).default;
+    const sirv = (await import("sirv")).default;
+    app.use(compression());
+    app.use(base, sirv("./dist/vanilla-ssr/client", { extensions: [] }));
+  }
+
+  // Express 5.x 호환 라우팅 패턴
+  app.use("/{*splat}", async (req, res) => {
+    try {
+      const url = req.originalUrl.replace(base, "");
+
+      // 환경별 템플릿 및 렌더 함수 로드
+      let template, render;
+      if (!isProduction) {
+        template = await fs.readFile("./index.html", "utf-8");
+        template = await vite.transformIndexHtml(url, template);
+        render = (await vite.ssrLoadModule("/src/main-server.js")).render;
+      } else {
+        template = await fs.readFile("./dist/vanilla-ssr/client/index.html", "utf-8");
+        render = (await import("./dist/vanilla-ssr/server/main-server.js")).render;
+      }
+
+      const rendered = await render(url);
+
+      // 템플릿 치환 (간소화된 버전)
+      const html = template
+        .replace("<!--app-head-->", rendered.head ?? "")
+        .replace("<!--app-html-->", rendered.html ?? "");
+
+      res.status(200).set({ "Content-Type": "text/html" }).send(html);
+    } catch (e) {
+      vite?.ssrFixStacktrace(e);
+      res.status(500).end(e.stack);
+    }
+  });
 }
-
-// 렌더링 파이프라인
-app.use("*", async (req, res) => {
-  const url = req.originalUrl.replace(base, "");
-  const { html, head, initialData } = await render(url);
-
-  // Template 치환
-  const finalHtml = template
-    .replace("<!--app-head-->", head)
-    .replace("<!--app-html-->", html)
-    .replace("</head>", `${initialDataScript}</head>`);
-});
 ```
 
 #### 2. 서버 렌더링 (main-server.js)
+
 **핵심 키워드**: routing, prefetch, store, params
 
 ```javascript
@@ -196,6 +243,7 @@ export async function render(url) {
 ```
 
 #### 3. SSG (static-site-generate.js)
+
 **핵심 키워드**: build-time, dynamic routes, file generation
 
 ```javascript
@@ -220,15 +268,16 @@ async function getPages() {
   return [
     { url: "/", filePath: `${DIST_DIR}/index.html` },
     { url: "/404", filePath: `${DIST_DIR}/404.html` },
-    ...products.map(p => ({
+    ...products.map((p) => ({
       url: `/product/${p.id}/`,
-      filePath: `${DIST_DIR}/product/${p.id}/index.html`
-    }))
+      filePath: `${DIST_DIR}/product/${p.id}/index.html`,
+    })),
   ];
 }
 ```
 
 #### 4. 하이드레이션 (main.js)
+
 **핵심 키워드**: client-side, initial data, store sync
 
 ```javascript
@@ -244,12 +293,14 @@ render(); // 클라이언트 렌더링 시작
 ```
 
 ### 엔티티 기반 구조 (React)
+
 - **entities/products**: 상품 목록, 필터링, 상세보기
 - **entities/carts**: 로컬 스토리지를 활용한 장바구니 기능
 - **components**: 공유 UI 컴포넌트 (Modal, Toast 등)
 - **pages**: 라우트별 페이지 컴포넌트
 
 ### 목 데이터 & API
+
 - 개발 중 API 모킹을 위한 MSW(Mock Service Worker)
 - `mocks/items.json`의 JSON 기반 상품 데이터
 - `api/productApi.js`의 API 계층 추상화
@@ -257,21 +308,25 @@ render(); // 클라이언트 렌더링 시작
 ## 구현 체크리스트 (BASIC_REQUIREMENTS.md 기준)
 
 ### Express SSR 서버
+
 - [ ] Express 미들웨어 기반 서버 구현
 - [ ] 개발/프로덕션 환경 분기 처리
 - [ ] HTML 템플릿 치환 (`<!--app-html-->`, `<!--app-head-->`)
 
 ### 서버 사이드 렌더링
+
 - [ ] 서버에서 동작하는 Router 구현
 - [ ] 서버 데이터 프리페칭 (상품 목록, 상품 상세)
 - [ ] 서버 상태관리 초기화
 
 ### 클라이언트 Hydration
+
 - [ ] `window.__INITIAL_DATA__` 스크립트 주입
 - [ ] 클라이언트 상태 복원
 - [ ] 서버-클라이언트 데이터 일치
 
 ### Static Site Generation
+
 - [ ] 동적 라우트 SSG (상품 상세 페이지들)
 - [ ] 빌드 타임 페이지 생성
 - [ ] 파일 시스템 기반 배포
@@ -279,27 +334,33 @@ render(); // 클라이언트 렌더링 시작
 ## 개발 참고사항
 
 ### TypeScript 설정
+
 - 번들러 모듈 해석을 사용한 ES 모듈
 - 엄격한 타입 체크 활성화
 - no emit 모드 (빌드는 Vite에서 처리)
 - 워크스페이스 전체 TypeScript 설정
 
 ### 빌드 시스템
+
 - **Vite** (Rolldown 변형) 번들링
 - **Vitest** 단위 테스트
 - **Playwright** E2E 테스트
 - **ESLint + Prettier** 코드 품질
 
 ### 환경 요구사항
+
 - Node.js >= 22
 - pnpm >= 10
 
 ### Git Hooks
+
 - pre-commit 훅을 위한 Husky
 - 스테이징된 파일 포맷팅을 위한 lint-staged
 
 ### 테스트 통과 목표
+
 기본 과제 완료 후 다음 명령어로 테스트 통과 확인:
+
 ```bash
 pnpm run test:e2e:basic
 ```
