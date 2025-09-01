@@ -15,6 +15,21 @@ const app = express();
 
 let vite;
 
+// MSW 서버 설정 (serverHandlers.js에서 가져오기)
+try {
+  console.log("MSW 서버 설정 시작...");
+  const { mswServer } = await import("./src/mocks/serverHandlers.js");
+
+  mswServer.listen({
+    onUnhandledRequest: "bypass",
+    quiet: false, // MSW 로그 활성화
+  });
+
+  console.log("🚀 MSW 서버 시작 완료!");
+} catch (error) {
+  console.error("MSW 서버 설정 실패:", error);
+}
+
 // 개발/프로덕션 환경 분기 (basic.md 가이드)
 if (!prod) {
   const { createServer } = await import("vite");
@@ -35,6 +50,19 @@ if (!prod) {
 app.use("*all", async (req, res) => {
   try {
     const url = req.originalUrl.replace(base, "");
+
+    // 정적 파일은 SSR에서 제외 (API는 MSW가 처리)
+    if (
+      url.includes("favicon") ||
+      url.includes("well-known") ||
+      url.includes(".ico") ||
+      url.includes(".png") ||
+      url.includes(".jpg") ||
+      url.includes(".css") ||
+      url.includes(".js")
+    ) {
+      return res.status(404).json({ error: "Not found" });
+    }
 
     let template;
     let render;

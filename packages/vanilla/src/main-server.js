@@ -1,10 +1,3 @@
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 // 서버용 전역 변수 설정
 global.window = {
   location: {
@@ -21,55 +14,45 @@ global.document = {
   addEventListener: () => {},
 };
 
-// 서버용 fetch 모킹 (상대 URL을 절대 URL로 변환)
+// MSW는 server.js에서 이미 설정됨
+// 서버용 fetch 설정 (절대 URL로 변환)
 const originalFetch = global.fetch;
 global.fetch = async (url, options) => {
+  // 상대 URL을 절대 URL로 변환 (MSW가 제대로 처리할 수 있도록)
   if (typeof url === "string" && url.startsWith("/")) {
-    // 상대 URL을 절대 URL로 변환
     url = `http://localhost:5174${url}`;
   }
 
-  // 서버에서는 실제 API 호출 대신 목업 데이터 반환
-  if (url.includes("/api/products")) {
-    const items = loadItems();
-    const urlObj = new URL(url);
-    const searchParams = urlObj.searchParams;
+  console.log("🔍 서버에서 fetch 호출:", url);
 
-    if (url.includes("/api/products/")) {
-      // 개별 상품 조회
-      const productId = url.split("/api/products/")[1];
-      const product = items.find((item) => item.productId === productId);
-      return {
-        ok: true,
-        json: async () => product || null,
-      };
-    } else {
-      // 상품 목록 조회
-      const page = parseInt(searchParams.get("page") || "1");
-      const limit = parseInt(searchParams.get("limit") || "20");
-      const start = (page - 1) * limit;
-      const end = start + limit;
+  try {
+    const response = await originalFetch(url, options);
+    console.log("📦 fetch 응답 상태:", response.status, response.statusText);
 
-      return {
-        ok: true,
-        json: async () => ({
-          products: items.slice(start, end),
-          pagination: { total: items.length },
-        }),
-      };
+    if (url.includes("/api/")) {
+      const text = await response.text();
+      console.log("📄 API 응답 내용 (첫 100자):", text.substring(0, 100));
+
+      // JSON 파싱 시도
+      try {
+        const data = JSON.parse(text);
+        console.log("✅ JSON 파싱 성공");
+        return {
+          ...response,
+          json: async () => data,
+          text: async () => text,
+        };
+      } catch (e) {
+        console.log("❌ JSON 파싱 실패:", e.message);
+        return response;
+      }
     }
-  }
 
-  if (url.includes("/api/categories")) {
-    const categories = extractCategories(loadItems());
-    return {
-      ok: true,
-      json: async () => categories,
-    };
+    return response;
+  } catch (error) {
+    console.error("🚨 fetch 에러:", error.message);
+    throw error;
   }
-
-  // 다른 요청은 원본 fetch 사용
-  return originalFetch ? originalFetch(url, options) : Promise.reject(new Error("Fetch not available"));
 };
 
 // 서버용 Store 모킹
@@ -111,111 +94,135 @@ const matchRoute = (url) => {
   return { type: "404" };
 };
 
-// 카테고리 추출 함수
-function extractCategories(items) {
-  const categories = {};
-  items.forEach((item) => {
-    const cat1 = item.category1;
-    const cat2 = item.category2;
-    if (!categories[cat1]) categories[cat1] = {};
-    if (cat2 && !categories[cat1][cat2]) categories[cat1][cat2] = {};
-  });
-  return categories;
-}
-
-// 서버에서 JSON 직접 로드
-const loadItems = () => {
-  try {
-    const itemsPath = path.resolve(__dirname, "./mocks/items.json");
-    return JSON.parse(fs.readFileSync(itemsPath, "utf-8"));
-  } catch (error) {
-    console.error("서버 아이템 로드 실패:", error);
-    return [];
-  }
-};
-
 // 기존 컴포넌트를 서버에서 사용하기 위한 렌더링 함수들
 async function renderWithExistingComponents(url) {
-  const items = loadItems();
   console.log("renderWithExistingComponents url:", url);
   const route = matchRoute(url);
 
   if (route.type === "home") {
-    // 서버용 productStore 설정
-    const serverProductStore = createServerStore({
-      products: items.slice(0, 20),
-      totalCount: items.length,
-      loading: false,
-      status: "done",
-      categories: extractCategories(items),
-      currentProduct: null,
-      relatedProducts: [],
-      error: null,
-    });
-
-    // 서버용 router 설정
-    const serverRouter = createServerRouter(url, {});
-
-    // 전역 store와 router를 서버용으로 설정
-    global.productStore = serverProductStore;
-    global.router = serverRouter;
-
+    // 서버용 MSW를 통해 실제 API 호출로 데이터 가져오기
     try {
-      // 기존 HomePage 컴포넌트 import (동적으로 로드하여 의존성 문제 방지)
-      const { HomePage } = await import("./pages/HomePage.js");
+      const [productsResponse, categoriesResponse] = await Promise.all([
+        fetch("/api/products?page=1&limit=20&sort=price_asc"),
+        fetch("/api/categories"),
+      ]);
 
-      // withLifecycle을 우회하고 순수 렌더링 함수만 실행
-      const homePageComponent = HomePage();
-      const html = typeof homePageComponent === "function" ? homePageComponent() : homePageComponent;
+      const productsData = await productsResponse.json();
+      const categoriesData = await categoriesResponse.json();
 
-      return {
-        html,
-        head: "<title>쇼핑몰 - 홈</title>",
-        initialData: { products: serverProductStore.getState() },
-      };
+      // 서버용 productStore 설정 (서버용 MSW 응답 데이터 사용)
+      const serverProductStore = createServerStore({
+        products: productsData.products || [],
+        totalCount: productsData.pagination?.total || 0,
+        loading: false,
+        status: "done",
+        categories: categoriesData || {},
+        currentProduct: null,
+        relatedProducts: [],
+        error: null,
+      });
+
+      console.log("🎯 서버용 MSW를 통해 로드된 상품 수:", productsData.products?.length || 0);
+
+      // 서버용 router 설정
+      const serverRouter = createServerRouter(url, {});
+
+      // 전역 store와 router를 서버용으로 설정
+      global.productStore = serverProductStore;
+      global.router = serverRouter;
+
+      try {
+        // 기존 HomePage 컴포넌트 import (동적으로 로드하여 의존성 문제 방지)
+        const { HomePage } = await import("./pages/HomePage.js");
+
+        // withLifecycle을 우회하고 순수 렌더링 함수만 실행
+        const homePageComponent = HomePage();
+        const html = typeof homePageComponent === "function" ? homePageComponent() : homePageComponent;
+
+        return {
+          html,
+          head: "<title>쇼핑몰 - 홈</title>",
+          initialData: { products: serverProductStore.getState() },
+        };
+      } catch (error) {
+        console.error("기존 홈 컴포넌트 렌더링 실패:", error);
+        throw error;
+      }
     } catch (error) {
-      console.error("기존 홈 컴포넌트 렌더링 실패:", error);
+      console.error("서버용 MSW 데이터 로딩 실패:", error);
       throw error;
     }
   }
 
   if (route.type === "product") {
-    const product = items.find((item) => item.productId === route.id);
-
-    if (!product) {
-      throw new Error(`Product not found: ${route.id}`);
-    }
-
-    const serverProductStore = createServerStore({
-      products: [],
-      totalCount: 0,
-      loading: false,
-      status: "done",
-      categories: {},
-      currentProduct: product,
-      relatedProducts: [],
-      error: null,
-    });
-
-    const serverRouter = createServerRouter(url, {});
-    serverRouter.params = { id: route.id };
-
-    global.productStore = serverProductStore;
-    global.router = serverRouter;
-
+    // 서버용 MSW를 통해 상품 상세 정보 가져오기
     try {
-      const { ProductDetailPage } = await import("./pages/ProductDetailPage.js");
-      const productPageComponent = ProductDetailPage();
-      const html = typeof productPageComponent === "function" ? productPageComponent() : productPageComponent;
+      const productResponse = await fetch(`/api/products/${route.id}`);
+
+      if (!productResponse.ok) {
+        throw new Error(`Product not found: ${route.id}`);
+      }
+
+      const product = await productResponse.json();
+
+      const serverProductStore = createServerStore({
+        products: [],
+        totalCount: 0,
+        loading: false,
+        status: "done",
+        categories: {},
+        currentProduct: product,
+        relatedProducts: [],
+        error: null,
+      });
+
+      console.log("🎯 서버용 MSW를 통해 로드된 상품:", product.title);
+
+      const serverRouter = createServerRouter(url, {});
+      serverRouter.params = { id: route.id };
+
+      global.productStore = serverProductStore;
+      global.router = serverRouter;
+
+      try {
+        const { ProductDetailPage } = await import("./pages/ProductDetailPage.js");
+        const productPageComponent = ProductDetailPage();
+        const html = typeof productPageComponent === "function" ? productPageComponent() : productPageComponent;
+
+        return {
+          html,
+          head: `<title>${product.title} - 쇼핑몰</title>`,
+          initialData: { products: serverProductStore.getState() },
+        };
+      } catch (error) {
+        console.error("기존 상품 상세 컴포넌트 렌더링 실패:", error);
+        throw error;
+      }
+    } catch (error) {
+      console.error("서버용 MSW 상품 데이터 로딩 실패:", error);
+      throw error;
+    }
+  }
+
+  // 404 페이지 처리
+  if (route.type === "404") {
+    try {
+      const { NotFoundPage } = await import("./pages/NotFoundPage.js");
+      const notFoundPageComponent = NotFoundPage();
+      const html = typeof notFoundPageComponent === "function" ? notFoundPageComponent() : notFoundPageComponent;
 
       return {
         html,
-        head: `<title>${product.title} - 쇼핑몰</title>`,
-        initialData: { products: serverProductStore.getState() },
+        head: `<title>404 - 페이지를 찾을 수 없습니다</title>`,
+        initialData: {},
       };
     } catch (error) {
-      console.error("기존 상품 상세 컴포넌트 렌더링 실패:", error);
-      throw error;
+      console.error("404 페이지 렌더링 실패:", error);
+      return {
+        html: "<div>404 - 페이지를 찾을 수 없습니다</div>",
+        head: `<title>404 - 페이지를 찾을 수 없습니다</title>`,
+        initialData: {},
+      };
     }
   }
 
