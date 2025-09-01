@@ -1,3 +1,4 @@
 export * from "./HomePage";
-export * from "./ProductDetailPage";
 export * from "./NotFoundPage";
+export * from "./PageWrapper";
+export * from "./ProductDetailPage";
