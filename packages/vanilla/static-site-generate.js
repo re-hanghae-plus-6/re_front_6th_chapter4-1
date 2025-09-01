@@ -61,8 +61,6 @@ await generateStaticSite("/");
 
 // 상세페이지 생성
 const { products } = getProducts();
-for (const { productId } of products) {
-  await generateStaticSite(`/product/${productId}/`);
-}
+await Promise.all(products.map(async ({ productId }) => await generateStaticSite(`/product/${productId}/`)));
 
 vite.close();
