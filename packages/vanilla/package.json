@@ -58,6 +58,7 @@
   "dependencies": {
     "compression": "^1.8.1",
     "express": "^5.1.0",
+    "glob": "^11.0.3",
     "sirv": "^3.0.1"
   }
 }
