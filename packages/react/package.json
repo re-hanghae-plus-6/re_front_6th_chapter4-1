@@ -9,8 +9,8 @@
   "scripts": {
     "dev": "vite --port 5175",
     "dev:ssr": "PORT=5176 node server.js",
-    "build:client": "rm -rf ./dist/react && vite build --outDir ./dist/react && cp ./dist/react/index.html ./dist/react/404.html",
-    "build:client-for-ssg": "rm -rf ../../dist/react && vite build --outDir ../../dist/react",
+    "build:client": "rimraf ./dist/react && vite build --outDir ./dist/react && copyfiles ./dist/react/index.html ./dist/react/404.html",
+    "build:client-for-ssg": "rimraf ../../dist/react && vite build --outDir ../../dist/react",
     "build:server": "vite build --outDir ./dist/react-ssr --ssr src/main-server.tsx",
     "build:without-ssg": "pnpm run build:client && npm run build:server",
     "build:ssg": "pnpm run build:client-for-ssg && node static-site-generate.js",
@@ -32,6 +32,8 @@
     "@hanghae-plus/lib": "workspace:*"
   },
   "devDependencies": {
+    "rimraf": "^5.0.10",
+    "copyfiles": "^2.4.1",
     "@babel/core": "latest",
     "@babel/plugin-transform-react-jsx": "latest",
     "@eslint/js": "^9.16.0",
