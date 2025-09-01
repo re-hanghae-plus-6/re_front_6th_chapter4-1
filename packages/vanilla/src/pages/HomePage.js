@@ -3,23 +3,27 @@ import { productStore } from "../stores";
 import { router, withLifecycle } from "../router";
 import { loadProducts, loadProductsAndCategories } from "../services";
 import { PageWrapper } from "./PageWrapper.js";
+import { isServer } from "../utils/isServer.js";
+import { createMemoryStorage } from "../lib/index.js";
 
 export const HomePage = withLifecycle(
   {
     onMount: () => {
-      loadProductsAndCategories();
+      if (isServer) {
+        createMemoryStorage();
+      } else loadProductsAndCategories();
     },
     watches: [
-      () => {
-        const { search, limit, sort, category1, category2 } = router.query;
+      ({ query = router.query } = {}) => {
+        const { search, limit, sort, category1, category2 } = query || {};
         return [search, limit, sort, category1, category2];
       },
       () => loadProducts(true),
     ],
   },
-  () => {
-    const productState = productStore.getState();
-    const { search: searchQuery, limit, sort, category1, category2 } = router.query;
+  (url, query = router.query, request) => {
+    const productState = isServer ? request : productStore.getState();
+    const { search: searchQuery, limit, sort, category1, category2 } = isServer ? query || {} : router.query;
     const { products, loading, error, totalCount, categories } = productState;
     const category = { category1, category2 };
     const hasMore = products.length < totalCount;
