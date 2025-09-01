@@ -59,7 +59,7 @@ function filterProducts(products, query) {
 /**
  * SSR 전용 데이터 fetch 함수
  */
-export async function fetchDataApi(path, query = {}, params = {}) {
+export async function fetchDataSSR(path, query = {}, params = {}) {
   try {
     if (path === "/") {
       const filteredProducts = filterProducts(items, query);
@@ -75,16 +75,25 @@ export async function fetchDataApi(path, query = {}, params = {}) {
       };
     }
 
-    if (path === "/products/:id/") {
+    if (path === "/product/:id/") {
       const product = items.find((item) => item.productId === params.id);
       if (!product) return null;
+
+      const detailProduct = {
+        ...product,
+        description: `${product.title}에 대한 상세 설명입니다. ${product.brand} 브랜드의 우수한 품질을 자랑하는 상품으로, 고객 만족도가 높은 제품입니다.`,
+        rating: Math.floor(Math.random() * 2) + 4, // 4~5점 랜덤
+        reviewCount: Math.floor(Math.random() * 1000) + 50, // 50~1050개 랜덤
+        stock: Math.floor(Math.random() * 100) + 10, // 10~110개 랜덤
+        images: [product.image, product.image.replace(".jpg", "_2.jpg"), product.image.replace(".jpg", "_3.jpg")],
+      };
 
       const related = items
         .filter((p) => p.category2 === product.category2 && p.productId !== product.productId)
         .slice(0, 4);
 
       return {
-        currentProduct: product,
+        currentProduct: detailProduct,
         relatedProducts: related,
       };
     }

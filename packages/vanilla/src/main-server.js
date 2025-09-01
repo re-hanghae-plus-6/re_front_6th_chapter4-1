@@ -1,9 +1,9 @@
 import { router } from "./router/router.js";
-import { fetchDataApi } from "./api/fetchDataApi.js";
+import { fetchDataSSR } from "./api/fetchDataSSR.js";
 import { HomePage, ProductDetailPage, NotFoundPage } from "./pages";
 
 router.addRoute("/", HomePage);
-router.addRoute("/products/:id/", ProductDetailPage);
+router.addRoute("/product/:id/", ProductDetailPage);
 
 export async function render(url) {
   const matched = router.match(url);
@@ -19,7 +19,8 @@ export async function render(url) {
   const { path, params, query } = matched;
 
   try {
-    const initialData = await fetchDataApi(path, query, params);
+    const initialData = await fetchDataSSR(path, query, params);
+    console.log(initialData);
 
     let pageHtml;
     let pageTitle;
@@ -27,10 +28,10 @@ export async function render(url) {
     if (path === "/") {
       pageTitle = "쇼핑몰 - 홈";
       pageHtml = HomePage({ initialData });
-    } else if (path === "/products/:id/") {
+    } else if (path === "/product/:id/") {
       const productName = initialData?.currentProduct?.name ?? "상품 상세";
       pageTitle = `쇼핑몰 - ${productName}`;
-      pageHtml = ProductDetailPage();
+      pageHtml = ProductDetailPage({ initialData });
     } else {
       pageTitle = "404 - Not Found";
       pageHtml = NotFoundPage();
