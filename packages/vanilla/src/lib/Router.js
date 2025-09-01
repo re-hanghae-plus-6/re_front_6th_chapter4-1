@@ -14,10 +14,11 @@ export class Router {
     this.#route = null;
     this.#baseUrl = baseUrl.replace(/\/$/, "");
 
-    window.addEventListener("popstate", () => {
-      this.#route = this.#findRoute();
-      this.#observer.notify();
-    });
+    // 뒤로가기 버튼 눌렀을 때 실행되는 이벤트 (서버에서 사용 안함)
+    // window.addEventListener("popstate", () => {
+    //   this.#route = this.#findRoute();
+    //   this.#observer.notify();
+    // });
   }
 
   get baseUrl() {
