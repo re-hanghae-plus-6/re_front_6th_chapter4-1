@@ -43,9 +43,17 @@ app.use("*all", async (req, res) => {
     // URL에서 쿼리 파라미터 파싱
     const urlObj = new URL(url, `http://localhost:${port}`);
     const query = {};
+
     for (const [key, value] of urlObj.searchParams) {
       query[key] = value;
     }
+
+    // 포트로 SSR/CSR 결정: 4173 → SSR, 5173 → CSR (그 외는 SSR)
+    const hostHeader = req.headers.host || "";
+    const reqPort = Number(hostHeader.split(":")[1] || (req.socket?.localPort ?? 0));
+    const mode = urlObj.searchParams.get("mode"); // ?mode=csr / ?mode=ssr 강제
+    const doSSR =
+      mode === "csr" ? false : mode === "ssr" ? true : reqPort === 4173 ? true : reqPort === 5173 ? false : true;
 
     // 서버에서 필요한 데이터 미리 로드
     const initialData = {
@@ -59,42 +67,44 @@ app.use("*all", async (req, res) => {
     };
 
     try {
-      // 기존 API 함수들 import (서버에서도 작동하도록 수정된 버전)
-      const { getProducts, getCategories, getProduct } = await vite.ssrLoadModule("./src/api/productApi.js");
-
       // URL에 따라 다른 데이터 로드
-      if (url === "" || url === "/" || url.startsWith("/?")) {
-        // 홈페이지: 상품 목록과 카테고리 로드
-        const [productsData, categoriesData] = await Promise.all([getProducts(query), getCategories()]);
+      if (doSSR) {
+        // 기존 API 함수들 import (서버에서도 작동하도록 수정된 버전)
+        const { getProducts, getCategories, getProduct } = await vite.ssrLoadModule("./src/api/productApi.js");
 
-        initialData.products = productsData.products;
-        initialData.categories = categoriesData;
-        initialData.totalCount = productsData.pagination.total;
-      } else if (url.match(/^\/product\/([^/]+)\/?$/)) {
-        // 상품 상세 페이지: 상품 상세와 관련 상품 로드
-        const productId = url.match(/^\/product\/([^/]+)\/?$/)[1];
+        if (url === "" || url === "/" || url.startsWith("/?") || url.startsWith("?")) {
+          // 홈페이지: 상품 목록과 카테고리 로드
+          const [productsData, categoriesData] = await Promise.all([getProducts(query), getCategories()]);
 
-        const product = await getProduct(productId);
-        initialData.currentProduct = product;
+          initialData.products = productsData.products;
+          initialData.categories = categoriesData;
+          initialData.totalCount = productsData.pagination.total;
+        } else if (url.match(/^\/product\/([^/]+)\/?$/)) {
+          // 상품 상세 페이지: 상품 상세와 관련 상품 로드
+          const productId = url.match(/^\/product\/([^/]+)\/?$/)[1];
 
-        // 관련 상품 로드 (같은 category2)
-        if (product.category2) {
-          const relatedData = await getProducts({
-            category2: product.category2,
-            limit: 20,
-          });
-          initialData.relatedProducts = relatedData.products.filter((p) => p.productId !== productId);
+          const product = await getProduct(productId);
+          initialData.currentProduct = product;
+
+          // 관련 상품 로드 (같은 category2)
+          if (product.category2) {
+            const relatedData = await getProducts({
+              category2: product.category2,
+              limit: 20,
+            });
+            initialData.relatedProducts = relatedData.products.filter((p) => p.productId !== productId);
+          }
+
+          const categoriesData = await getCategories();
+          initialData.categories = categoriesData;
         }
-
-        const categoriesData = await getCategories();
-        initialData.categories = categoriesData;
       }
     } catch (error) {
       console.error("서버 데이터 로드 실패:", error);
       initialData.error = error.message;
     }
 
-    const rendered = await render(url, query, initialData);
+    const rendered = doSSR ? await render(url, query, initialData, { doSSR }) : { head: "", html: "" };
 
     // 초기 데이터를 HTML에 주입
     const html = template
@@ -102,7 +112,10 @@ app.use("*all", async (req, res) => {
       .replace(`<!--app-html-->`, rendered.html ?? "")
       .replace(
         `</head>`,
-        `<script>window.__INITIAL_DATA__ = ${JSON.stringify(initialData).replace(/</g, "\\u003c")}</script></head>`,
+        `<script>
+           window.__INITIAL_DATA__=${JSON.stringify(initialData).replace(/</g, "\\u003c")};
+           window.__RENDER_MODE__="${doSSR ? "ssr" : "csr"}";
+         </script></head>`,
       );
 
     res.status(200).set({ "Content-Type": "text/html" }).end(html);
