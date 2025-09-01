@@ -62,20 +62,14 @@ const createServerStore = (initialState) => ({
   subscribe: () => {},
 });
 
-// 서버용 라우터 모킹
+// 서버용 라우터 모킹 (Express에서 쿼리를 받아서 사용)
 const createServerRouter = (url) => {
   const urlObj = new URL(url, "http://localhost");
   const pathname = urlObj.pathname;
   const productMatch = pathname.match(/^\/product\/([^/]+)\/?$/);
 
-  // 쿼리스트링 파싱
-  const query = {};
-  urlObj.searchParams.forEach((value, key) => {
-    query[key] = value;
-  });
-
   return {
-    query, // 실제 URL에서 파싱된 쿼리스트링
+    query: {}, // Express에서 설정됨
     params: productMatch ? { id: productMatch[1] } : {}, // URL 파라미터
     baseUrl: "", // 여기서는 의미 없음 (CSR 라우터 호환용)
     target: null, // 필요시 라우트 대상 지정 가능
@@ -102,8 +96,9 @@ const matchRoute = (url) => {
 };
 
 // 기존 컴포넌트를 서버에서 사용하기 위한 렌더링 함수들
-async function renderWithExistingComponents(url) {
+async function renderWithExistingComponents(url, query = {}) {
   console.log("renderWithExistingComponents url:", url);
+  console.log("renderWithExistingComponents query:", query);
 
   // 라우트 판별 (홈페이지, 상세페이지, 404페이지)
   const route = matchRoute(url);
@@ -112,15 +107,12 @@ async function renderWithExistingComponents(url) {
   if (route.type === "home") {
     // 서버용 MSW를 통해 실제 API 호출로 데이터 가져오기
     try {
-      // 서버용 router 설정하여 쿼리스트링 파싱
-      const serverRouter = createServerRouter(url);
-
-      // 쿼리스트링에서 파라미터 추출 (기본값 설정)
-      const page = serverRouter.query.page || "1";
-      const limit = serverRouter.query.limit || "20";
-      const sort = serverRouter.query.sort || "price_asc";
-      const category = serverRouter.query.category || "";
-      const search = serverRouter.query.search || "";
+      // Express에서 파싱된 쿼리 바로 사용
+      const page = query.page || "1";
+      const limit = query.limit || "20";
+      const sort = query.sort || "price_asc";
+      const category = query.category || "";
+      const search = query.search || "";
 
       // 실제 쿼리스트링으로 API 호출
       let apiUrl = `/api/products?page=${page}&limit=${limit}&sort=${sort}`;
@@ -147,6 +139,10 @@ async function renderWithExistingComponents(url) {
       });
 
       console.log("서버용 MSW를 통해 로드된 상품 수:", productsData.products?.length || 0);
+
+      // 서버용 router 설정
+      const serverRouter = createServerRouter(url);
+      serverRouter.query = query; // Express에서 파싱된 쿼리 설정
 
       // 전역 store와 router를 서버용으로 설정
       global.productStore = serverProductStore;
@@ -203,6 +199,7 @@ async function renderWithExistingComponents(url) {
       console.log("🎯 서버용 MSW를 통해 로드된 상품:", product.title);
 
       const serverRouter = createServerRouter(url);
+      serverRouter.query = query; // Express에서 파싱된 쿼리 설정
 
       global.productStore = serverProductStore;
       global.router = serverRouter;
@@ -252,7 +249,8 @@ async function renderWithExistingComponents(url) {
   throw new Error(`Unknown route type: ${route.type}`);
 }
 
-export async function render(url) {
+export async function render(url, query = {}) {
   console.log("main-server.js의 render URL:", url);
-  return await renderWithExistingComponents(url);
+  console.log("main-server.js의 render query:", query);
+  return await renderWithExistingComponents(url, query);
 }

@@ -81,7 +81,7 @@ app.use("*all", async (req, res) => {
     }
 
     // 서버 렌더링 실행
-    const { html, head, initialData } = await render(url);
+    const { html, head, initialData } = await render(url, req.query);
 
     // 초기 데이터 스크립트 생성
     const initialDataScript = `<script>window.__INITIAL_DATA__=${JSON.stringify(initialData)};</script>`;
