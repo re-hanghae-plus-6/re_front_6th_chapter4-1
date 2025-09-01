@@ -2,6 +2,9 @@ import { productStore } from "../stores";
 import { loadProductDetailForPage } from "../services";
 import { router, withLifecycle } from "../router";
 import { PageWrapper } from "./PageWrapper.js";
+import { hasProductDetailData } from "../utils";
+
+import { items, filterProducts } from "../mocks/shared.js";
 
 const loadingContent = `
   <div class="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -231,36 +234,87 @@ function ProductDetail({ product, relatedProducts = [] }) {
   `;
 }
 
+// 실제 렌더링 로직 - 서버와 클라이언트에서 공통 사용
+const renderProductDetailPage = (productState) => {
+  const { currentProduct: product, relatedProducts = [], error, loading } = productState;
+
+  return PageWrapper({
+    headerLeft: `
+      <div class="flex items-center space-x-3">
+        <button onclick="window.history.back()" 
+                class="p-2 text-gray-700 hover:text-gray-900 transition-colors">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+          </svg>
+        </button>
+        <h1 class="text-lg font-bold text-gray-900">상품 상세</h1>
+      </div>
+    `.trim(),
+    children: loading
+      ? loadingContent
+      : error && !product
+        ? ErrorContent({ error })
+        : ProductDetail({ product, relatedProducts }),
+  });
+};
+
+// 서버 전용 렌더 함수
+export const renderProductDetailPageForServer = (initialData) => {
+  const productState = {
+    currentProduct: initialData.currentProduct,
+    relatedProducts: initialData.relatedProducts || [],
+    error: initialData.error,
+    loading: initialData.loading,
+  };
+
+  return renderProductDetailPage(productState);
+};
+
 /**
  * 상품 상세 페이지 컴포넌트
  */
 export const ProductDetailPage = withLifecycle(
   {
     onMount: () => {
-      loadProductDetailForPage(router.params.id);
+      // SSR 데이터가 이미 있고 현재 상품 ID와 일치한다면 로딩하지 않음
+      const currentProductId = router.params.id;
+
+      if (!hasProductDetailData(currentProductId)) {
+        loadProductDetailForPage(currentProductId);
+      }
     },
     watches: [() => [router.params.id], () => loadProductDetailForPage(router.params.id)],
   },
   () => {
-    const { currentProduct: product, relatedProducts = [], error, loading } = productStore.getState();
-
-    return PageWrapper({
-      headerLeft: `
-        <div class="flex items-center space-x-3">
-          <button onclick="window.history.back()" 
-                  class="p-2 text-gray-700 hover:text-gray-900 transition-colors">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-            </svg>
-          </button>
-          <h1 class="text-lg font-bold text-gray-900">상품 상세</h1>
-        </div>
-      `.trim(),
-      children: loading
-        ? loadingContent
-        : error && !product
-          ? ErrorContent({ error })
-          : ProductDetail({ product, relatedProducts }),
-    });
+    const productState = productStore.getState();
+    return renderProductDetailPage(productState);
   },
 );
+
+export const getServerSideProps = async (context) => {
+  const { id } = context.params || {};
+  const product = items.find((p) => p.productId === id);
+  if (!product) {
+    return { initialData: { status: "notfound" } };
+  } else {
+    const relatedCandidates = filterProducts(items, { category2: product.category2 });
+    const relatedProducts = relatedCandidates.filter((p) => p.productId !== product.productId).slice(0, 20);
+
+    return {
+      initialData: {
+        currentProduct: {
+          ...product,
+          description: `${product.title}에 대한 상세 설명입니다. ${product.brand || ""} 브랜드의 우수한 품질을 자랑하는 상품입니다.`,
+          rating: 5,
+          reviewCount: 100,
+          stock: 50,
+          images: [product.image],
+        },
+        relatedProducts,
+        loading: false,
+        error: null,
+        status: "done",
+      },
+    };
+  }
+};
