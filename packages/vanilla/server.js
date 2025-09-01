@@ -1,12 +1,17 @@
 import express from "express";
 import fs from "fs";
+import { server } from "./src/mocks/node.js";
 
 const prod = process.env.NODE_ENV === "production";
 const port = process.env.PORT || 5173;
 const base = process.env.BASE || (prod ? "/front_6th_chapter4-1/vanilla/" : "/");
 
-const app = express();
+server.listen({
+  onUnhandledRequest: "bypass",
+});
+
 const templateHtml = prod ? fs.readFileSync("./dist/vanilla/index.html") : "";
+const app = express();
 
 let vite;
 
@@ -45,7 +50,7 @@ app.use("*all", async (req, res) => {
       render = (await import("./dist/vanilla-ssr/main-server.js")).render;
     }
 
-    const rendered = await render(url);
+    const rendered = await render(url, req.query);
 
     const html = template
       .replace(`<!--app-head-->`, rendered.head ?? "")

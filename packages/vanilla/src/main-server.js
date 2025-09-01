@@ -1,53 +1,49 @@
 import { router } from "./router/router.js";
-import { fetchDataSSR } from "./api/fetchDataSSR.js";
 import { HomePage, ProductDetailPage, NotFoundPage } from "./pages";
+import { fetchProductDataSSR, fetchProductsDataSSR } from "./api/fetchDataSSR.js";
 
 router.addRoute("/", HomePage);
 router.addRoute("/product/:id/", ProductDetailPage);
 
-export async function render(url) {
+export async function render(url, query = {}) {
   const matched = router.match(url);
 
   if (!matched) {
     return {
-      head: `<title>404 - Not Found</title>`,
+      head: "<title>404</title>",
       html: NotFoundPage(),
       initialData: null,
     };
   }
 
-  const { path, params, query } = matched;
+  const { path, params } = matched;
 
-  try {
-    const initialData = await fetchDataSSR(path, query, params);
-    console.log(initialData);
+  let initialData;
 
-    let pageHtml;
-    let pageTitle;
-
-    if (path === "/") {
-      pageTitle = "쇼핑몰 - 홈";
-      pageHtml = HomePage({ initialData });
-    } else if (path === "/product/:id/") {
-      const productName = initialData?.currentProduct?.name ?? "상품 상세";
-      pageTitle = `쇼핑몰 - ${productName}`;
-      pageHtml = ProductDetailPage({ initialData });
-    } else {
-      pageTitle = "404 - Not Found";
-      pageHtml = NotFoundPage();
-    }
-
-    return {
-      head: `<title>${pageTitle}</title>`,
-      html: pageHtml,
-      initialData,
-    };
-  } catch (e) {
-    console.error("SSR error: ", e);
-    return {
-      head: `<title>500 - server error</title>`,
-      html: NotFoundPage(),
-      initialData: null,
-    };
+  if (path === "/") {
+    initialData = await fetchProductsDataSSR(query);
+  } else if (path === "/product/:id/") {
+    initialData = await fetchProductDataSSR(params.id);
   }
+
+  let pageTitle;
+  let pageHtml;
+
+  if (path === "/") {
+    pageTitle = "쇼핑몰 - 홈";
+    pageHtml = HomePage({ initialData });
+  } else if (path === "/product/:id/") {
+    pageTitle = initialData?.currentProduct?.title ?? "상품 상세";
+    pageHtml = ProductDetailPage({ initialData });
+  } else {
+    pageHtml = NotFoundPage();
+  }
+
+  console.log(initialData);
+
+  return {
+    head: `<title>${pageTitle}</title>`,
+    html: pageHtml,
+    initialData,
+  };
 }

@@ -56,6 +56,10 @@ export class ServerRouter {
     return this.#lastMatch?.path ?? "";
   }
 
+  get target() {
+    return this.#lastMatch?.handler;
+  }
+
   static parseQuery(search = "") {
     const params = new URLSearchParams(search);
     const query = {};

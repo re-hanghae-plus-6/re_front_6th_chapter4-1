@@ -237,35 +237,21 @@ function ProductDetail({ product, relatedProducts = [] }) {
 export const ProductDetailPage = withLifecycle(
   {
     onMount: () => {
-      if (typeof window !== "undefined") {
-        loadProductDetailForPage(router.params.id);
-      }
+      if (typeof window === "undefined") return;
+      loadProductDetailForPage(router.params.id);
     },
     watches: [
       () => {
-        if (typeof window !== "undefined") {
-          [router.params.id];
-        }
-        return [router.params.id];
+        [router.params.id];
       },
       () => {
-        if (typeof window !== "undefined") {
-          loadProductDetailForPage(router.params.id);
-        }
+        loadProductDetailForPage(router.params.id);
       },
     ],
   },
   ({ initialData } = {}) => {
     // SSR - initialData, CSR - store
-    const productDetailState =
-      typeof window === "undefined"
-        ? {
-            currentProduct: initialData?.currentProduct ?? [],
-            relatedProducts: initialData?.relatedProducts ?? [],
-            loading: false,
-            error: initialData?.error ?? null,
-          }
-        : productStore.getState();
+    const productDetailState = typeof window === "undefined" ? initialData : productStore.getState();
 
     const { currentProduct: product, relatedProducts = [], error, loading } = productDetailState;
 
