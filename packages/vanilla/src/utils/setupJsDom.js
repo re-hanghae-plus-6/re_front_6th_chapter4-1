@@ -2,7 +2,7 @@
 
 import { JSDOM } from "jsdom";
 
-export function setupServerJsdom() {
+export async function setupServerJsdom() {
   // 이미 설정되어 있다면 스킵
   if (typeof globalThis.window !== "undefined") {
     return;
@@ -20,8 +20,8 @@ export function setupServerJsdom() {
     </html>
   `,
     {
-      url: "http://localhost:5173",
-      referrer: "http://localhost:5173",
+      url: `http://localhost:5173`,
+      referrer: `http://localhost:5173`,
       contentType: "text/html",
       includeNodeLocations: true,
       storageQuota: 10000000,
@@ -50,36 +50,17 @@ export function setupServerJsdom() {
   globalThis.MouseEvent = dom.window.MouseEvent;
   globalThis.KeyboardEvent = dom.window.KeyboardEvent;
 
-  // Timer functions는 Node.js 기본 함수 사용 (재할당하지 않음)
-  // globalThis.setTimeout = dom.window.setTimeout; // 제거
-  // globalThis.clearTimeout = dom.window.clearTimeout; // 제거
-  // globalThis.setInterval = dom.window.setInterval; // 제거
-  // globalThis.clearInterval = dom.window.clearInterval; // 제거
-
   // 기타 유용한 APIs
   globalThis.XMLHttpRequest = dom.window.XMLHttpRequest;
-  globalThis.fetch = dom.window.fetch; // jsdom이 지원하는 경우
 
-  // fetch API 설정 (Node.js 18+ 또는 node-fetch 사용)
-  if (!globalThis.fetch) {
-    try {
-      // Node.js 18+에서는 fetch가 기본 제공됨
-      globalThis.fetch = globalThis.fetch || require("node-fetch");
-    } catch {
-      console.warn("fetch API not available, using mock fetch");
-
-      globalThis.fetch = async () => {
-        // Mock fetch for development
-        return {
-          ok: true,
-          json: async () => ({
-            products: [],
-            categories: [],
-            pagination: { total: 0 },
-          }),
-          text: async () => "{}",
-        };
-      };
+  // Node.js의 내장 fetch 사용 (Node.js 18+)
+  if (typeof globalThis.fetch === "undefined") {
+    // Node.js 18+ 에서는 fetch가 전역으로 사용 가능
+    if (typeof fetch !== "undefined") {
+      globalThis.fetch = fetch;
+    } else {
+      console.warn("Node.js fetch not available, using jsdom fetch");
+      globalThis.fetch = dom.window.fetch;
     }
   }
 

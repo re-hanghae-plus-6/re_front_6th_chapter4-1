@@ -1,7 +1,7 @@
 import { http, HttpResponse } from "msw";
-import items from "./items.json" with { type: "json" };
-import type { StringRecord } from "../types.ts";
 import type { Product } from "../entities";
+import type { StringRecord } from "../types.ts";
+import items from "./items.json";
 
 const delay = async () => await new Promise((resolve) => setTimeout(resolve, 200));
 
