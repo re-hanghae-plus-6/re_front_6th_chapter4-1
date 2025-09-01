@@ -1,8 +1,8 @@
-import { registerGlobalEvents } from "./utils";
-import { initRender } from "./render";
-import { registerAllEvents } from "./events";
-import { loadCartFromStorage } from "./services";
-import { router } from "./router";
+import { registerGlobalEvents, hydrateStoreFromSSR } from "./utils/index.js";
+import { initRender } from "./render.js";
+import { registerAllEvents } from "./events.js";
+import { loadCartFromStorage } from "./services/index.js";
+import { router } from "./router/index.js";
 import { BASE_URL } from "./constants.js";
 
 const enableMocking = () =>
@@ -19,6 +19,10 @@ function main() {
   registerAllEvents();
   registerGlobalEvents();
   loadCartFromStorage();
+
+  // SSR 초기 데이터 복원
+  hydrateStoreFromSSR();
+
   initRender();
   router.start();
 }
