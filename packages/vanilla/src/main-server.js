@@ -68,10 +68,10 @@ const createServerRouter = (url, query = {}) => {
   const productMatch = pathname.match(/^\/product\/([^/]+)\/?$/);
 
   return {
-    query,
-    params: productMatch ? { id: productMatch[1] } : {},
-    baseUrl: "",
-    target: null,
+    query, // 쿼리스트링 넣을 자리 (?page=1 이런 부분들)
+    params: productMatch ? { id: productMatch[1] } : {}, // URL 파라미터
+    baseUrl: "", // 여기서는 의미 없음 (CSR 라우터 호환용)
+    target: null, // 필요시 라우트 대상 지정 가능
   };
 };
 
@@ -97,8 +97,11 @@ const matchRoute = (url) => {
 // 기존 컴포넌트를 서버에서 사용하기 위한 렌더링 함수들
 async function renderWithExistingComponents(url) {
   console.log("renderWithExistingComponents url:", url);
+
+  // 라우트 판별 (홈페이지, 상세페이지, 404페이지)
   const route = matchRoute(url);
 
+  // 홈페이지 처리
   if (route.type === "home") {
     // 서버용 MSW를 통해 실제 API 호출로 데이터 가져오기
     try {
@@ -122,7 +125,7 @@ async function renderWithExistingComponents(url) {
         error: null,
       });
 
-      console.log("🎯 서버용 MSW를 통해 로드된 상품 수:", productsData.products?.length || 0);
+      console.log("서버용 MSW를 통해 로드된 상품 수:", productsData.products?.length || 0);
 
       // 서버용 router 설정
       const serverRouter = createServerRouter(url, {});
@@ -136,6 +139,8 @@ async function renderWithExistingComponents(url) {
         const { HomePage } = await import("./pages/HomePage.js");
 
         // withLifecycle을 우회하고 순수 렌더링 함수만 실행
+        // 한 번 실행해서 리턴이 함수라면 그 함수도 실행함
+        // 그렇게 되면 실제 순수 html을 리턴하는 렌더함수가 실행됨
         const homePageComponent = HomePage();
         const html = typeof homePageComponent === "function" ? homePageComponent() : homePageComponent;
 
@@ -154,6 +159,7 @@ async function renderWithExistingComponents(url) {
     }
   }
 
+  // 상품 상세 페이지 처리
   if (route.type === "product") {
     // 서버용 MSW를 통해 상품 상세 정보 가져오기
     try {
@@ -231,7 +237,5 @@ async function renderWithExistingComponents(url) {
 
 export async function render(url) {
   console.log("main-server.js의 render URL:", url);
-
-  // 기존 컴포넌트만 사용하여 렌더링 (폴백 없음)
   return await renderWithExistingComponents(url);
 }
