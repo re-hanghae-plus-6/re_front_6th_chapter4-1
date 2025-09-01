@@ -1,5 +1,6 @@
 import fs from "node:fs/promises";
 import express from "express";
+import { mswServer } from "./src/mocks/node.js";
 
 const prod = process.env.NODE_ENV === "production";
 const port = process.env.PORT || 5173;
@@ -8,6 +9,10 @@ const base = process.env.BASE || (prod ? "/front_6th_chapter4-1/vanilla/" : "/")
 const templateHtml = prod ? await fs.readFile("./dist/vanilla/index.html", "utf-8") : "";
 
 const app = express();
+
+mswServer.listen({
+  onUnhandledRequest: "bypass", // 핸들러가 처리하지 않는 요청은 패스
+});
 
 // Add Vite or respective production middlewares
 /** @type {import('vite').ViteDevServer | undefined} */
@@ -45,7 +50,7 @@ app.use("*all", async (req, res) => {
       render = (await import("./dist/vanilla-ssr/main-server.js")).render;
     }
 
-    const rendered = await render(url);
+    const rendered = await render(url, req.query);
 
     const html = template
       .replace(`<!--app-head-->`, rendered.head ?? "")
