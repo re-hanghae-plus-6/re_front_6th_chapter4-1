@@ -44,7 +44,7 @@ if (!prod) {
   app.use(compression());
   app.use(
     base,
-    express.static("./dist/client", {
+    express.static("./dist/vanilla", {
       maxAge: "1d", // 브라우저 캐시 설정
       etag: true, // ETag 헤더 생성
     }),
@@ -56,7 +56,7 @@ app.use("*all", async (req, res) => {
   try {
     // 1. index.html 파일을 읽어들입니다.
     const __dirname = path.dirname(fileURLToPath(import.meta.url));
-    const templateHtml = prod ? fs.readFileSync(path.resolve(__dirname, "index.html"), "utf-8") : "";
+    const templateHtml = prod ? fs.readFileSync(path.resolve(__dirname, "./dist/vanilla/index.html"), "utf-8") : "";
 
     const url = req.originalUrl.replace(base, "");
 
