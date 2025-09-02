@@ -10,4 +10,4 @@ export const routes = {
   "*": NotFoundPage,
 };
 
-export const router = isServer ? new ServerRouter(BASE_URL) : new Router(BASE_URL, routes);
+export const router = isServer ? new ServerRouter(routes) : new Router(BASE_URL, routes);
