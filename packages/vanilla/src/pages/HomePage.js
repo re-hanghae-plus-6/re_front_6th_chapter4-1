@@ -7,6 +7,20 @@ import { PageWrapper } from "./PageWrapper.js";
 
 export const HomePage = withLifecycle(
   {
+    ssr: async () => {
+      await loadProductsAndCategories();
+      const data = productStore.getState();
+      return {
+        products: data.products,
+        categories: data.categories,
+        totalCount: data.totalCount,
+      };
+    },
+    metadata: async () => {
+      return {
+        title: "쇼핑몰 - 홈",
+      };
+    },
     onMount: () => {
       loadProductsAndCategories();
     },
