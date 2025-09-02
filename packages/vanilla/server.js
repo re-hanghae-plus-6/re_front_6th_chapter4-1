@@ -3,7 +3,7 @@ import fs from "fs";
 import { server } from "./src/mocks/node.js";
 
 const prod = process.env.NODE_ENV === "production";
-const port = process.env.PORT || 5173;
+const port = process.env.PORT || 5174;
 const base = process.env.BASE || (prod ? "/front_6th_chapter4-1/vanilla/" : "/");
 
 server.listen({

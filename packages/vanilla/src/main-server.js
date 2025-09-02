@@ -33,7 +33,7 @@ export async function render(url, query = {}) {
     pageTitle = "쇼핑몰 - 홈";
     pageHtml = HomePage({ initialData });
   } else if (path === "/product/:id/") {
-    pageTitle = initialData?.currentProduct?.title ?? "상품 상세";
+    pageTitle = initialData?.currentProduct?.title ? `${initialData?.currentProduct?.title} - 쇼핑몰` : "쇼핑몰";
     pageHtml = ProductDetailPage({ initialData });
   } else {
     pageHtml = NotFoundPage();
