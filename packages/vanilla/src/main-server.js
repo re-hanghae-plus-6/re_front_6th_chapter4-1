@@ -161,7 +161,12 @@ async function renderWithExistingComponents(url, query = {}) {
         return {
           html,
           head: "<title>쇼핑몰 - 홈</title>",
-          initialData: { products: serverProductStore.getState() },
+          initialData: {
+            // 테스트코드에 맞는 순서로 재 정렬
+            products: serverProductStore.getState().products,
+            categories: serverProductStore.getState().categories,
+            totalCount: serverProductStore.getState().totalCount,
+          },
         };
       } catch (error) {
         console.error("기존 홈 컴포넌트 렌더링 실패:", error);
@@ -212,7 +217,7 @@ async function renderWithExistingComponents(url, query = {}) {
         return {
           html,
           head: `<title>${product.title} - 쇼핑몰</title>`,
-          initialData: { products: serverProductStore.getState() },
+          initialData: serverProductStore.getState(),
         };
       } catch (error) {
         console.error("기존 상품 상세 컴포넌트 렌더링 실패:", error);
