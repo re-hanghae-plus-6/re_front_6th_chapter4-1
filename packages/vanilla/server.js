@@ -52,8 +52,11 @@ app.use("*all", async (req, res) => {
 
     const rendered = await render(url, req.query);
 
+    // Inject SSR initial data for hydration
+    const dataScript = rendered.initialData ? `<script>window.__INITIAL_DATA__=${rendered.initialData}</script>` : "";
+
     const html = template
-      .replace(`<!--app-head-->`, rendered.head ?? "")
+      .replace(`<!--app-head-->`, `${dataScript}${rendered.head ?? ""}`)
       .replace(`<!--app-html-->`, rendered.html ?? "");
     res.status(200).set({ "Content-Type": "text/html" }).send(html);
   } catch (e) {
