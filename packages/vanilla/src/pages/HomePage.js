@@ -7,6 +7,9 @@ import { PageWrapper } from "./PageWrapper.js";
 export const HomePage = withLifecycle(
   {
     onMount: () => {
+      const state = productStore.getState();
+      // 초기 로드는 ssr로 채워지기때문에 스킵
+      if (state && state.status === "done" && Array.isArray(state.products) && state.products.length > 0) return;
       loadProductsAndCategories();
     },
     watches: [
