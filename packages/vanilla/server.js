@@ -3,10 +3,16 @@ import express from "express";
 import { normalize } from "node:path";
 import compression from "compression";
 import sirv from "sirv";
+import { server as mswServer } from "./src/mocks/nodeServer.js";
+import { safeSerialize } from "./src/utils/serialized.js";
 
 const prod = process.env.NODE_ENV === "production";
 const port = process.env.PORT || 5173;
 const base = process.env.BASE || (prod ? "/front_6th_chapter4-1/vanilla/" : "/");
+
+mswServer.listen({
+  onUnhandledRequest: "bypass",
+});
 
 const templateHtml = prod ? await fs.readFile("./dist/vanilla/index.html", "utf-8") : "";
 
@@ -48,9 +54,8 @@ app.use("*all", async (req, res) => {
 
     const rendered = await render(pathname, req.query);
 
-    const serialized = JSON.stringify(rendered.__INITIAL_DATA__).replace(/</g, "\\u003c");
+    const serialized = safeSerialize(rendered.__INITIAL_DATA__);
     const initialDataScript = `<script>window.__INITIAL_DATA__ = ${serialized};</script>`;
-
     const html = template
       .replace(`<!--app-head-->`, rendered.head ?? "")
       .replace(`<!--app-html-->`, rendered.html ?? "")
