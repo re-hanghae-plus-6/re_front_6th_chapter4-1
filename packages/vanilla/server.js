@@ -1,6 +1,8 @@
 import express from "express";
 import * as fs from "fs";
 
+import { mswServer } from "./src/mocks/node.js";
+
 const prod = process.env.NODE_ENV === "production";
 const port = process.env.PORT || 5173;
 const base = process.env.BASE || (prod ? "/front_6th_chapter4-1/vanilla/" : "");
@@ -64,6 +66,10 @@ app.use("*all", async (req, res) => {
     console.log(e.stack);
     res.status(500).end(e.stack);
   }
+});
+
+mswServer.listen({
+  onUnhandledRequest: "bypass",
 });
 
 // Start http server
