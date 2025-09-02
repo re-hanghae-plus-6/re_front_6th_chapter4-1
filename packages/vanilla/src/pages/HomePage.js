@@ -15,13 +15,14 @@ export const HomePage = withLifecycle(
         const { search, limit, sort, category1, category2 } = query;
         return [search, limit, sort, category1, category2];
       },
-      () => loadProducts(true),
+      ({ query = router.query } = {}) => loadProducts(true, query),
     ],
   },
-  ({ query = router.query, productInfo = null } = {}) => {
+  ({ query = router.query, productInfo } = {}) => {
+    // SSR 환경에서는 productInfo 사용, 클라이언트 환경에서는 store 사용
     const productState = typeof window === "undefined" ? productInfo : productStore.getState();
-    const { search: searchQuery, limit, sort, category1, category2 } = query;
 
+    const { search: searchQuery, limit, sort, category1, category2 } = query;
     const { products, loading, error, totalCount, categories } = productState;
     const category = { category1, category2 };
     const hasMore = products.length < totalCount;

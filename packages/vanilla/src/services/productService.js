@@ -2,8 +2,11 @@ import { getCategories, getProduct, getProducts } from "../api/productApi";
 import { initialProductState, productStore, PRODUCT_ACTIONS } from "../stores";
 import { router } from "../router";
 
-export const loadProductsAndCategories = async () => {
-  router.query = { current: undefined }; // 항상 첫 페이지로 초기화
+export const loadProductsAndCategories = async (query = router.query) => {
+  if (typeof window !== "undefined") {
+    router.query = { current: undefined }; // 항상 첫 페이지로 초기화 (클라이언트 사이드만)
+  }
+
   productStore.dispatch({
     type: PRODUCT_ACTIONS.SETUP,
     payload: {
@@ -20,7 +23,7 @@ export const loadProductsAndCategories = async () => {
         pagination: { total },
       },
       categories,
-    ] = await Promise.all([getProducts(router.query), getCategories()]);
+    ] = await Promise.all([getProducts(query), getCategories()]);
 
     // 페이지 리셋이면 새로 설정, 아니면 기존에 추가
     productStore.dispatch({
@@ -45,7 +48,7 @@ export const loadProductsAndCategories = async () => {
 /**
  * 상품 목록 로드 (새로고침)
  */
-export const loadProducts = async (resetList = true) => {
+export const loadProducts = async (resetList = true, query = router.query) => {
   try {
     productStore.dispatch({
       type: PRODUCT_ACTIONS.SETUP,
@@ -55,7 +58,7 @@ export const loadProducts = async (resetList = true) => {
     const {
       products,
       pagination: { total },
-    } = await getProducts(router.query);
+    } = await getProducts(query);
     const payload = { products, totalCount: total };
 
     // 페이지 리셋이면 새로 설정, 아니면 기존에 추가
@@ -148,7 +151,7 @@ export const loadProductDetailForPage = async (productId) => {
     });
 
     // 관련 상품 로드 (같은 category2 기준)
-    if (product.category2) {
+    if (product && product.category2) {
       await loadRelatedProducts(product.category2, productId);
     }
   } catch (error) {
