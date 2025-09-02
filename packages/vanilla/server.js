@@ -1,6 +1,7 @@
 import express from "express";
 import fs from "fs";
 import path from "path";
+import { loadingProudcts, filterProducts } from "./src/utils/productUtils.js";
 
 const prod = process.env.NODE_ENV === "production";
 const port = process.env.PORT || 5173;
@@ -23,49 +24,6 @@ async function loadItemsFromDist() {
 
   const unescaped = m[1].replace(/\\"/g, '"').replace(/\\\\/g, "\\");
   return JSON.parse(unescaped);
-}
-
-function filterProducts(products, query) {
-  let filtered = [...products];
-
-  // 검색어 필터링
-  if (query.search) {
-    const searchTerm = query.search.toLowerCase();
-    filtered = filtered.filter(
-      (item) => item.title.toLowerCase().includes(searchTerm) || item.brand.toLowerCase().includes(searchTerm),
-    );
-  }
-
-  // 카테고리 필터링
-  if (query.category1) {
-    filtered = filtered.filter((item) => item.category1 === query.category1);
-  }
-  if (query.category2) {
-    filtered = filtered.filter((item) => item.category2 === query.category2);
-  }
-
-  // 정렬
-  if (query.sort) {
-    switch (query.sort) {
-      case "price_asc":
-        filtered.sort((a, b) => parseInt(a.lprice) - parseInt(b.lprice));
-        break;
-      case "price_desc":
-        filtered.sort((a, b) => parseInt(b.lprice) - parseInt(a.lprice));
-        break;
-      case "name_asc":
-        filtered.sort((a, b) => a.title.localeCompare(b.title, "ko"));
-        break;
-      case "name_desc":
-        filtered.sort((a, b) => b.title.localeCompare(a.title, "ko"));
-        break;
-      default:
-        // 기본은 가격 낮은 순
-        filtered.sort((a, b) => parseInt(a.lprice) - parseInt(b.lprice));
-    }
-  }
-
-  return filtered;
 }
 
 let vite;
@@ -186,12 +144,12 @@ app.use("*all", async (req, res) => {
           } else if (url === "" || url === "/" || url.startsWith("?")) {
             // 홈: 테스트가 기대하는 초기 데이터
             const limit = Number(query.limit) > 0 ? Number(query.limit) : 20;
+            const products = Object.keys(query).length === 0 ? loadingProudcts(items) : filterProducts(items, query);
 
-            const products = filterProducts([...items], query);
             // 초기 데이터 채우기
             initialData.products = products.slice(0, limit);
-            initialData.totalCount = products.length;
-            initialData.categories = buildCategories(products);
+            initialData.totalCount = products.length; // 340
+            initialData.categories = buildCategories(items);
           }
         }
       }
