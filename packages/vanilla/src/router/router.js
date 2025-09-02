@@ -6,7 +6,7 @@ import { ServerRouter } from "../lib/ServerRouter.js";
 
 export const routes = {
   "/": HomePage,
-  "/product/:id": ProductDetailPage,
+  "/product/:id/": ProductDetailPage,
   "*": NotFoundPage,
 };
 
