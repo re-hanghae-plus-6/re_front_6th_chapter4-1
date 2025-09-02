@@ -1,5 +1,18 @@
-import { useEffect } from "react";
-import { loadNextProducts, loadProductsAndCategories, ProductList, SearchBar } from "../entities";
+import { useEffect, useState } from "react";
+import { getCategories, getProducts } from "../api/productApi";
+import {
+  initialProductState,
+  loadNextProducts,
+  loadProductsAndCategories,
+  PRODUCT_ACTIONS,
+  ProductList,
+  productStore,
+  SearchBar,
+  type Categories,
+  type Product,
+} from "../entities";
+import { withServer } from "../router/withServer";
+import { isServer } from "../utils";
 import { PageWrapper } from "./PageWrapper";
 
 const headerLeft = (
@@ -26,23 +39,70 @@ const unregisterScrollHandler = () => {
   scrollHandlerRegistered = false;
 };
 
-export const HomePage = () => {
-  useEffect(() => {
-    registerScrollHandler();
-    loadProductsAndCategories();
+interface ServerResponse {
+  products: Product[];
+  categories: Categories;
+  totalCount: number;
+  loading: boolean;
+  status: string;
+}
 
-    return unregisterScrollHandler;
-  }, []);
+export const HomePage = withServer(
+  {
+    ssr: async ({ query }): Promise<ServerResponse> => {
+      const [
+        {
+          products,
+          pagination: { total },
+        },
+        categories,
+      ] = await Promise.all([getProducts(query), getCategories()]);
 
-  return (
-    <PageWrapper headerLeft={headerLeft}>
-      {/* 검색 및 필터 */}
-      <SearchBar />
+      return {
+        products,
+        categories,
+        totalCount: total,
+        loading: false,
+        status: "done",
+      };
+    },
+    metadata: async () => {
+      return {
+        title: "쇼핑몰 - 홈",
+      };
+    },
+  },
+  ({ data }: { data: ServerResponse }) => {
+    useState(() => {
+      if (isServer) {
+        productStore.dispatch({
+          type: PRODUCT_ACTIONS.SETUP,
+          payload: initialProductState,
+        });
+      }
+      productStore.dispatch({
+        type: PRODUCT_ACTIONS.SETUP,
+        payload: data,
+      });
+    });
 
-      {/* 상품 목록 */}
-      <div className="mb-6">
-        <ProductList />
-      </div>
-    </PageWrapper>
-  );
-};
+    useEffect(() => {
+      registerScrollHandler();
+      loadProductsAndCategories();
+
+      return unregisterScrollHandler;
+    }, []);
+
+    return (
+      <PageWrapper headerLeft={headerLeft}>
+        {/* 검색 및 필터 */}
+        <SearchBar />
+
+        {/* 상품 목록 */}
+        <div className="mb-6">
+          <ProductList />
+        </div>
+      </PageWrapper>
+    );
+  },
+);
