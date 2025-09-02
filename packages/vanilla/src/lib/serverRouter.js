@@ -48,12 +48,7 @@ async function renderHomePage(query) {
   return {
     head: generateHomePageHead(query),
     html: HomePage({ query, productInfo }),
-    initialData: {
-      products,
-      categories,
-      totalCount: total,
-      query,
-    },
+    initialData: productInfo,
   };
 }
 
