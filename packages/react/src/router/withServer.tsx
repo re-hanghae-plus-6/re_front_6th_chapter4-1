@@ -12,7 +12,7 @@ export interface ServerOptions {
 }
 
 export const withServer = <P extends Record<string, unknown>>(serverOptions: ServerOptions, Component: FC<P>) => {
-  const Page = (props: P) => <Component {...props} />;
+  const Page: FC<P> = (props: P) => <Component {...props} />;
   Object.assign(Page, serverOptions);
 
   return Page;

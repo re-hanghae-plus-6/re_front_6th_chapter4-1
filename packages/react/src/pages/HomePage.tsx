@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import type { RouterInstance } from "@hanghae-plus/lib";
+import { useEffect, useState, type FC } from "react";
 import { getCategories, getProducts } from "../api/productApi";
 import {
   initialProductState,
@@ -11,6 +12,7 @@ import {
   type Categories,
   type Product,
 } from "../entities";
+import { useRouterContext } from "../router/hooks/useRouterContext";
 import { withServer } from "../router/withServer";
 import { isServer } from "../utils";
 import { PageWrapper } from "./PageWrapper";
@@ -26,16 +28,16 @@ const headerLeft = (
 // 무한 스크롤 이벤트 등록
 let scrollHandlerRegistered = false;
 
-const registerScrollHandler = () => {
+const registerScrollHandler = (router: RouterInstance<FC>) => {
   if (scrollHandlerRegistered) return;
 
-  window.addEventListener("scroll", loadNextProducts);
+  window.addEventListener("scroll", () => loadNextProducts(router));
   scrollHandlerRegistered = true;
 };
 
-const unregisterScrollHandler = () => {
+const unregisterScrollHandler = (router: RouterInstance<FC>) => {
   if (!scrollHandlerRegistered) return;
-  window.removeEventListener("scroll", loadNextProducts);
+  window.removeEventListener("scroll", () => loadNextProducts(router));
   scrollHandlerRegistered = false;
 };
 
@@ -85,13 +87,16 @@ export const HomePage = withServer(
         payload: data,
       });
     });
+    const router = useRouterContext();
 
     useEffect(() => {
-      registerScrollHandler();
-      loadProductsAndCategories();
+      registerScrollHandler(router);
+      if (!data) {
+        loadProductsAndCategories(router);
+      }
 
-      return unregisterScrollHandler;
-    }, []);
+      return () => unregisterScrollHandler(router);
+    }, [router, data]);
 
     return (
       <PageWrapper headerLeft={headerLeft}>

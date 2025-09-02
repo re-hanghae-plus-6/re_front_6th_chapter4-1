@@ -3,15 +3,15 @@ import { useRouterQuery } from "../../../../router";
 import { loadProducts } from "../../productUseCase";
 
 export const useProductFilter = () => {
-  const { search: searchQuery, limit, sort, category1, category2 } = useRouterQuery();
+  const { search, limit, sort, category1, category2 } = useRouterQuery();
   const category = { category1, category2 };
 
   useEffect(() => {
-    loadProducts(true);
-  }, [searchQuery, limit, sort, category1, category2]);
+    loadProducts({ search, limit, sort, category1, category2 }, true);
+  }, [search, limit, sort, category1, category2]);
 
   return {
-    searchQuery,
+    searchQuery: search,
     limit,
     sort,
     category,
