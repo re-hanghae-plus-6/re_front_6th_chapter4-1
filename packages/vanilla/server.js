@@ -36,7 +36,6 @@ server.listen();
 app.use("*all", async (req, res) => {
   try {
     const url = req.originalUrl.replace(base, "");
-    console.log(req.query);
     /** @type {string} */
     let template;
     /** @type {import('./src/main-server.js').render} */
@@ -56,8 +55,16 @@ app.use("*all", async (req, res) => {
 
     const html = template
       .replace(`<!--app-head-->`, rendered.head ?? "")
-      .replace(`<!--app-html-->`, rendered.html ?? "");
-
+      .replace(`<!--app-html-->`, rendered.html ?? "")
+      .replace(
+        `</head>`,
+        `
+        <script>
+          window.__INITIAL_DATA__ = ${JSON.stringify(rendered.initialData || {})};
+        </script>
+        </head>
+      `,
+      );
     res.status(200).set({ "Content-Type": "text/html" }).send(html);
   } catch (e) {
     vite?.ssrFixStacktrace(e);
