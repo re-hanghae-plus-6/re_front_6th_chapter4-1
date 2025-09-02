@@ -1,5 +1,4 @@
-import { addEvent, isNearBottom } from "./utils";
-import { router } from "./router";
+import { routerInstance } from "./router";
 import {
   addToCart,
   clearCart,
@@ -16,7 +15,8 @@ import {
   toggleCartSelect,
   updateCartQuantity,
 } from "./services";
-import { productStore, uiStore, UI_ACTIONS } from "./stores";
+import { productStore, UI_ACTIONS, uiStore } from "./stores";
+import { addEvent, isNearBottom } from "./utils";
 
 /**
  * 상품 관련 이벤트 등록
@@ -147,7 +147,7 @@ export function registerProductDetailEvents() {
     if (!productId) return;
 
     // 상품 상세 페이지로 이동
-    router.push(`/product/${productId}/`);
+    routerInstance.push(`/product/${productId}/`);
   });
 
   // 상품 상세 페이지에서 관련 상품 클릭
@@ -156,7 +156,7 @@ export function registerProductDetailEvents() {
     if (!productId) return;
 
     // 상품 상세 페이지로 이동
-    router.push(`/product/${productId}/`);
+    routerInstance.push(`/product/${productId}/`);
   });
 
   // 상품 상세 페이지에서 브레드크럼 카테고리 클릭
@@ -175,7 +175,7 @@ export function registerProductDetailEvents() {
         }
       }
       const queryString = new URLSearchParams(categories).toString();
-      router.push(`/?${queryString}`);
+      routerInstance.push(`/?${queryString}`);
     } catch (error) {
       console.error("브레드크럼 카테고리 필터 실패:", error);
     }
@@ -189,7 +189,7 @@ export function registerProductDetailEvents() {
       currentPage: 1,
     };
     const queryString = new URLSearchParams(query).toString();
-    router.push(`/?${queryString}`);
+    routerInstance.push(`/?${queryString}`);
   });
 
   // 상품 상세 페이지에서 수량 증가/감소
@@ -372,7 +372,7 @@ export function registerScrollEvents() {
   // 무한 스크롤 (직접 등록) - 홈 페이지에서만 동작
   window.addEventListener("scroll", async () => {
     // 현재 라우트가 홈이 아니면 무한 스크롤 비활성화
-    if (router.route.path !== "/") {
+    if (routerInstance.route.path !== "/") {
       return;
     }
 
@@ -410,7 +410,7 @@ export function registerLinkEvents() {
     e.preventDefault();
     const url = e.target.getAttribute("href");
     if (url) {
-      router.push(url);
+      routerInstance.push(url);
     }
   });
 }

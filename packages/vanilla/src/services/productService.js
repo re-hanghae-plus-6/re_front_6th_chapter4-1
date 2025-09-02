@@ -1,9 +1,9 @@
 import { getCategories, getProduct, getProducts } from "../api/productApi";
-import { initialProductState, productStore, PRODUCT_ACTIONS } from "../stores";
-import { router } from "../router";
+import { routerInstance } from "../router";
+import { initialProductState, PRODUCT_ACTIONS, productStore } from "../stores";
 
 export const loadProductsAndCategories = async () => {
-  router.query = { current: undefined }; // 항상 첫 페이지로 초기화
+  routerInstance.query = { current: undefined }; // 항상 첫 페이지로 초기화
   productStore.dispatch({
     type: PRODUCT_ACTIONS.SETUP,
     payload: {
@@ -20,7 +20,7 @@ export const loadProductsAndCategories = async () => {
         pagination: { total },
       },
       categories,
-    ] = await Promise.all([getProducts(router.query), getCategories()]);
+    ] = await Promise.all([getProducts(routerInstance.query), getCategories()]);
 
     // 페이지 리셋이면 새로 설정, 아니면 기존에 추가
     productStore.dispatch({
@@ -55,7 +55,7 @@ export const loadProducts = async (resetList = true) => {
     const {
       products,
       pagination: { total },
-    } = await getProducts(router.query);
+    } = await getProducts(routerInstance.query);
     const payload = { products, totalCount: total };
 
     // 페이지 리셋이면 새로 설정, 아니면 기존에 추가
@@ -84,35 +84,35 @@ export const loadMoreProducts = async () => {
     return;
   }
 
-  router.query = { current: Number(router.query.current ?? 1) + 1 };
+  routerInstance.query = { current: Number(routerInstance.query.current ?? 1) + 1 };
   await loadProducts(false);
 };
 /**
  * 상품 검색
  */
 export const searchProducts = (search) => {
-  router.query = { search, current: 1 };
+  routerInstance.query = { search, current: 1 };
 };
 
 /**
  * 카테고리 필터 설정
  */
 export const setCategory = (categoryData) => {
-  router.query = { ...categoryData, current: 1 };
+  routerInstance.query = { ...categoryData, current: 1 };
 };
 
 /**
  * 정렬 옵션 변경
  */
 export const setSort = (sort) => {
-  router.query = { sort, current: 1 };
+  routerInstance.query = { sort, current: 1 };
 };
 
 /**
  * 페이지당 상품 수 변경
  */
 export const setLimit = (limit) => {
-  router.query = { limit, current: 1 };
+  routerInstance.query = { limit, current: 1 };
 };
 
 /**
