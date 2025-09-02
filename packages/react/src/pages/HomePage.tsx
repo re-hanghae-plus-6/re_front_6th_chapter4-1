@@ -27,17 +27,19 @@ const headerLeft = (
 
 // 무한 스크롤 이벤트 등록
 let scrollHandlerRegistered = false;
+let abortController: AbortController | null = null;
 
 const registerScrollHandler = (router: RouterInstance<FC>) => {
   if (scrollHandlerRegistered) return;
-
-  window.addEventListener("scroll", () => loadNextProducts(router));
+  abortController = new AbortController();
+  window.addEventListener("scroll", () => loadNextProducts(router), abortController);
   scrollHandlerRegistered = true;
 };
 
-const unregisterScrollHandler = (router: RouterInstance<FC>) => {
+const unregisterScrollHandler = () => {
   if (!scrollHandlerRegistered) return;
-  window.removeEventListener("scroll", () => loadNextProducts(router));
+  abortController?.abort();
+  abortController = null;
   scrollHandlerRegistered = false;
 };
 
@@ -95,7 +97,7 @@ export const HomePage = withServer(
         loadProductsAndCategories(router);
       }
 
-      return () => unregisterScrollHandler(router);
+      return unregisterScrollHandler;
     }, [router, data]);
 
     return (
