@@ -1,31 +1,19 @@
 import express from "express";
+import fs from "fs";
 
-const prod = process.env.NODE_ENV === "production";
 const port = process.env.PORT || 5173;
-const base = process.env.BASE || (prod ? "/front_6th_chapter4-1/vanilla/" : "/");
 
 const app = express();
 
 const render = () => {
-  return `<div>안녕하세요</div>`;
+  // 파일 시스템 가져오기.
+  const html = fs.readFileSync("./dist/vanilla/index.html", "utf-8");
+  console.log(html);
+  return html.replace("<!--app-html-->", `<div>hrell</div>`);
 };
 
 app.get("*all", (req, res) => {
-  res.send(
-    `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Vanilla Javascript SSR</title>
-</head>
-<body>
-<div id="app">${render()}</div>
-</body>
-</html>
-  `.trim(),
-  );
+  res.send(render());
 });
 
 // Start http server
