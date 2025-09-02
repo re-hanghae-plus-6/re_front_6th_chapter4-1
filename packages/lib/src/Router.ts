@@ -2,7 +2,7 @@ import type { FC } from "react";
 import { createObserver } from "./createObserver";
 import type { AnyFunction, StringRecord } from "./types";
 
-interface Route<Handler extends FC<unknown>> {
+interface Route<Handler extends FC> {
   regex: RegExp;
   paramNames: string[];
   handler: Handler;
@@ -13,7 +13,7 @@ type QueryPayload = Record<string, string | number | undefined>;
 
 export type RouterInstance<T extends AnyFunction> = InstanceType<typeof Router<T>>;
 
-export class Router<Handler extends FC<unknown>> {
+export class Router<Handler extends FC> {
   readonly #routes: Map<string, Route<Handler>>;
   readonly #observer = createObserver();
   readonly #baseUrl;
@@ -21,10 +21,14 @@ export class Router<Handler extends FC<unknown>> {
 
   #route: null | (Route<Handler> & { params: StringRecord; path: string });
 
-  constructor(baseUrl = "") {
+  constructor(initRoutes: Record<string, Handler>, baseUrl = "") {
     this.#routes = new Map();
     this.#route = null;
     this.#baseUrl = baseUrl.replace(/\/$/, "");
+
+    Object.entries(initRoutes).forEach(([path, page]) => {
+      this.addRoute(path, page);
+    });
 
     if (typeof window !== "undefined") {
       window.addEventListener("popstate", () => {

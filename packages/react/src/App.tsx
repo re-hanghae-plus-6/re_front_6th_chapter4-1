@@ -1,9 +1,6 @@
-import type { StringRecord } from "@hanghae-plus/lib";
-import { useState } from "react";
 import { ModalProvider, ToastProvider } from "./components";
 import { useLoadCartStore } from "./entities";
-import { router, useCurrentPage } from "./router";
-import { isServer } from "./utils";
+import { useCurrentPage } from "./router";
 
 const CartInitializer = () => {
   useLoadCartStore();
@@ -11,19 +8,13 @@ const CartInitializer = () => {
 };
 
 interface Props {
-  data: unknown;
-  query: StringRecord;
+  data?: unknown;
 }
 
 /**
  * 전체 애플리케이션 렌더링
  */
-export const App = ({ data, query }: Props) => {
-  useState(() => {
-    if (isServer) {
-      router.query = query;
-    }
-  });
+export const App = ({ data }: Props) => {
   const PageComponent = useCurrentPage();
 
   return (
