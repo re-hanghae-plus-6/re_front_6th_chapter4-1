@@ -1,0 +1,45 @@
+---
+description: SSR, SSG 행동 강령
+globs: 
+alwaysApply: true
+---
+version: 1
+rules:
+  # Express Server (server.js)
+  - require: Implement an Express middleware-based server
+    hint: "Use middleware pattern, template rendering, hydration entry support"
+  - require: Handle environment splitting (development vs production)
+    hint: "Add dev/prod mode checks and configuration"
+  - require: Inject HTML templates (`<!--app-html-->`, `<!--app-head-->`)
+    hint: "Replace placeholders in base HTML template"
+
+  # Server Rendering (main-server.js)
+  - require: Implement Router that works on the server
+    hint: "Server-side routing logic should match client routes"
+  - require: Prefetch server data (product list, product detail) using route params
+    hint: "Handle async data fetching before rendering"
+  - require: Initialize and manage server-side store
+    hint: "Populate store/state with prefetched data for rendering"
+
+  # Static Site Generation (static-site-generate.js)
+  - require: Generate static pages at build-time
+    hint: "Run generation script during build process"
+  - require: Support dynamic routes (e.g., product detail pages)
+    hint: "Iterate over data to pre-generate dynamic routes"
+  - require: Write generated pages into the file system for deployment
+    hint: "Save HTML files under output directory"
+
+  # Client Hydration (main.js)
+  - require: Inject `window.__INITIAL_DATA__` script
+    hint: "Serialize server state into HTML for client hydration"
+  - require: Restore client state using initial server data
+    hint: "Sync client store with server-injected initial data"
+  - require: Sync server and client state for consistency
+    hint: "Ensure no mismatch between rendered HTML and hydrated app"
+  - require: Load client-side app entry
+    hint: "Bootstrap SPA after SSR render"
+
+  # Testing (global)
+  - require: Ensure all implementations pass e2e test with `pnpm run test:e2e:basic`
+    hint: "Run automated tests to validate SSR, hydration, and SSG behavior"
+
