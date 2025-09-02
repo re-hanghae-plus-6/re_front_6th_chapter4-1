@@ -1,4 +1,3 @@
-import { addEvent, isNearBottom } from "./utils";
 import { router } from "./router";
 import {
   addToCart,
@@ -16,7 +15,8 @@ import {
   toggleCartSelect,
   updateCartQuantity,
 } from "./services";
-import { productStore, uiStore, UI_ACTIONS } from "./stores";
+import { productStore, UI_ACTIONS, uiStore } from "./stores";
+import { addEvent, isNearBottom } from "./utils";
 
 /**
  * 상품 관련 이벤트 등록
@@ -138,14 +138,33 @@ export function registerProductEvents() {
  * 상품 상세 페이지 관련 이벤트 등록
  */
 export function registerProductDetailEvents() {
-  // 상품 클릭 시 상품 상세 페이지로 이동 (이미지 또는 제목)
-  addEvent("click", ".product-image, .product-info", async (e) => {
+  // 상품 클릭 시 상품 상세 페이지로 이동 (전체 카드)
+  addEvent("click", ".product-card", async (e) => {
+    console.log("🖱️ 상품 카드 클릭 이벤트 발생:", e.target);
+
+    // 장바구니 버튼 클릭은 제외
+    if (e.target.classList.contains("add-to-cart-btn") || e.target.closest(".add-to-cart-btn")) {
+      console.log("🛒 장바구니 버튼 클릭으로 인한 이벤트 무시");
+      return;
+    }
+
     const productCard = e.target.closest(".product-card");
-    if (!productCard) return;
+    console.log("🔍 찾은 상품 카드:", productCard);
+
+    if (!productCard) {
+      console.log("❌ 상품 카드를 찾을 수 없음");
+      return;
+    }
 
     const productId = productCard.getAttribute("data-product-id");
-    if (!productId) return;
+    console.log("🆔 상품 ID:", productId);
 
+    if (!productId) {
+      console.log("❌ 상품 ID를 찾을 수 없음");
+      return;
+    }
+
+    console.log("🚀 상품 상세 페이지로 이동:", `/product/${productId}/`);
     // 상품 상세 페이지로 이동
     router.push(`/product/${productId}/`);
   });

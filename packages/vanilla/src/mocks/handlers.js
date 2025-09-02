@@ -1,11 +1,5 @@
-import { readFileSync } from "fs";
 import { http, HttpResponse } from "msw";
-import { dirname, join } from "path";
-import { fileURLToPath } from "url";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-const items = JSON.parse(readFileSync(join(__dirname, "items.json"), "utf8"));
+import items from "./items.json";
 
 const delay = async () => await new Promise((resolve) => setTimeout(resolve, 200));
 

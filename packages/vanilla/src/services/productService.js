@@ -124,7 +124,7 @@ export const loadProductDetailForPage = async (productId) => {
     const currentProduct = productStore.getState().currentProduct;
     if (productId === currentProduct?.productId) {
       // 관련 상품 로드 (같은 category2 기준)
-      if (currentProduct.category2) {
+      if (currentProduct && currentProduct.category2) {
         await loadRelatedProducts(currentProduct.category2, productId);
       }
       return;
@@ -149,7 +149,7 @@ export const loadProductDetailForPage = async (productId) => {
     });
 
     // 관련 상품 로드 (같은 category2 기준)
-    if (product.category2) {
+    if (product && product.category2) {
       await loadRelatedProducts(product.category2, productId);
     }
   } catch (error) {

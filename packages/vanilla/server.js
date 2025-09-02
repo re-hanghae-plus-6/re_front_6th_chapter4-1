@@ -2,7 +2,7 @@ import express from "express";
 import { getConfig } from "./server/config.js";
 import { asyncHandler, errorHandler, notFoundHandler } from "./server/errorHandler.js";
 import { setupMiddleware } from "./server/middleware.js";
-import { render } from "./server/render.js";
+import { renderWithInitialData } from "./server/render.js";
 import { createHTMLTemplate } from "./server/template.js";
 
 // 설정 가져오기
@@ -18,11 +18,11 @@ const vite = await setupMiddleware(app, config);
 app.get(
   "*all",
   asyncHandler(async (req, res) => {
-    // SSR 렌더링
-    const appHtml = await render(req.url, req.query, vite);
+    // SSR 렌더링 (초기 데이터 포함)
+    const { appHtml, initialData } = await renderWithInitialData(req.url, req.query, vite);
 
-    // HTML 템플릿 생성
-    const html = createHTMLTemplate(appHtml);
+    // HTML 템플릿 생성 (초기 데이터 주입)
+    const html = createHTMLTemplate(appHtml, "", initialData);
 
     res.send(html);
   }),
