@@ -70,8 +70,7 @@ app.use("*all", async (req, res) => {
       // 2. Vite의 HTML 변환 작업을 통해 Vite HMR 클라이언트를 주입하고,
       //    Vite 플러그인의 HTML 변환도 적용합니다.
       //    (예: @vitejs/plugin-react의 전역 초기화 코드)
-      template = await fs.readFile("./index.html", "utf-8");
-
+      template = fs.readFileSync("./index.html", "utf-8");
       template = await vite.transformIndexHtml(url, template);
       // 3. 서버의 진입점(Entry)을 로드합니다.
       //    ssrLoadModule은 Node.js에서 사용할 수 있도록 ESM 소스 코드를 자동으로 변환합니다.
@@ -85,7 +84,7 @@ app.use("*all", async (req, res) => {
     // 4. 앱의 HTML을 렌더링합니다.
     //    이는 entry-server.js에서 내보낸(Export) `render` 함수가
     //    ReactDOMServer.renderToString()과 같은 적절한 프레임워크의 SSR API를 호출한다고 가정합니다.
-    const rendered = await render(url.originalUrl, req.query);
+    const rendered = await render(url, req.query);
 
     // 5. 렌더링된 HTML을 템플릿에 주입합니다.
     const html = template
