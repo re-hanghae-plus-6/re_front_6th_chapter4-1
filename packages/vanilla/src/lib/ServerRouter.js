@@ -69,7 +69,7 @@ export class ServerRouter {
     });
   }
 
-  #findRoute(pathname) {
+  findRoute(pathname) {
     for (const [routePath, route] of this.#routes) {
       const match = pathname.match(route.regex);
       if (match) {
@@ -93,7 +93,7 @@ export class ServerRouter {
    * 라우터 시작
    */
   start() {
-    this.#route = this.#findRoute();
+    this.#route = this.findRoute(window.location.pathname);
     this.#observer.notify();
   }
 

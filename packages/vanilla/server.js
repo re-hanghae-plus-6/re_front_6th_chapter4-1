@@ -53,7 +53,7 @@ app.use("*all", async (req, res) => {
     } else {
       // 프로덕션: 캐시된 템플릿과 빌드된 모듈 사용
       template = templateHtml;
-      render = (await import("./dist/server/main-server.js")).render;
+      render = (await import("./dist/vanilla-ssr/main-server.js")).render;
     }
 
     // URL에서 쿼리 파라미터 분리
@@ -69,8 +69,14 @@ app.use("*all", async (req, res) => {
     const htmlContent = typeof rendered === "string" ? rendered : rendered?.html || "";
     const headContent = typeof rendered === "object" ? rendered?.head || "" : "";
 
+    // 클라이언트용 순수 데이터 추출 (HTML 코드 제외)
+    const clientData = typeof rendered === "object" ? rendered.data || {} : {};
+
     // HTML 템플릿에 렌더링 결과 주입
-    const html = template.replace(`<!--app-head-->`, headContent).replace(`<!--app-html-->`, htmlContent);
+    const html = template
+      .replace(`<!--app-head-->`, headContent)
+      .replace(`<!--app-html-->`, htmlContent)
+      .replace(`<!--app-data-->`, `<script>window.__INITIAL_DATA__ = ${JSON.stringify(clientData)};</script>`);
 
     res.status(200).set({ "Content-Type": "text/html" }).send(html);
   } catch (e) {

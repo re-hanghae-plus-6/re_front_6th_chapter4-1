@@ -17,6 +17,8 @@ export function SearchBar({ searchQuery = "", limit = 20, sort = "price_asc", ca
     .map(
       (categoryKey) => `
         <button 
+          data-action="category-filter"
+          data-category-type="category1"
           data-category1="${categoryKey}"
           class="category1-filter-btn text-left px-3 py-2 text-sm rounded-md border transition-colors
                  bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
@@ -34,6 +36,7 @@ export function SearchBar({ searchQuery = "", limit = 20, sort = "price_asc", ca
         <div class="relative">
           <input type="text" 
                  id="search-input"
+                 data-action="search"
                  placeholder="상품명을 검색해보세요..." 
                  value="${searchQuery}"
                  class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg 
@@ -57,9 +60,9 @@ export function SearchBar({ searchQuery = "", limit = 20, sort = "price_asc", ca
               .filter((cat, index) => index === 0 || Boolean(cat))
               .map((cat, index) => {
                 if (cat === "전체") {
-                  return `<button data-breadcrumb="reset" class="text-xs hover:text-blue-800 hover:underline">전체</button>`;
+                  return `<button data-action="category-filter" data-breadcrumb="reset" class="text-xs hover:text-blue-800 hover:underline">전체</button>`;
                 } else if (index === 1) {
-                  return `<button data-breadcrumb="category1" data-category1="${cat}" class="text-xs hover:text-blue-800 hover:underline">${cat}</button>`;
+                  return `<button data-action="category-filter" data-breadcrumb="category1" data-category1="${cat}" class="text-xs hover:text-blue-800 hover:underline">${cat}</button>`;
                 } else if (index === 2) {
                   return `<span class="text-xs text-gray-600 cursor-default">${cat}</span>`;
                 }
@@ -93,6 +96,8 @@ export function SearchBar({ searchQuery = "", limit = 20, sort = "price_asc", ca
                     const isSelected = category.category2 === category2Key;
                     return `
                       <button 
+                        data-action="category-filter"
+                        data-category-type="category2"
                         data-category1="${category.category1}"
                         data-category2="${category2Key}"
                         class="category2-filter-btn text-left px-3 py-2 text-sm rounded-md border transition-colors
@@ -119,7 +124,7 @@ export function SearchBar({ searchQuery = "", limit = 20, sort = "price_asc", ca
           <!-- 페이지당 상품 수 -->
           <div class="flex items-center gap-2">
             <label class="text-sm text-gray-600">개수:</label>
-            <select id="limit-select" class="text-sm border border-gray-300 rounded px-2 py-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+            <select id="limit-select" data-action="limit" class="text-sm border border-gray-300 rounded px-2 py-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
                ${options}
             </select>
           </div>
@@ -127,7 +132,7 @@ export function SearchBar({ searchQuery = "", limit = 20, sort = "price_asc", ca
           <!-- 정렬 -->
           <div class="flex items-center gap-2">
             <label class="text-sm text-gray-600">정렬:</label>
-            <select id="sort-select" 
+            <select id="sort-select" data-action="sort" 
                     class="text-sm border border-gray-300 rounded px-2 py-1 
                            focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
               <option value="price_asc" ${sort === "price_asc" ? "selected" : ""}>가격 낮은순</option>
