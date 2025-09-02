@@ -67,12 +67,18 @@ export class ServerRouter {
 
   addRoute(path, handler) {
     const paramNames = [];
-    const regexPath = path
+    let regexPath = path
       .replace(/:\w+/g, (match) => {
         paramNames.push(match.slice(1));
         return "([^/]+)";
       })
       .replace(/\//g, "\\/");
+
+    if (path === "*" || path === ".*") {
+      regexPath = ".*";
+    } else if (!path.endsWith("/") && !path.includes("*")) {
+      regexPath += "\\/?";
+    }
 
     const regex = new RegExp(`^${regexPath}$`);
 
