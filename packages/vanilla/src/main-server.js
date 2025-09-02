@@ -1,10 +1,6 @@
 import serverRouter from "./lib/ServerRouter.js";
 import { ErrorPage } from "./pages/ErrorPage.js";
 
-import { cartStore } from "./stores/cartStore.js";
-import { productStore } from "./stores/productStore.js";
-import { uiStore } from "./stores/uiStore.js";
-
 async function prefetchPageData(route, params) {
   if (!route) return;
 
@@ -19,11 +15,6 @@ async function prefetchPageData(route, params) {
 
 export async function render(url) {
   try {
-    // 1. Store 초기화
-    productStore.dispatch({ type: "RESET" });
-    cartStore.dispatch({ type: "RESET" });
-    uiStore.dispatch({ type: "RESET" });
-
     // 2. 라우트 매칭
     const route = serverRouter.findRoute(url);
 
@@ -41,13 +32,8 @@ export async function render(url) {
     // 4. HTML 생성
     const html = await result.page();
 
-    // 초기 데이터 준비
-    const initialData = {
-      products: productStore.getState().products,
-      currentProduct: productStore.getState().currentProduct,
-      cart: cartStore.getState(),
-      ui: uiStore.getState(),
-    };
+    // 초기 데이터 준비 - 핸들러에서 반환된 데이터와 스토어 상태를 결합
+    const initialData = result.data;
 
     return { html, head: "", initialData: initialData };
   } catch (error) {

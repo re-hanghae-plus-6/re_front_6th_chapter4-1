@@ -1,4 +1,4 @@
-import { getProduct, getProducts } from "../api/productApi";
+import { getCategories, getProduct, getProducts } from "../api/productApi";
 import { HomePage, NotFoundPage, ProductDetailPage } from "../pages";
 import { productStore } from "../stores";
 
@@ -56,11 +56,30 @@ const serverRouter = new ServerRouter();
 // 라우트 등록 + 데이터 프리페칭
 serverRouter.addRoute("/", async () => {
   // 홈페이지 - 상품 목록
-  const products = await getProducts({ limit: 20 });
+  const {
+    products,
+    pagination: { total },
+  } = await getProducts({ limit: 20 });
+  const categories = await getCategories();
 
-  productStore.dispatch({ type: "SETUP", payload: products });
+  // ! 여기서 dispatch된 products는 main-server.js에서 initialData에 들어가지 않음
+  // productStore.dispatch({ type: "SETUP", payload: products  });
+  productStore.dispatch({
+    type: "SETUP",
+    payload: {
+      products,
+      categories,
+      totalCount: total,
+      loading: false,
+      status: "done",
+    },
+  });
 
-  return { page: HomePage };
+  // 페이지와 데이터를 함께 반환
+  return {
+    page: HomePage,
+    data: { products, categories, totalCount: total },
+  };
 });
 
 serverRouter.addRoute("/product/:id", async (params) => {
@@ -69,11 +88,14 @@ serverRouter.addRoute("/product/:id", async (params) => {
 
   productStore.dispatch({ type: "SET_CURRENT_PRODUCT", payload: product });
 
-  return { page: ProductDetailPage };
+  return {
+    page: ProductDetailPage,
+    data: { currentProduct: product },
+  };
 });
 
 serverRouter.addRoute("/404", async () => {
-  return { page: NotFoundPage };
+  return { page: NotFoundPage, data: {} };
 });
 
 export default serverRouter;

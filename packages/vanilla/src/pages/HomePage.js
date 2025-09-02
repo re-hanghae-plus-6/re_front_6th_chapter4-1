@@ -1,7 +1,7 @@
 import { ProductList, SearchBar } from "../components";
-import { productStore } from "../stores";
 import { router, withLifecycle } from "../router";
 import { loadProducts, loadProductsAndCategories } from "../services";
+import { productStore } from "../stores";
 import { PageWrapper } from "./PageWrapper.js";
 
 export const HomePage = withLifecycle(
@@ -23,7 +23,7 @@ export const HomePage = withLifecycle(
     const { products, loading, error, totalCount, categories } = productState;
     const category = { category1, category2 };
     const hasMore = products.length < totalCount;
-
+    console.log("categories", categories);
     return PageWrapper({
       headerLeft: `
         <h1 class="text-xl font-bold text-gray-900">

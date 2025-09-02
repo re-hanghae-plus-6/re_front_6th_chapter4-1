@@ -101,7 +101,8 @@ app.use("*all", async (req, res) => {
     const url = req.originalUrl.replace(base, "");
 
     const { html, head, initialData } = await render(url);
-
+    console.log("initialData", JSON.stringify(initialData).slice(0, 30));
+    console.log("html", html);
     const template = await getTemplate();
 
     const initialDataScript = initialData

@@ -14,10 +14,7 @@ if (typeof window === "undefined") {
 } else {
   // 브라우저 환경
   const base = import.meta.env.PROD ? "/front_6th_chapter4-1/vanilla" : "";
-  console.log("base", base);
-  console.log("url", `${base}/items.json`);
   const response = await fetch(`${base}/items.json`);
-  console.log("response", response);
   items = await response.json();
 }
 
