@@ -15,10 +15,30 @@ const enableMocking = () =>
     }),
   );
 
+function restoreSSRState() {
+  if (typeof window !== "undefined" && window.__INITIAL_DATA__) {
+    const productState = window.__INITIAL_DATA__;
+
+    import("./stores/index.js").then(({ productStore }) => {
+      if (productStore) {
+        productStore.setState(productState);
+      }
+    });
+
+    delete window.__INITIAL_DATA__;
+  }
+}
+
 function main() {
   registerAllEvents();
   registerGlobalEvents();
-  loadCartFromStorage();
+
+  restoreSSRState();
+
+  if (!window.__INITIAL_DATA__?.cartStore) {
+    loadCartFromStorage();
+  }
+
   initRender();
   router.start();
 }

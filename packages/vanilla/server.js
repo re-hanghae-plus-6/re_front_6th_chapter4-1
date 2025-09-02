@@ -89,7 +89,15 @@ app.use("*all", async (req, res) => {
     // 5. 렌더링된 HTML을 템플릿에 주입합니다.
     const html = template
       .replace(`<!--app-head-->`, rendered.head ?? "")
-      .replace(`<!--app-html-->`, rendered.html ?? "");
+      .replace(`<!--app-html-->`, rendered.html ?? "")
+      .replace(
+        `</body>`,
+        `
+        <script>
+          window.__INITIAL_DATA__ = ${JSON.stringify(rendered.initialState)};
+        </script>
+        </body>`,
+      );
 
     // 6. 렌더링된 HTML을 응답으로 전송합니다.
     res.status(200).set({ "Content-Type": "text/html" }).send(html);

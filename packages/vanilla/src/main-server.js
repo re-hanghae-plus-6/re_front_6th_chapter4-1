@@ -1,13 +1,16 @@
 import { ServerRouter } from "./lib/router/ServerRouter.js";
+import { prefetchHomePage, prefetchProductDetail, getDefaultInitialState } from "./server/prefetch.js";
 
-async function prefetchData(route) {
+async function prefetchData(route, params) {
   if (route.path === "/") {
-    // mockGetProducts + mockGetCategories
-    // productStore.dispatch(SETUP)
-  } else if (route.path === "/product/:id/") {
-    // mockGetProduct(params.id)
-    // productStore.dispatch(SET_CURRENT_PRODUCT)
+    return await prefetchHomePage();
   }
+
+  if (route.path === "/product/:id") {
+    return await prefetchProductDetail(params.id);
+  }
+
+  return await getDefaultInitialState();
 }
 
 export const render = async (url, query) => {
