@@ -34,7 +34,42 @@ const ErrorContent = ({ error }) => `
   </div>
 `;
 
-function ProductDetail({ product, relatedProducts = [] }) {
+// 서버/클라 공용 상세 페이지 뷰(브라우저 의존 없음)
+export function ProductDetailView({ product, relatedProducts = [], error = null, loading = false }) {
+  if (loading) {
+    return PageWrapper({
+      headerLeft: `
+        <div class="flex items-center space-x-3">
+          <button onclick="window.history.back()" 
+                  class="p-2 text-gray-700 hover:text-gray-900 transition-colors">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+          </button>
+          <h1 class="text-lg font-bold text-gray-900">상품 상세</h1>
+        </div>
+      `.trim(),
+      children: loadingContent,
+    });
+  }
+
+  if (error && !product) {
+    return PageWrapper({
+      headerLeft: `
+        <div class="flex items-center space-x-3">
+          <button onclick="window.history.back()" 
+                  class="p-2 text-gray-700 hover:text-gray-900 transition-colors">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+          </button>
+          <h1 class="text-lg font-bold text-gray-900">상품 상세</h1>
+        </div>
+      `.trim(),
+      children: ErrorContent({ error }),
+    });
+  }
+
   const {
     productId,
     title,
@@ -56,7 +91,7 @@ function ProductDetail({ product, relatedProducts = [] }) {
   if (category1) breadcrumbItems.push({ name: category1, category: "category1", value: category1 });
   if (category2) breadcrumbItems.push({ name: category2, category: "category2", value: category2 });
 
-  return `
+  const content = `
     <!-- 브레드크럼 -->
     ${
       breadcrumbItems.length > 0
@@ -229,6 +264,20 @@ function ProductDetail({ product, relatedProducts = [] }) {
         : ""
     }
   `;
+  return PageWrapper({
+    headerLeft: `
+      <div class="flex items-center space-x-3">
+        <button onclick="window.history.back()" 
+                class="p-2 text-gray-700 hover:text-gray-900 transition-colors">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+          </svg>
+        </button>
+        <h1 class="text-lg font-bold text-gray-900">상품 상세</h1>
+      </div>
+    `.trim(),
+    children: content,
+  });
 }
 
 /**
@@ -244,23 +293,6 @@ export const ProductDetailPage = withLifecycle(
   () => {
     const { currentProduct: product, relatedProducts = [], error, loading } = productStore.getState();
 
-    return PageWrapper({
-      headerLeft: `
-        <div class="flex items-center space-x-3">
-          <button onclick="window.history.back()" 
-                  class="p-2 text-gray-700 hover:text-gray-900 transition-colors">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-            </svg>
-          </button>
-          <h1 class="text-lg font-bold text-gray-900">상품 상세</h1>
-        </div>
-      `.trim(),
-      children: loading
-        ? loadingContent
-        : error && !product
-          ? ErrorContent({ error })
-          : ProductDetail({ product, relatedProducts }),
-    });
+    return ProductDetailView({ product, relatedProducts, error, loading });
   },
 );
