@@ -237,12 +237,15 @@ function ProductDetail({ product, relatedProducts = [] }) {
 export const ProductDetailPage = withLifecycle(
   {
     onMount: () => {
+      if (typeof window !== "undefined") return;
       loadProductDetailForPage(router.params.id);
     },
     watches: [() => [router.params.id], () => loadProductDetailForPage(router.params.id)],
   },
-  () => {
-    const { currentProduct: product, relatedProducts = [], error, loading } = productStore.getState();
+  //eslint-disable-next-line no-unused-vars
+  ({ query = router.query, productInfo = null }) => {
+    const state = productInfo ?? productStore.getState();
+    const { currentProduct: product, relatedProducts = [], error, loading } = state;
 
     return PageWrapper({
       headerLeft: `

@@ -111,12 +111,13 @@ async function renderWithExistingComponents(url, query = {}) {
       const page = query.page || "1";
       const limit = query.limit || "20";
       const sort = query.sort || "price_asc";
-      const category = query.category || "";
+      const category1 = query.category1 || "";
+      const category2 = query.category2 || "";
       const search = query.search || "";
 
-      // 실제 쿼리스트링으로 API 호출
       let apiUrl = `/api/products?page=${page}&limit=${limit}&sort=${sort}`;
-      if (category) apiUrl += `&category=${category}`;
+      if (category1) apiUrl += `&category1=${encodeURIComponent(category1)}`;
+      if (category2) apiUrl += `&category2=${encodeURIComponent(category2)}`;
       if (search) apiUrl += `&search=${encodeURIComponent(search)}`;
 
       console.log("🔍 서버에서 API 호출 URL:", apiUrl);
@@ -155,17 +156,23 @@ async function renderWithExistingComponents(url, query = {}) {
         // withLifecycle을 우회하고 순수 렌더링 함수만 실행
         // 한 번 실행해서 리턴이 함수라면 그 함수도 실행함
         // 그렇게 되면 실제 순수 html을 리턴하는 렌더함수가 실행됨
-        const homePageComponent = HomePage();
-        const html = typeof homePageComponent === "function" ? homePageComponent() : homePageComponent;
+        // const homePageComponent = HomePage();
+        // const html = typeof homePageComponent === "function" ? homePageComponent() : homePageComponent;
+
+        const state = serverProductStore.getState();
+        const html = HomePage({ query: serverRouter.query, productInfo: state });
 
         return {
           html,
           head: "<title>쇼핑몰 - 홈</title>",
           initialData: {
             // 테스트코드에 맞는 순서로 재 정렬
-            products: serverProductStore.getState().products,
-            categories: serverProductStore.getState().categories,
-            totalCount: serverProductStore.getState().totalCount,
+            // products: serverProductStore.getState().products,
+            // categories: serverProductStore.getState().categories,
+            // totalCount: serverProductStore.getState().totalCount,
+            products: state.products,
+            categories: state.categories,
+            totalCount: state.totalCount,
           },
         };
       } catch (error) {
@@ -184,11 +191,23 @@ async function renderWithExistingComponents(url, query = {}) {
     try {
       const productResponse = await fetch(`/api/products/${route.id}`);
 
-      if (!productResponse.ok) {
+      if (!productResponse) {
         throw new Error(`Product not found: ${route.id}`);
       }
 
       const product = await productResponse.json();
+      console.log("🎯 서버용 MSW를 통해 로드된 상품:", product.title);
+
+      let relatedProducts = [];
+      if (product.category1) {
+        const relatedResponse = await fetch(`/api/products?category1=${product.category1}`);
+
+        if (relatedResponse) {
+          const relatedProductsData = await relatedResponse.json();
+
+          relatedProducts = relatedProductsData.products.filter((prod) => prod.productId !== product.productId);
+        }
+      }
 
       const serverProductStore = createServerStore({
         products: [],
@@ -197,11 +216,9 @@ async function renderWithExistingComponents(url, query = {}) {
         status: "done",
         categories: {},
         currentProduct: product,
-        relatedProducts: [],
+        relatedProducts: relatedProducts,
         error: null,
       });
-
-      console.log("🎯 서버용 MSW를 통해 로드된 상품:", product.title);
 
       const serverRouter = createServerRouter(url);
       serverRouter.query = query; // Express에서 파싱된 쿼리 설정
@@ -211,13 +228,16 @@ async function renderWithExistingComponents(url, query = {}) {
 
       try {
         const { ProductDetailPage } = await import("./pages/ProductDetailPage.js");
-        const productPageComponent = ProductDetailPage();
-        const html = typeof productPageComponent === "function" ? productPageComponent() : productPageComponent;
+        // const productPageComponent = ProductDetailPage();
+        // const html = typeof productPageComponent === "function" ? productPageComponent() : productPageComponent;
+        const state = serverProductStore.getState();
+        const html = ProductDetailPage({ query: serverRouter.query, productInfo: state });
 
         return {
           html,
           head: `<title>${product.title} - 쇼핑몰</title>`,
-          initialData: serverProductStore.getState(),
+          // initialData: serverProductStore.getState(),
+          initialData: state,
         };
       } catch (error) {
         console.error("기존 상품 상세 컴포넌트 렌더링 실패:", error);
