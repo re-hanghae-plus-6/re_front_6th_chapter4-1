@@ -1,7 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
 import { createServer } from "vite";
-import items from "./src/mocks/items.json" with { type: "json" };
 import { mswServer } from "./src/mocks/node.js";
 
 mswServer.listen({
@@ -40,19 +39,6 @@ async function generateStaticSite(pathname, ssg) {
   fs.writeFileSync(fullPathname, html);
 }
 
-const getProducts = ({ category2 } = {}) => {
-  const filterByCategory = (data) => {
-    if (category2) {
-      return data.filter((v) => v.category2 === category2);
-    }
-    return data;
-  };
-
-  const products = filterByCategory(items);
-
-  return { products: products.sort((a, b) => +a.lprice - +b.lprice).slice(0, 20), totalCount: products.length };
-};
-
 // 404 생성
 await generateStaticSite("/404.html");
 
@@ -60,7 +46,9 @@ await generateStaticSite("/404.html");
 await generateStaticSite("/");
 
 // 상세페이지 생성
-const { products } = getProducts();
+const { getProducts } = await vite.ssrLoadModule("./src/api/productApi.js");
+const { products } = await getProducts();
 await Promise.all(products.map(async ({ productId }) => await generateStaticSite(`/product/${productId}/`)));
 
+mswServer.close();
 vite.close();
