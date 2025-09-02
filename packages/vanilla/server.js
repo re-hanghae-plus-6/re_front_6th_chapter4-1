@@ -41,6 +41,40 @@ if (!prod) {
   app.use(base, sirv("dist/vanilla", { extensions: [] }));
 }
 
+// 서버사이드 렌더링을 위한 라우터 설정
+const setupServerRoutes = async (url) => {
+  const { ServerRouter } = await import("./src/lib/ServerRouter.js");
+  const { HomePage, ProductDetailPage, NotFoundPage } = await import("./src/pages/index.js");
+
+  const serverRouter = new ServerRouter(url, base);
+
+  // 라우트 등록 (클라이언트와 동일)
+  serverRouter.addRoute("/", HomePage);
+  serverRouter.addRoute("/product/:id/", ProductDetailPage);
+  serverRouter.addRoute(".*", NotFoundPage);
+
+  return serverRouter;
+};
+
+// 서버사이드 렌더링 함수
+const renderPage = async (url) => {
+  try {
+    const serverRouter = await setupServerRoutes(url);
+    const route = serverRouter.start();
+
+    if (!route) {
+      return `<div>페이지를 찾을 수 없습니다.</div>`;
+    }
+
+    // 서버에서 컴포넌트 렌더링
+    const PageComponent = route.handler;
+    return PageComponent();
+  } catch (error) {
+    console.error("SSR 렌더링 오류:", error);
+    return `<div>서버 렌더링 중 오류가 발생했습니다.</div>`;
+  }
+};
+
 // 렌더링 파이프라인
 app.use("*all", async (req, res) => {
   try {
@@ -56,11 +90,12 @@ app.use("*all", async (req, res) => {
       }
     }
 
-    // 렌더링 데이터 - 테스트용
+    // 서버사이드 렌더링
+    const appHtml = await renderPage(url);
     const appHead = `<title>Vanilla Javascript SSR</title>`;
 
     // Template 치환
-    const finalHtml = html.replace("<!--app-head-->", appHead).replace("<!--app-html-->", html);
+    const finalHtml = html.replace("<!--app-head-->", appHead).replace("<!--app-html-->", appHtml);
 
     res.status(200).set({ "Content-Type": "text/html" }).end(finalHtml);
   } catch (e) {
