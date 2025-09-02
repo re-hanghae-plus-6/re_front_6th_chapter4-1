@@ -71,20 +71,21 @@ async function renderProductDetailPage(productId) {
       relatedProducts = relatedResponse.products.filter((p) => p.productId !== productId);
     }
 
+    const productDetailInfo = {
+      currentProduct: product,
+      relatedProducts,
+      loading: false,
+      error: null,
+    };
+
     return {
       head: generateProductDetailHead(product),
       html: ProductDetailPage({
         productId,
-        product,
-        relatedProducts,
-        loading: false,
-        error: null,
+        productDetailInfo,
       }),
       initialData: {
-        currentProduct: product,
-        relatedProducts,
-        loading: false,
-        error: null,
+        productDetailInfo,
       },
     };
   } catch (error) {
