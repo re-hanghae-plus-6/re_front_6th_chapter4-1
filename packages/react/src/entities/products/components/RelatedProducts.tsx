@@ -1,5 +1,5 @@
-import { router } from "../../../router";
-import { useProductStore } from "../hooks";
+import { router } from "../../../router/router.js";
+import { useProductStore } from "../hooks/index.js";
 
 export default function RelatedProducts() {
   const { relatedProducts } = useProductStore();
