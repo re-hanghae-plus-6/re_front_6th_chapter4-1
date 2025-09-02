@@ -237,12 +237,20 @@ function ProductDetail({ product, relatedProducts = [] }) {
 export const ProductDetailPage = withLifecycle(
   {
     onMount: () => {
+      if (typeof window === "undefined") return;
       loadProductDetailForPage(router.params.id);
     },
     watches: [() => [router.params.id], () => loadProductDetailForPage(router.params.id)],
   },
-  () => {
-    const { currentProduct: product, relatedProducts = [], error, loading } = productStore.getState();
+  ({ productDetailInfo } = {}) => {
+    // 서버 사이드에서는 productDetailInfo 사용, 클라이언트 사이드에서는 스토어 사용
+
+    const {
+      currentProduct: product,
+      relatedProducts = [],
+      error,
+      loading,
+    } = typeof window === "undefined" ? productDetailInfo : productStore.getState();
 
     return PageWrapper({
       headerLeft: `

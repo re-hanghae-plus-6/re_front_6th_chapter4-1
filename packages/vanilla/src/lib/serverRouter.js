@@ -70,22 +70,17 @@ async function renderProductDetailPage(productId) {
       // Exclude current product
       relatedProducts = relatedResponse.products.filter((p) => p.productId !== productId);
     }
-
+    const productDetailInfo = {
+      productId,
+      currentProduct: product,
+      relatedProducts,
+      loading: false,
+      error: null,
+    };
     return {
       head: generateProductDetailHead(product),
-      html: ProductDetailPage({
-        productId,
-        product,
-        relatedProducts,
-        loading: false,
-        error: null,
-      }),
-      initialData: {
-        currentProduct: product,
-        relatedProducts,
-        loading: false,
-        error: null,
-      },
+      html: ProductDetailPage({ productDetailInfo }),
+      initialData: productDetailInfo,
     };
   } catch (error) {
     console.error(`Failed to load product ${productId}:`, error);
