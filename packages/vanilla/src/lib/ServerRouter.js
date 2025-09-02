@@ -4,17 +4,26 @@
  */
 export class ServerRouter {
   #routes;
-  #baseUrl;
   #route;
+  #notFoundHandler;
 
-  constructor(baseUrl = "") {
+  constructor(routes = null) {
     this.#routes = new Map();
-    this.#baseUrl = baseUrl.replace(/\/$/, "");
     this.#route = null;
+    this.#notFoundHandler = null;
+    if (routes) {
+      this.addRoutes(routes);
+    }
   }
 
-  get baseUrl() {
-    return this.#baseUrl;
+  /**
+   * routes 객체를 한 번에 등록
+   * @param {Object} routes - 라우트 객체 { "/path": handler, "/product/:id": handler, "*": notFoundHandler }
+   */
+  addRoutes(routes) {
+    for (const [path, handler] of Object.entries(routes)) {
+      this.addRoute(path, handler);
+    }
   }
 
   /**
@@ -23,19 +32,22 @@ export class ServerRouter {
    * @param {Function} handler - 라우트 핸들러
    */
   addRoute(path, handler) {
+    // * 경로 처리 (와일드카드)
+    if (path === "*") {
+      this.#notFoundHandler = handler;
+      return;
+    }
+
     const paramNames = [];
+
     let regexPath = path
-      .replace(/:\w+/g, (match) => {
-        paramNames.push(match.slice(1));
+      .replace(/:(\w+)/g, (match, paramName) => {
+        paramNames.push(paramName);
         return "([^/]+)";
       })
       .replace(/\//g, "\\/");
 
-    if (path === "*") {
-      regexPath = ".*";
-    }
-
-    const regex = new RegExp(`^${this.#baseUrl}${regexPath}$`);
+    const regex = new RegExp(`^${regexPath}$`);
 
     this.#routes.set(path, {
       regex,
@@ -50,7 +62,7 @@ export class ServerRouter {
    * @returns {Object|null}
    */
   #findRoute(url) {
-    const { pathname } = new URL(url, `http://localhost${this.#baseUrl}`);
+    const { pathname } = new URL(url, `http://localhost`);
 
     for (const [routePath, route] of this.#routes) {
       const match = pathname.match(route.regex);
@@ -67,6 +79,15 @@ export class ServerRouter {
         };
       }
     }
+
+    if (this.#notFoundHandler) {
+      return {
+        handler: this.#notFoundHandler,
+        params: {},
+        path: "*",
+      };
+    }
+
     return null;
   }
 
@@ -89,5 +110,15 @@ export class ServerRouter {
   /** 현재 매칭된 라우트 반환 */
   get route() {
     return this.#route;
+  }
+
+  /** 현재 라우트의 핸들러(target) 반환 */
+  get target() {
+    return this.#route?.handler || null;
+  }
+
+  /** 현재 라우트의 파라미터 반환 */
+  get params() {
+    return this.#route?.params || {};
   }
 }
