@@ -21,8 +21,8 @@ const serverRouter = new ServerRouter({
   },
 });
 
-export const render = async (url, query) => {
-  console.log({ url, query });
+export const render = async (url) => {
+  console.log(url);
 
   // 1단계: URL 매칭
   const route = serverRouter.match(url);

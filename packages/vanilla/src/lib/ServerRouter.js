@@ -19,7 +19,7 @@ export class ServerRouter {
       })
       .replace(/\//g, "\\/");
 
-    const regex = new RegExp(`^${regexPath}$`);
+    const regex = new RegExp(`^${regexPath}/?$`);
 
     this.routes.set(path, {
       regex,
