@@ -21,15 +21,16 @@ if (!prod) {
     base,
   });
   app.use(vite.middlewares);
+
+  // Mock server setup for development
+  const { server } = await vite.ssrLoadModule("/src/mocks/serverBrowser.js");
+  server.listen();
 } else {
   const compression = (await import("compression")).default;
   const sirv = (await import("sirv")).default;
   app.use(compression());
   app.use(base, sirv("./dist/vanilla", { extensions: [] }));
 }
-
-const { server } = await vite.ssrLoadModule("/src/mocks/serverBrowser.js");
-server.listen();
 
 // use , get 차이점
 // use 는 모든 요청에 대해 실행되고, get 은 특정 요청에 대해 실행됩니다.
