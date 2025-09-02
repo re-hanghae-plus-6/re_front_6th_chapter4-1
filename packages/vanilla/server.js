@@ -2,10 +2,10 @@ import fs from "node:fs/promises";
 import express from "express";
 
 const prod = process.env.NODE_ENV === "production";
-const port = process.env.PORT || 5173;
+const port = process.env.PORT || 5174; // SSR 서버 포트
 const base = process.env.BASE || (prod ? "/front_6th_chapter4-1/vanilla/" : "/");
 
-const templateHtml = prod ? await fs.readFile("./dist/client/index.html", "utf-8") : "";
+const templateHtml = prod ? await fs.readFile("./dist/vanilla/index.html", "utf-8") : "";
 
 const app = express();
 
@@ -23,9 +23,23 @@ if (!prod) {
   const compression = (await import("compression")).default;
   const sirv = (await import("sirv")).default;
   app.use(compression());
-  app.use(base, sirv("./dist/client", { extensions: [] }));
+  app.use(base, sirv("./dist/vanilla", { extensions: [] }));
 }
-app.use("*all", async (req, res) => {
+
+// API 프록시 - 기존 API 서버로 요청 전달
+app.use("/api/*", async (req, res) => {
+  try {
+    const apiUrl = `http://localhost:5173${req.url}`;
+    const response = await fetch(apiUrl);
+    const data = await response.json();
+    res.json(data);
+  } catch (error) {
+    console.error("API 프록시 오류:", error);
+    res.status(500).json({ error: "API 서버 연결 실패" });
+  }
+});
+
+app.use("*", async (req, res) => {
   try {
     const url = req.originalUrl.replace(base, "");
 
@@ -65,5 +79,5 @@ app.use("*all", async (req, res) => {
 
 // Start http server
 app.listen(port, () => {
-  console.log(`React Server started at http://localhost:${port}`);
+  console.log(`Vanilla SSR Server started at http://localhost:${port}`);
 });
