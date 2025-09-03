@@ -3,14 +3,14 @@ import fs from "fs";
 import { server } from "./src/mocks/node.js";
 
 const prod = process.env.NODE_ENV === "production";
-const port = process.env.PORT || 5174;
+const port = process.env.PORT || 5173;
 const base = process.env.BASE || (prod ? "/front_6th_chapter4-1/vanilla/" : "/");
 
 server.listen({
   onUnhandledRequest: "bypass",
 });
 
-const templateHtml = prod ? fs.readFileSync("./dist/vanilla/index.html") : "";
+const templateHtml = prod ? fs.readFileSync("./dist/vanilla/index.html", "utf-8") : "";
 const app = express();
 
 let vite;
@@ -36,6 +36,17 @@ if (!prod) {
 
 app.use("*all", async (req, res) => {
   try {
+    if (
+      req.originalUrl.includes("favicon") ||
+      req.originalUrl.endsWith(".ico") ||
+      req.originalUrl.endsWith(".png") ||
+      req.originalUrl.endsWith(".jpg") ||
+      req.originalUrl.endsWith(".css") ||
+      req.originalUrl.endsWith(".js")
+    ) {
+      return res.status(404).end();
+    }
+
     const url = req.originalUrl.replace(base, "");
 
     let template;

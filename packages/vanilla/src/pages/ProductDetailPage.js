@@ -240,14 +240,7 @@ export const ProductDetailPage = withLifecycle(
       if (typeof window === "undefined") return;
       loadProductDetailForPage(router.params.id);
     },
-    watches: [
-      () => {
-        [router.params.id];
-      },
-      () => {
-        loadProductDetailForPage(router.params.id);
-      },
-    ],
+    watches: [() => [router.params.id], () => loadProductDetailForPage(router.params.id)],
   },
   ({ initialData } = {}) => {
     // SSR - initialData, CSR - store

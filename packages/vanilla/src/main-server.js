@@ -39,8 +39,6 @@ export async function render(url, query = {}) {
     pageHtml = NotFoundPage();
   }
 
-  console.log(initialData);
-
   return {
     head: `<title>${pageTitle}</title>`,
     html: pageHtml,

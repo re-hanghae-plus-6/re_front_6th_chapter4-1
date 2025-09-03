@@ -223,9 +223,6 @@ importers:
       prettier:
         specifier: ^3.4.2
         version: 3.6.2
-      shx:
-        specifier: ^0.4.0
-        version: 0.4.0
       sirv:
         specifier: ^3.0.0
         version: 3.0.1
