@@ -6,7 +6,7 @@ const serverRouter = new ServerRouter();
 registerRoutes(serverRouter);
 
 /**
- * 서버에서 데이터 프리페칭 - SSR에서는 로딩 상태 없이 완전한 데이터만 반환
+ * 서버에서 데이터 프리페칭 - 새로운 SSR 메서드 사용
  */
 async function prefetchData(route, params, query) {
   try {
@@ -15,24 +15,16 @@ async function prefetchData(route, params, query) {
       console.log("SSR 데이터 프리페칭 시작:", route.path);
       const data = await route.handler.ssr({ params, query });
       console.log("SSR 데이터 프리페칭 완료:", route.path);
-
-      // SSR에서는 항상 loading: false로 보장
-      return {
-        ...data,
-        loading: false, // SSR에서는 항상 false
-      };
+      return data;
     }
 
-    // SSR 메서드가 없는 경우 기본 상태 반환 (로딩 상태 없음)
+    // SSR 메서드가 없는 경우 빈 객체 반환
     console.log("SSR 메서드가 없는 페이지:", route.path);
-    return {
-      loading: false, // SSR에서는 항상 false
-      status: "done",
-    };
+    return {};
   } catch (error) {
     console.error("서버 데이터 프리페칭 실패:", error);
     return {
-      loading: false, // 에러 시에도 로딩 상태 없음
+      loading: false,
       error: error.message,
       status: "done",
     };
@@ -82,10 +74,7 @@ export const render = async (pathname, query = {}) => {
             <p class="text-gray-600">페이지를 찾을 수 없습니다.</p>
           </div>
         </div>`,
-        __INITIAL_DATA__: {
-          loading: false, // 404 페이지에서도 로딩 상태 없음
-          status: "done",
-        },
+        __INITIAL_DATA__: {},
       };
     }
 
@@ -96,9 +85,9 @@ export const render = async (pathname, query = {}) => {
     // 3. 메타데이터 생성
     const metadata = await generateMetadata(route, route.params, data);
 
-    // 4. 페이지 컴포넌트 렌더링
-    const params = { pathname, query, params: route.params };
-    const html = route.handler({ ...params, data });
+    // 4. 페이지 컴포넌트 렌더링 - SSR 데이터 전달
+    const params = { pathname, query, params: route.params, data };
+    const html = route.handler(params);
 
     return {
       head: `
@@ -119,11 +108,7 @@ export const render = async (pathname, query = {}) => {
           <p class="text-gray-600">잠시 후 다시 시도해주세요.</p>
         </div>
       </div>`,
-      __INITIAL_DATA__: {
-        loading: false, // 에러 시에도 로딩 상태 없음
-        error: error.message,
-        status: "done",
-      },
+      __INITIAL_DATA__: {},
     };
   }
 };

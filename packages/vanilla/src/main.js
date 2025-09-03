@@ -23,23 +23,27 @@ function hydrateFromServerData() {
   if (window.__INITIAL_DATA__) {
     const data = window.__INITIAL_DATA__;
 
-    // 상품 스토어 상태 복원
+    // 상품 스토어 상태 복원 - SSR 데이터가 있으면 즉시 복원
     if (data.products || data.categories || data.currentProduct || data.relatedProducts) {
       productStore.dispatch({
         type: PRODUCT_ACTIONS.SETUP,
         payload: {
           ...data,
-          loading: false,
+          loading: false, // SSR 데이터가 있으면 로딩 상태 없음
           error: null,
           status: "done",
         },
+      });
+
+      console.log("클라이언트 하이드레이션 완료 - SSR 데이터로 상태 복원:", {
+        productsCount: data.products?.length || 0,
+        categoriesCount: Object.keys(data.categories || {}).length,
+        loading: false,
       });
     }
 
     // 초기 데이터 정리
     delete window.__INITIAL_DATA__;
-
-    console.log("클라이언트 하이드레이션 완료:", data);
   }
 }
 

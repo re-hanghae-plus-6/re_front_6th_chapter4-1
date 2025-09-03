@@ -237,12 +237,18 @@ function ProductDetail({ product, relatedProducts = [] }) {
 const ProductDetailPageComponent = withLifecycle(
   {
     onMount: () => {
-      loadProductDetailForPage(router.params.id);
+      // SSR 데이터가 있으면 로드하지 않음
+      const currentState = productStore.getState();
+      if (!currentState.currentProduct && !currentState.loading) {
+        loadProductDetailForPage(router.params.id);
+      }
     },
     watches: [() => [router.params.id], () => loadProductDetailForPage(router.params.id)],
   },
-  () => {
-    const { currentProduct: product, relatedProducts = [], error, loading } = productStore.getState();
+  ({ data } = {}) => {
+    // SSR 데이터가 있으면 사용, 없으면 스토어 상태 사용
+    const productState = data || productStore.getState();
+    const { currentProduct: product, relatedProducts = [], error, loading } = productState;
 
     return PageWrapper({
       headerLeft: `
@@ -265,7 +271,7 @@ const ProductDetailPageComponent = withLifecycle(
   },
 );
 
-// SSR 메서드 - 로딩 상태 없이 완전한 데이터만 반환
+// SSR 메서드 - 로딩 상태 없이 완전한 데이터 반환
 ProductDetailPageComponent.ssr = async ({ params }) => {
   const { getProduct, getProducts } = await import("../api/productApi.js");
 
@@ -294,7 +300,7 @@ ProductDetailPageComponent.ssr = async ({ params }) => {
       console.log("관련 상품 로드 완료:", relatedProducts.length, "개");
     }
 
-    // SSR에서는 loading: false로 항상 설정 (로딩 상태 없음)
+    // SSR에서는 로딩 상태 없이 완전한 데이터만 반환
     return {
       currentProduct: product,
       relatedProducts,
@@ -304,11 +310,11 @@ ProductDetailPageComponent.ssr = async ({ params }) => {
     };
   } catch (error) {
     console.error("상품 상세 페이지 SSR 실패:", error);
-    // 에러 발생 시에도 로딩 상태는 false
+    // 에러 발생 시에도 로딩 상태는 false로 설정
     return {
       currentProduct: null,
       relatedProducts: [],
-      loading: false, // 에러 시에도 로딩 상태 없음
+      loading: false,
       error: error.message,
       status: "done",
     };

@@ -68,7 +68,16 @@ app.use(async (req, res) => {
       render = (await vite.ssrLoadModule("/src/main-server.js")).render;
     } else {
       template = templateHtml;
-      render = (await import("./dist/server/main-server.js")).render;
+      // 빌드된 main-server.js 파일을 동적으로 찾기
+      const fs = await import("node:fs/promises");
+      const path = await import("node:path");
+      const serverAssetsDir = "./dist/server/client/assets";
+      const files = await fs.readdir(serverAssetsDir);
+      const mainServerFile = files.find((file) => file.startsWith("main-server-") && file.endsWith(".js"));
+      if (!mainServerFile) {
+        throw new Error("main-server.js 파일을 찾을 수 없습니다");
+      }
+      render = (await import(path.resolve(serverAssetsDir, mainServerFile))).render;
     }
 
     const query = Object.fromEntries(new URLSearchParams(req.url.split("?")[1] || ""));

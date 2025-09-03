@@ -7,7 +7,11 @@ import { PageWrapper } from "./PageWrapper.js";
 const HomePageComponent = withLifecycle(
   {
     onMount: () => {
-      loadProductsAndCategories();
+      // SSR 데이터가 있으면 로드하지 않음
+      const currentState = productStore.getState();
+      if (currentState.products.length === 0 && !currentState.loading) {
+        loadProductsAndCategories();
+      }
     },
     watches: [
       () => {
@@ -17,8 +21,9 @@ const HomePageComponent = withLifecycle(
       () => loadProducts(true),
     ],
   },
-  () => {
-    const productState = productStore.getState();
+  ({ data } = {}) => {
+    // SSR 데이터가 있으면 사용, 없으면 스토어 상태 사용
+    const productState = data || productStore.getState();
     const { search: searchQuery, limit, sort, category1, category2 } = router.query;
     const { products, loading, error, totalCount, categories } = productState;
     const category = { category1, category2 };
@@ -49,32 +54,29 @@ const HomePageComponent = withLifecycle(
   },
 );
 
-// SSR 메서드 - 로딩 상태 없이 완전한 데이터만 반환
+// SSR 메서드 - 로딩 상태 없이 완전한 데이터 반환
 HomePageComponent.ssr = async ({ query }) => {
   const { getProducts, getCategories } = await import("../api/productApi.js");
 
   try {
-    // SSR에서는 항상 완전한 데이터를 받아온 후 렌더링
+    // SSR에서도 클라이언트와 동일한 정렬 기준 사용
     const queryWithSort = { ...query, sort: query.sort || "price_asc" };
     const [productsResponse, categories] = await Promise.all([getProducts(queryWithSort), getCategories()]);
 
-    // SSR에서는 loading: false로 항상 설정 (로딩 상태 없음)
+    // SSR에서는 로딩 상태 없이 완전한 데이터만 반환
     return {
       products: productsResponse.products,
-      totalCount: productsResponse.pagination.total,
       categories,
-      loading: false, // SSR에서는 항상 false
-      error: null,
-      status: "done",
+      totalCount: productsResponse.pagination.total,
     };
   } catch (error) {
     console.error("홈페이지 SSR 데이터 로드 실패:", error);
-    // 에러 발생 시에도 로딩 상태는 false
+    // 에러 발생 시에도 로딩 상태는 false로 설정
     return {
       products: [],
       totalCount: 0,
       categories: {},
-      loading: false, // 에러 시에도 로딩 상태 없음
+      loading: false,
       error: error.message,
       status: "done",
     };
