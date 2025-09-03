@@ -44,14 +44,22 @@ if (!prod) {
 // 서버사이드 렌더링을 위한 라우터 설정
 const setupServerRoutes = async (url) => {
   const { ServerRouter } = await import("./src/lib/ServerRouter.js");
-  const { HomePage, ProductDetailPage, NotFoundPage } = await import("./src/pages/index.js");
 
   const serverRouter = new ServerRouter(url, base);
+  // const { HomePage, ProductDetailPage, NotFoundPage } = await import("./src/pages/index.js");
 
-  // 라우트 등록 (클라이언트와 동일)
-  serverRouter.addRoute("/", HomePage);
-  serverRouter.addRoute("/product/:id/", ProductDetailPage);
-  serverRouter.addRoute(".*", NotFoundPage);
+  // 테스트용 간단한 렌더링 함수들
+  const serverHomePage = () => `<div>홈페이지 - 상품 목록</div>`;
+  const serverProductDetailPage = () => `<div>상품 상세 페이지</div>`;
+  const serverNotFoundPage = () => `<div>페이지를 찾을 수 없습니다.</div>`;
+
+  // 테스트용 라우트 등록 (Node 환경에서 js 확장자 필요)
+  serverRouter.addRoute("/", serverHomePage);
+  serverRouter.addRoute("/product/:id/", serverProductDetailPage);
+  serverRouter.addRoute(".*", serverNotFoundPage);
+  // serverRouter.addRoute("/", HomePage);
+  // serverRouter.addRoute("/product/:id/", ProductDetailPage);
+  // serverRouter.addRoute(".*", NotFoundPage);
 
   return serverRouter;
 };
