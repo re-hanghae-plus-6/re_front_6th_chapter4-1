@@ -1,7 +1,7 @@
 import express from "express";
 import sirv from "sirv";
 import compression from "compression";
-import { readFileSync } from "fs";
+import { readFile, readFileSync } from "fs";
 import { fileURLToPath } from "url";
 import { dirname, resolve } from "path";
 
@@ -9,9 +9,6 @@ import { dirname, resolve } from "path";
 const prod = process.env.NODE_ENV === "production";
 const port = process.env.PORT || 5173;
 const base = process.env.BASE || (prod ? "/front_6th_chapter4-1/vanilla/" : "/");
-
-// Express 앱 인스턴스 생성
-const app = express();
 
 // CommonJS (require 기반)에서는 Node.js가 자동으로 __dirname, __filename을 제공
 // console.log(__dirname);  현재 파일이 있는 디렉토리
@@ -34,6 +31,36 @@ const __dirname = dirname(__filename);
 // __dirname은 현재 파일이 위치한 디렉토리이고, "index.html"을 붙이면: C:\Users\user\project\src\index.html
 const templatePath = resolve(__dirname, "index.html");
 
+// 프로덕션 모드에서는 SSR에서 사용할 HTML 템플릿을 미리 읽어옵니다.(cached)
+// 개발 모드에서는 빈 문자열('')로 두고, 요청 시마다 읽어서 최신 상태 유지.
+const templateHtml = prod ? await readFile("./dist/vanilla/index.html", "utf-8") : "";
+console.log(templateHtml);
+
+// Express 앱 인스턴스 생성
+const app = express();
+
+let vite;
+if (!prod) {
+  // Vite 개발 서버를 middlewareMode로 생성.
+  // middlewareMode: true: Express와 함께 Vite 미들웨어로 사용 가능.
+  // vite.middlewares를 Express에 연결 → 개발 서버에서 JS/CSS HMR 제공.
+  const { createServer } = await import("vite");
+  vite = await createServer({
+    server: { middlewareMode: true },
+    appType: "custom",
+    base,
+  });
+  app.use(vite.middlewares);
+} else {
+  //   compression : gzip 압축 미들웨어 → 네트워크 전송 최적화.
+  // sirv : 정적 파일 제공 미들웨어.
+  // ./dist/client 경로의 빌드 파일 제공.
+  const compression = (await import("compression")).default;
+  const sirv = (await import("sirv")).default;
+  app.use(compression());
+  app.use(base, sirv("./dist/vanilla", { extensions: [] }));
+}
+
 let template;
 
 try {
@@ -55,9 +82,6 @@ try {
     </body>
     </html>`;
 }
-
-console.log(`🚀 서버 모드: ${prod ? "프로덕션" : "개발"}`);
-console.log(`📁 베이스 경로: ${base}`);
 
 // ===== 미들웨어 체인 설계 =====
 // 학습 포인트: Express 미들웨어는 등록 순서대로 실행됩니다
@@ -163,4 +187,6 @@ app.get("*all", (req, res) => {
 // Start http server
 app.listen(port, () => {
   console.log(`React Server started at http://localhost:${port}`);
+  console.log(`🚀 서버 모드: ${prod ? "프로덕션" : "개발"}`);
+  console.log(`📁 베이스 경로: ${base}`);
 });
