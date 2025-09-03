@@ -82,8 +82,8 @@ export const searchProducts = async (searchTerm) => {
   await loadProducts(true);
 };
 
-export const setCategory = async (category, value) => {
-  router.query = { ...router.query, [category]: value, current: undefined };
+export const setCategory = async (categoryData) => {
+  router.query = { ...router.query, ...categoryData, current: undefined };
   await loadProducts(true);
 };
 

@@ -381,7 +381,7 @@ export function registerScrollEvents() {
       const hasMore = productState.products.length < productState.totalCount;
 
       // 로딩 중이거나 더 이상 로드할 데이터가 없으면 return
-      if (productState.loading || !hasMore) {
+      if (productState.status === "loading_more" || !hasMore) {
         return;
       }
 

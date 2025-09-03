@@ -1,3 +1,14 @@
+// 서버 환경에서 사용할 baseUrl 생성
+function getServerBaseUrl() {
+  if (typeof window !== "undefined") {
+    return ""; // 클라이언트 환경에서는 빈 문자열
+  }
+
+  // 서버 환경: NODE_ENV에 따라 포트 결정
+  const port = process.env.NODE_ENV === "production" ? "4174" : "5174";
+  return `http://localhost:${port}`;
+}
+
 export async function getProducts(params = {}) {
   const { limit = 20, search = "", category1 = "", category2 = "", sort = "price_asc" } = params;
   const page = params.current ?? params.page ?? 1;
@@ -11,23 +22,20 @@ export async function getProducts(params = {}) {
     sort,
   });
 
-  // 서버 환경에서는 절대 URL 사용
-  const baseUrl = typeof window === "undefined" ? "http://localhost:5174" : "";
+  const baseUrl = getServerBaseUrl();
   const response = await fetch(`${baseUrl}/api/products?${searchParams}`);
 
   return await response.json();
 }
 
 export async function getProduct(productId) {
-  // 서버 환경에서는 절대 URL 사용
-  const baseUrl = typeof window === "undefined" ? "http://localhost:5174" : "";
+  const baseUrl = getServerBaseUrl();
   const response = await fetch(`${baseUrl}/api/products/${productId}`);
   return await response.json();
 }
 
 export async function getCategories() {
-  // 서버 환경에서는 절대 URL 사용
-  const baseUrl = typeof window === "undefined" ? "http://localhost:5174" : "";
+  const baseUrl = getServerBaseUrl();
   const response = await fetch(`${baseUrl}/api/categories`);
   return await response.json();
 }

@@ -27,7 +27,8 @@ const HomePageComponent = withLifecycle(
     // SSR에서는 params.query 사용, 클라이언트에서는 router.query 사용
     const currentQuery = query || router.query;
     const { search: searchQuery, limit, sort, category1, category2 } = currentQuery;
-    const { products, loading, error, totalCount, categories } = productState;
+    const { products, status, error, totalCount, categories } = productState;
+    const loading = status === "loading_more";
     const category = { category1, category2 };
     const hasMore = products.length < totalCount;
 

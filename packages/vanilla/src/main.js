@@ -6,8 +6,14 @@ import { router } from "./router";
 import { BASE_URL } from "./constants.js";
 import { productStore, PRODUCT_ACTIONS } from "./stores";
 
-const enableMocking = () =>
-  import("./mocks/browser.js").then(({ worker }) =>
+const enableMocking = () => {
+  // 프로덕션 환경에서는 MSW 비활성화
+  if (import.meta.env.PROD) {
+    console.log("프로덕션 환경: MSW 비활성화");
+    return Promise.resolve();
+  }
+
+  return import("./mocks/browser.js").then(({ worker }) =>
     worker.start({
       serviceWorker: {
         url: `${BASE_URL}mockServiceWorker.js`,
@@ -15,6 +21,7 @@ const enableMocking = () =>
       onUnhandledRequest: "bypass",
     }),
   );
+};
 
 /**
  * 서버에서 전달받은 초기 데이터로 클라이언트 상태 복원

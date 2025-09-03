@@ -31,6 +31,7 @@ const productReducer = (state, action) => {
       return {
         ...state,
         status: action.payload,
+        loading: action.payload === "loading_more" || action.payload === "pending",
       };
 
     case PRODUCT_ACTIONS.SET_CATEGORIES:
