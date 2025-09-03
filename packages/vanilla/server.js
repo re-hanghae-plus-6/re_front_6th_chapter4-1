@@ -99,10 +99,10 @@ if (prod) {
 app.use("*all", async (req, res) => {
   try {
     const url = req.originalUrl.replace(base, "");
+    const pathname = url.split("?")[0];
 
-    const { html, head, initialData } = await render(url);
-    console.log("initialData", JSON.stringify(initialData).slice(0, 30));
-    console.log("html", html);
+    const { html, head, initialData } = await render(pathname, req.query);
+
     const template = await getTemplate();
 
     const initialDataScript = initialData

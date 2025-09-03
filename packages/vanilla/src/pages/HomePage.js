@@ -1,3 +1,4 @@
+import { getCategories, getProducts } from "../api/productApi.js";
 import { ProductList, SearchBar } from "../components";
 import { router, withLifecycle } from "../router";
 import { loadProducts, loadProductsAndCategories } from "../services";
@@ -37,9 +38,6 @@ export const HomePage = withLifecycle(
     const category = { category1, category2 };
     const hasMore = products.length < totalCount;
 
-    console.log("HomePage render - serverData:", serverData);
-    console.log("HomePage render - products:", products);
-
     return PageWrapper({
       headerLeft: `
         <h1 class="text-xl font-bold text-gray-900">
@@ -64,3 +62,21 @@ export const HomePage = withLifecycle(
     });
   },
 );
+
+HomePage.prefetch = async ({ query }) => {
+  const [
+    {
+      products,
+      pagination: { total },
+    },
+    categories,
+  ] = await Promise.all([getProducts(query), getCategories()]);
+
+  return {
+    products,
+    categories,
+    totalCount: total,
+    loading: false,
+    status: "done",
+  };
+};

@@ -255,9 +255,6 @@ export const ProductDetailPage = withLifecycle(
     const error = productState.error;
     const loading = productState.loading;
 
-    console.log("ProductDetailPage render - serverData:", serverData);
-    console.log("ProductDetailPage render - product:", product);
-
     return PageWrapper({
       headerLeft: `
         <div class="flex items-center space-x-3">
