@@ -4,6 +4,7 @@ import { router } from "../router";
 import { withLifecycle } from "../router/withLifecycle.js";
 import { loadProducts, loadProductsAndCategories } from "../services";
 import { PageWrapper } from "./PageWrapper.js";
+import { hydrateStoreFromSSR, hasHomePageData, hasCategoryData } from "../utils/hydration.js";
 
 export const HomePage = withLifecycle(
   {
@@ -23,6 +24,12 @@ export const HomePage = withLifecycle(
       };
     },
     onMount: () => {
+      const hydrated = hydrateStoreFromSSR();
+
+      if (hydrated && hasHomePageData() && hasCategoryData()) {
+        return;
+      }
+
       loadProductsAndCategories();
     },
     watches: [

@@ -4,6 +4,7 @@ import { router } from "../router";
 import { withLifecycle } from "../router/withLifecycle.js";
 import { PageWrapper } from "./PageWrapper.js";
 import { getProduct } from "../api/productApi.js";
+import { hydrateStoreFromSSR, hasProductDetailData } from "../utils/hydration.js";
 
 const loadingContent = `
   <div class="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -259,7 +260,15 @@ export const ProductDetailPage = withLifecycle(
       }
     },
     onMount: () => {
-      loadProductDetailForPage(router.params.id);
+      const productId = router.params.id;
+
+      const hydrated = hydrateStoreFromSSR();
+
+      if (hydrated && hasProductDetailData(productId)) {
+        return;
+      }
+
+      loadProductDetailForPage(productId);
     },
     watches: [() => [router.params.id], () => loadProductDetailForPage(router.params.id)],
   },
