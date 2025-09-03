@@ -80,8 +80,7 @@ app.use(async (req, res) => {
       render = (await import(path.resolve(serverAssetsDir, mainServerFile))).render;
     }
 
-    const query = Object.fromEntries(new URLSearchParams(req.url.split("?")[1] || ""));
-    const rendered = await render(url, query);
+    const rendered = await render(url, req.query);
     console.log(rendered);
 
     const html = template

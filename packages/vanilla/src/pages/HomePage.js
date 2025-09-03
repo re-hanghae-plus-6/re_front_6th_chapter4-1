@@ -21,10 +21,12 @@ const HomePageComponent = withLifecycle(
       () => loadProducts(true),
     ],
   },
-  ({ data } = {}) => {
+  ({ data, query } = {}) => {
     // SSR 데이터가 있으면 사용, 없으면 스토어 상태 사용
     const productState = data || productStore.getState();
-    const { search: searchQuery, limit, sort, category1, category2 } = router.query;
+    // SSR에서는 params.query 사용, 클라이언트에서는 router.query 사용
+    const currentQuery = query || router.query;
+    const { search: searchQuery, limit, sort, category1, category2 } = currentQuery;
     const { products, loading, error, totalCount, categories } = productState;
     const category = { category1, category2 };
     const hasMore = products.length < totalCount;
