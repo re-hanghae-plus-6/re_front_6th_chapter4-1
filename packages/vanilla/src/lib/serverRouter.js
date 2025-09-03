@@ -1,5 +1,5 @@
 import { HomePage, ProductDetailPage } from "../pages/index.js";
-import items from "../mocks/items.json";
+import items from "../mocks/items.json" with { type: "json" };
 
 // 카테고리 추출 함수
 function getUniqueCategories() {

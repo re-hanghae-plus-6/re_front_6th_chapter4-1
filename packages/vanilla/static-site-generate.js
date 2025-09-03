@@ -1,20 +1,54 @@
 import fs from "fs";
+import { createServer } from "vite";
+const vite = await createServer({
+  server: { middlewareMode: true },
+  appType: "custom",
+});
 
-const render = () => {
-  return `<div>안녕하세요</div>`;
-};
+// Mock server setup for development
+const { server } = await vite.ssrLoadModule("/src/mocks/serverBrowser.js");
+server.listen();
 
-async function generateStaticSite() {
+const { getProducts } = await vite.ssrLoadModule("/src/api/productApi.js");
+
+const { renderPage } = await vite.ssrLoadModule("/src/lib/serverRouter.js");
+
+async function generateStaticSite(url, query) {
   // HTML 템플릿 읽기
   const template = fs.readFileSync("../../dist/vanilla/index.html", "utf-8");
 
-  // 어플리케이션 렌더링하기
-  const appHtml = render();
+  const rendered = await renderPage(url, query);
 
-  // 결과 HTML 생성하기
-  const result = template.replace("<!--app-html-->", appHtml);
-  fs.writeFileSync("../../dist/vanilla/index.html", result);
+  const html = template
+    .replace(`<!--app-head-->`, rendered.head ?? "")
+    .replace(`<!--app-html-->`, rendered.html ?? "")
+    .replace(
+      `</head>`,
+      `
+        <script>
+          window.__INITIAL_DATA__ = ${JSON.stringify(rendered.initialData || {})};
+        </script>
+        </head>
+      `,
+    );
+
+  if (url == "/404") {
+    fs.writeFileSync("../../dist/vanilla/404.html", html);
+  } else {
+    if (!fs.existsSync(`../../dist/vanilla${url}`)) {
+      fs.mkdirSync(`../../dist/vanilla${url}`, { recursive: true });
+    }
+    fs.writeFileSync(`../../dist/vanilla${url}/index.html`, html);
+  }
 }
 
+const { products } = await getProducts();
+
 // 실행
-generateStaticSite();
+generateStaticSite("/", {});
+generateStaticSite("/404", {});
+for (let i = 0; i < products.length; i++) {
+  generateStaticSite(`/product/${products[i].productId}`, {});
+}
+
+vite.close();
