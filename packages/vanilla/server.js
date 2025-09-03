@@ -1,5 +1,6 @@
 import fs from "fs/promises";
 import express from "express";
+import { mswServer } from "./src/mocks/serverBrowser.js";
 
 const prod = process.env.NODE_ENV === "production";
 const port = process.env.PORT || 5173;
@@ -8,6 +9,8 @@ const base = process.env.BASE || (prod ? "/front_6th_chapter4-1/vanilla/" : "/")
 const templateHtml = prod ? await fs.readFile("./dist/vanilla/index.html", "utf-8") : "";
 
 const app = express();
+
+mswServer.listen({ onUnhandledRequest: "bypass" });
 
 let vite;
 if (!prod) {
@@ -44,10 +47,11 @@ app.use("*all", async (req, res) => {
       render = (await import("./dist/vanilla-ssr/main-server.js")).render;
     }
 
-    const rendered = await render(url);
+    const rendered = await render(url, req.query);
 
     const html = template
       .replace(`<!--app-head-->`, rendered.head ?? "")
+      .replace(`<!--app-data-->`, `<script>window.__INITIAL_DATA__ = ${rendered.data}</script>`)
       .replace(`<!--app-html-->`, rendered.html ?? "");
 
     res.status(200).set({ "Content-Type": "text/html" }).send(html);
