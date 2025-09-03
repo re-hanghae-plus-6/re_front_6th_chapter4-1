@@ -14,109 +14,95 @@ export const loadProductsAndCategories = async () => {
   });
 
   try {
-    const [
-      {
-        products,
-        pagination: { total },
-      },
-      categories,
-    ] = await Promise.all([getProducts(router.query), getCategories()]);
+    const [productsResponse, categories] = await Promise.all([getProducts(router.query), getCategories()]);
 
-    // 페이지 리셋이면 새로 설정, 아니면 기존에 추가
     productStore.dispatch({
       type: PRODUCT_ACTIONS.SETUP,
       payload: {
-        products,
+        products: productsResponse.products,
+        totalCount: productsResponse.pagination.total,
         categories,
-        totalCount: total,
         loading: false,
         status: "done",
       },
     });
   } catch (error) {
-    productStore.dispatch({
-      type: PRODUCT_ACTIONS.SET_ERROR,
-      payload: error.message,
-    });
-    throw error;
-  }
-};
-
-/**
- * 상품 목록 로드 (새로고침)
- */
-export const loadProducts = async (resetList = true) => {
-  try {
+    console.error("상품 목록 및 카테고리 로드 실패:", error);
     productStore.dispatch({
       type: PRODUCT_ACTIONS.SETUP,
-      payload: { loading: true, status: "pending", error: null },
+      payload: {
+        ...initialProductState,
+        error: error.message,
+        loading: false,
+        status: "done",
+      },
     });
-
-    const {
-      products,
-      pagination: { total },
-    } = await getProducts(router.query);
-    const payload = { products, totalCount: total };
-
-    // 페이지 리셋이면 새로 설정, 아니면 기존에 추가
-    if (resetList) {
-      productStore.dispatch({ type: PRODUCT_ACTIONS.SET_PRODUCTS, payload });
-      return;
-    }
-    productStore.dispatch({ type: PRODUCT_ACTIONS.ADD_PRODUCTS, payload });
-  } catch (error) {
-    productStore.dispatch({
-      type: PRODUCT_ACTIONS.SET_ERROR,
-      payload: error.message,
-    });
-    throw error;
   }
 };
 
-/**
- * 다음 페이지 로드 (무한 스크롤)
- */
-export const loadMoreProducts = async () => {
-  const state = productStore.getState();
-  const hasMore = state.products.length < state.totalCount;
+export const loadProducts = async (reset = false) => {
+  const currentState = productStore.getState();
+  const currentPage = Math.ceil(currentState.products.length / (router.query.limit || 20));
+  const nextPage = reset ? 1 : currentPage + 1;
 
-  if (!hasMore || state.loading) {
+  if (!reset && currentState.products.length >= currentState.totalCount) {
+    console.log("모든 상품을 로드했습니다.");
     return;
   }
 
-  router.query = { current: Number(router.query.current ?? 1) + 1 };
+  if (!reset) {
+    productStore.dispatch({
+      type: PRODUCT_ACTIONS.SET_STATUS,
+      payload: "loading_more",
+    });
+  }
+
+  try {
+    const query = { ...router.query, page: nextPage };
+    const response = await getProducts(query);
+
+    productStore.dispatch({
+      type: PRODUCT_ACTIONS.SET_PRODUCTS,
+      payload: {
+        products: reset ? response.products : [...currentState.products, ...response.products],
+        totalCount: response.pagination.total,
+      },
+    });
+  } catch (error) {
+    console.error("상품 목록 로드 실패:", error);
+    productStore.dispatch({
+      type: PRODUCT_ACTIONS.SET_STATUS,
+      payload: "error",
+    });
+  }
+};
+
+export const searchProducts = async (searchTerm) => {
+  router.query = { ...router.query, search: searchTerm, current: undefined };
+  await loadProducts(true);
+};
+
+export const setCategory = async (category, value) => {
+  router.query = { ...router.query, [category]: value, current: undefined };
+  await loadProducts(true);
+};
+
+export const setSort = async (sort) => {
+  router.query = { ...router.query, sort, current: undefined };
+  await loadProducts(true);
+};
+
+export const setLimit = async (limit) => {
+  router.query = { ...router.query, limit, current: undefined };
+  await loadProducts(true);
+};
+
+export const loadMoreProducts = async () => {
   await loadProducts(false);
 };
-/**
- * 상품 검색
- */
-export const searchProducts = (search) => {
-  router.query = { search, current: 1 };
-};
 
 /**
- * 카테고리 필터 설정
- */
-export const setCategory = (categoryData) => {
-  router.query = { ...categoryData, current: 1 };
-};
-
-/**
- * 정렬 옵션 변경
- */
-export const setSort = (sort) => {
-  router.query = { sort, current: 1 };
-};
-
-/**
- * 페이지당 상품 수 변경
- */
-export const setLimit = (limit) => {
-  router.query = { limit, current: 1 };
-};
-
-/**
- * 상품 상세 페이지용 상품 조회 및 관련 상품 로드
+ * 상품 상세 페이지 로드
  */
 export const loadProductDetailForPage = async (productId) => {
   console.log("클라이언트에서 상품 상세 페이지 로드 시작:", productId);
@@ -125,7 +111,7 @@ export const loadProductDetailForPage = async (productId) => {
     if (productId === currentProduct?.productId) {
       console.log("이미 로드된 상품:", productId);
       // 관련 상품 로드 (같은 category2 기준)
-      if (currentProduct.category2) {
+      if (currentProduct?.category2) {
         await loadRelatedProducts(currentProduct.category2, productId);
       }
       return;
@@ -151,34 +137,37 @@ export const loadProductDetailForPage = async (productId) => {
     });
 
     // 관련 상품 로드 (같은 category2 기준)
-    if (product.category2) {
+    if (product && product.category2) {
       await loadRelatedProducts(product.category2, productId);
     }
   } catch (error) {
     console.error("상품 상세 페이지 로드 실패:", error);
     productStore.dispatch({
-      type: PRODUCT_ACTIONS.SET_ERROR,
-      payload: error.message,
+      type: PRODUCT_ACTIONS.SETUP,
+      payload: {
+        ...initialProductState,
+        error: error.message,
+        loading: false,
+        status: "done",
+      },
     });
-    throw error;
   }
 };
 
 /**
- * 관련 상품 로드 (같은 카테고리의 다른 상품들)
+ * 관련 상품 로드
  */
 export const loadRelatedProducts = async (category2, excludeProductId) => {
   try {
-    const params = {
+    console.log("관련 상품 로드 시작:", category2);
+    const response = await getProducts({
       category2,
-      limit: 20, // 관련 상품 20개
+      limit: 20,
       page: 1,
-    };
+    });
 
-    const response = await getProducts(params);
-
-    // 현재 상품 제외
     const relatedProducts = response.products.filter((product) => product.productId !== excludeProductId);
+    console.log("관련 상품 로드 완료:", relatedProducts.length, "개");
 
     productStore.dispatch({
       type: PRODUCT_ACTIONS.SET_RELATED_PRODUCTS,
@@ -186,7 +175,6 @@ export const loadRelatedProducts = async (category2, excludeProductId) => {
     });
   } catch (error) {
     console.error("관련 상품 로드 실패:", error);
-    // 관련 상품 로드 실패는 전체 페이지에 영향주지 않도록 조용히 처리
     productStore.dispatch({
       type: PRODUCT_ACTIONS.SET_RELATED_PRODUCTS,
       payload: [],

@@ -237,9 +237,9 @@ function ProductDetail({ product, relatedProducts = [] }) {
 const ProductDetailPageComponent = withLifecycle(
   {
     onMount: () => {
-      // SSR 데이터가 있으면 로드하지 않음
+      // 클라이언트에서 초기 데이터 로드 (SSR 데이터가 없거나 부족한 경우)
       const currentState = productStore.getState();
-      if (!currentState.currentProduct && !currentState.loading) {
+      if (!currentState.currentProduct) {
         loadProductDetailForPage(router.params.id);
       }
     },

@@ -7,9 +7,9 @@ import { PageWrapper } from "./PageWrapper.js";
 const HomePageComponent = withLifecycle(
   {
     onMount: () => {
-      // SSR 데이터가 있으면 로드하지 않음
+      // 클라이언트에서 초기 데이터 로드 (SSR 데이터가 없거나 부족한 경우)
       const currentState = productStore.getState();
-      if (currentState.products.length === 0 && !currentState.loading) {
+      if (currentState.products.length === 0) {
         loadProductsAndCategories();
       }
     },
@@ -83,7 +83,7 @@ HomePageComponent.ssr = async ({ query }) => {
 };
 
 HomePageComponent.metadata = () => ({
-  title: "쇼핑몰 - 상품 목록",
+  title: "쇼핑몰 - 홈",
   description: "다양한 상품을 만나보세요",
 });
 
