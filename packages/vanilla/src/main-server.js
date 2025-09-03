@@ -1,8 +1,14 @@
-import { serverRouter } from "./lib/ServerRouter.js";
+import { ServerRouter } from "./lib/ServerRouter.js";
 import { HomePage, NotFoundPage, ProductDetailPage } from "./pages";
 
 export async function render(url) {
   // 2. 라우트 매칭
+  const serverRouter = new ServerRouter();
+
+  serverRouter.addRoute("/", HomePage);
+  serverRouter.addRoute("/product/:id/", ProductDetailPage);
+  serverRouter.addRoute("/404", NotFoundPage);
+
   serverRouter.start(url);
 
   const { pathname, query, params } = serverRouter;
@@ -10,7 +16,6 @@ export async function render(url) {
   // 3. 데이터 프리페칭
   const routeParams = { pathname, query, params };
   const data = await serverRouter.prefetch(routeParams);
-  console.log("here data:", data);
   const metaData = serverRouter.target.meta(data);
   const head = metaData;
 
@@ -22,8 +27,3 @@ export async function render(url) {
 
   return { html, head, initialData: data };
 }
-
-// 라우트 등록
-serverRouter.addRoute("/", HomePage);
-serverRouter.addRoute("product/:id", ProductDetailPage);
-serverRouter.addRoute("/404", NotFoundPage);

@@ -36,12 +36,9 @@ class ServerRouter {
 
   // 동적 라우트를 정규식으로 변환하여 저장
   addRoute(path, handler) {
+    // 경로 패턴을 정규식으로 변환
     const paramNames = [];
-
-    // 경로 정규화: 끝의 슬래시 제거
-    const normalizedPath = path.replace(/\/$/, "");
-
-    const regexPath = normalizedPath
+    const regexPath = path
       .replace(/:\w+/g, (match) => {
         paramNames.push(match.slice(1)); // ':id' -> 'id'
         return "([^/]+)";
@@ -58,13 +55,19 @@ class ServerRouter {
   }
 
   // URL과 매칭되는 라우트 찾기
-  findRoute(path) {
+  findRoute(pathname) {
+    // pathname 정규화: 앞에 슬래시가 없으면 추가
+    let normalizedPathname = pathname;
+    if (!normalizedPathname.startsWith("/")) {
+      normalizedPathname = "/" + normalizedPathname;
+    }
+
     for (const [routePath, route] of this.#routes) {
-      const match = path.replace(/\/$/, "").match(route.regex);
+      const match = normalizedPathname.match(route.regex);
 
       if (match) {
+        // 매치된 파라미터들을 객체로 변환
         const params = {};
-
         route.paramNames.forEach((name, index) => {
           params[name] = match[index + 1];
         });
@@ -146,8 +149,5 @@ class ServerRouter {
   }
 }
 
-// 서버 라우터 인스턴스 생성
-const serverRouter = new ServerRouter();
-
 export default ServerRouter;
-export { serverRouter };
+export { ServerRouter };

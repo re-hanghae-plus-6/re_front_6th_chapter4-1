@@ -60,7 +60,6 @@ export const HomePage = withLifecycle(
 );
 
 HomePage.prefetch = async ({ query }) => {
-  console.log("🔍 [HomePage.prefetch] Query:", query);
   const [
     {
       products,
@@ -68,13 +67,6 @@ HomePage.prefetch = async ({ query }) => {
     },
     categories,
   ] = await Promise.all([getProducts(query), getCategories()]);
-
-  console.log("🔍 [HomePage.prefetch] Products received:", {
-    count: products?.length || 0,
-    firstProduct: products?.[0],
-    hasNullProducts: products?.some((p) => p === null || p === undefined),
-    nullProductIndexes: products?.map((p, i) => (p === null || p === undefined ? i : null)).filter((i) => i !== null),
-  });
 
   return {
     products,

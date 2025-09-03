@@ -2,6 +2,7 @@ import { getProduct, getProducts } from "../api/productApi.js";
 import { router, withLifecycle } from "../router";
 import { loadProductDetailForPage } from "../services";
 import { productStore } from "../stores";
+import { isServer } from "../utils/envUtils.js";
 import { PageWrapper } from "./PageWrapper.js";
 
 const loadingContent = `
@@ -238,6 +239,8 @@ function ProductDetail({ product, relatedProducts = [] }) {
 export const ProductDetailPage = withLifecycle(
   {
     onMount: () => {
+      if (isServer) return;
+
       loadProductDetailForPage(router.params.id);
     },
     watches: [() => [router.params.id], () => loadProductDetailForPage(router.params.id)],
