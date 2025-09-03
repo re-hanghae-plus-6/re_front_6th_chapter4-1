@@ -113,7 +113,7 @@ export class ServerRouter {
    * @param {string} search - location.search 또는 쿼리 문자열
    * @returns {Object} 파싱된 쿼리 객체
    */
-  static parseQuery = (search = window.location.search) => {
+  static parseQuery = (search) => {
     const params = new URLSearchParams(search);
     const query = {};
     for (const [key, value] of params) {
