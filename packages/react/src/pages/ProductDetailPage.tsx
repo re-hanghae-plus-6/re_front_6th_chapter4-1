@@ -1,17 +1,7 @@
-import { useState } from "react";
 import { getProduct, getProducts } from "../api/productApi";
 import { ErrorContent, PublicImage } from "../components";
-import {
-  initialProductState,
-  PRODUCT_ACTIONS,
-  ProductDetail,
-  productStore,
-  useLoadProductDetail,
-  useProductStore,
-  type Product,
-} from "../entities";
+import { ProductDetail, useLoadProductDetail, useProductStore, type Product } from "../entities";
 import { withServer } from "../router/withServer";
-import { isServer } from "../utils";
 import { PageWrapper } from "./PageWrapper";
 
 interface ServerResponse {
@@ -52,19 +42,7 @@ export const ProductDetailPage = withServer(
       };
     },
   },
-  ({ data }) => {
-    useState(() => {
-      if (isServer) {
-        productStore.dispatch({
-          type: PRODUCT_ACTIONS.SETUP,
-          payload: initialProductState,
-        });
-      }
-      productStore.dispatch({
-        type: PRODUCT_ACTIONS.SETUP,
-        payload: data,
-      });
-    });
+  () => {
     const { currentProduct: product, error, loading } = useProductStore();
 
     useLoadProductDetail();

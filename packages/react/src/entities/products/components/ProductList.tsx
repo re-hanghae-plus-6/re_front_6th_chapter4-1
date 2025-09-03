@@ -1,7 +1,7 @@
 import { PublicImage } from "../../../components";
 import { useRouterQuery } from "../../../router";
 import { useRouterContext } from "../../../router/hooks/useRouterContext";
-import { useProductStore } from "../hooks";
+import { useProductStore, useProductStoreContext } from "../hooks";
 import { loadProducts } from "../productUseCase";
 import { ProductCard, ProductCardSkeleton } from "./ProductCard";
 
@@ -9,6 +9,7 @@ import { ProductCard, ProductCardSkeleton } from "./ProductCard";
  * 상품 목록 컴포넌트
  */
 export function ProductList() {
+  const productStore = useProductStoreContext();
   const router = useRouterContext();
   const query = useRouterQuery();
   const { products, loading, error, totalCount } = useProductStore();
@@ -16,7 +17,7 @@ export function ProductList() {
 
   const retry = async () => {
     try {
-      await loadProducts(query, true);
+      await loadProducts(productStore, query, true);
     } catch (error) {
       console.error("재시도 실패:", error);
     }

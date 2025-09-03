@@ -1,20 +1,18 @@
 import type { RouterInstance } from "@hanghae-plus/lib";
-import { useEffect, useState, type FC } from "react";
+import { useEffect, type FC } from "react";
 import { getCategories, getProducts } from "../api/productApi";
 import {
-  initialProductState,
   loadNextProducts,
   loadProductsAndCategories,
-  PRODUCT_ACTIONS,
   ProductList,
-  productStore,
   SearchBar,
+  useProductStoreContext,
   type Categories,
   type Product,
+  type ProductStore,
 } from "../entities";
 import { useRouterContext } from "../router/hooks/useRouterContext";
 import { withServer } from "../router/withServer";
-import { isServer } from "../utils";
 import { PageWrapper } from "./PageWrapper";
 
 const headerLeft = (
@@ -29,10 +27,10 @@ const headerLeft = (
 let scrollHandlerRegistered = false;
 let abortController: AbortController | null = null;
 
-const registerScrollHandler = (router: RouterInstance<FC>) => {
+const registerScrollHandler = (productStore: ProductStore, router: RouterInstance<FC>) => {
   if (scrollHandlerRegistered) return;
   abortController = new AbortController();
-  window.addEventListener("scroll", () => loadNextProducts(router), abortController);
+  window.addEventListener("scroll", () => loadNextProducts(productStore, router), abortController);
   scrollHandlerRegistered = true;
 };
 
@@ -77,28 +75,18 @@ export const HomePage = withServer(
     },
   },
   ({ data }: { data: ServerResponse }) => {
-    useState(() => {
-      if (isServer) {
-        productStore.dispatch({
-          type: PRODUCT_ACTIONS.SETUP,
-          payload: initialProductState,
-        });
-      }
-      productStore.dispatch({
-        type: PRODUCT_ACTIONS.SETUP,
-        payload: data,
-      });
-    });
+    const productStore = useProductStoreContext();
+
     const router = useRouterContext();
 
     useEffect(() => {
-      registerScrollHandler(router);
+      registerScrollHandler(productStore, router);
       if (!data) {
-        loadProductsAndCategories(router);
+        loadProductsAndCategories(productStore, router);
       }
 
       return unregisterScrollHandler;
-    }, [router, data]);
+    }, [productStore, router, data]);
 
     return (
       <PageWrapper headerLeft={headerLeft}>

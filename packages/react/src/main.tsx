@@ -2,6 +2,8 @@ import { Router } from "@hanghae-plus/lib";
 import { createRoot, hydrateRoot } from "react-dom/client";
 import { App } from "./App";
 import { BASE_URL } from "./constants.ts";
+import { createProductStore } from "./entities/index.ts";
+import { ProductProvider } from "./entities/products/ProductContext.tsx";
 import { RouterContext } from "./router/hooks/useRouterContext.ts";
 import { routes } from "./router/router.ts";
 
@@ -19,23 +21,24 @@ function main() {
   const router = new Router(routes, BASE_URL);
   router.start();
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const initData: any = (window as any).__INITIAL_DATA__;
+
+  const renderApp = () => {
+    return (
+      <RouterContext value={router}>
+        <ProductProvider productStore={createProductStore(initData)}>
+          <App data={initData} />
+        </ProductProvider>
+      </RouterContext>
+    );
+  };
+
   const rootElement = document.getElementById("root")!;
-
-  const initData = (window as unknown as { __INITIAL_DATA__: unknown }).__INITIAL_DATA__;
-
   if (initData) {
-    hydrateRoot(
-      rootElement,
-      <RouterContext value={router}>
-        <App data={(window as unknown as { __INITIAL_DATA__: unknown }).__INITIAL_DATA__} />
-      </RouterContext>,
-    );
+    hydrateRoot(rootElement, renderApp());
   } else {
-    createRoot(rootElement).render(
-      <RouterContext value={router}>
-        <App />
-      </RouterContext>,
-    );
+    createRoot(rootElement).render(renderApp());
   }
 }
 
