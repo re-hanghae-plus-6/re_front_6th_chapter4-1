@@ -56,7 +56,7 @@ const render = async (url) => {
     }
   } catch (error) {
     console.error("Render error:", error);
-    return { html: "<div>Error</div>", head: "", initialData: {} };
+    return { html: `<div>Error: ${error.message}</div>`, head: "", initialData: {} };
   }
 };
 
@@ -99,9 +99,8 @@ if (prod) {
 app.use("*all", async (req, res) => {
   try {
     const url = req.originalUrl.replace(base, "");
-    const pathname = url.split("?")[0];
 
-    const { html, head, initialData } = await render(pathname, req.query);
+    const { html, head, initialData } = await render(url);
 
     const template = await getTemplate();
 
@@ -109,10 +108,11 @@ app.use("*all", async (req, res) => {
       ? `<script>window.__INITIAL_DATA__ = ${JSON.stringify(initialData)};</script>`
       : "";
 
-    const finalHtml = template
-      .replace("<!--app-html-->", html)
-      .replace("<!--app-head-->", head)
-      .replace("</head>", `${initialDataScript}</head>`);
+    const finalHtml = template.replace("<!--app-html-->", html).replace(
+      "<!--app-head-->",
+      `${head}
+      ${initialDataScript}`,
+    );
 
     res.status(200).set({ "Content-Type": "text/html" }).end(finalHtml);
   } catch (error) {

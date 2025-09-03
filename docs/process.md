@@ -340,3 +340,90 @@ GET /api/mocked-endpoint → MSW가 가로채서 모의 데이터 반환
 // MSW로 모킹되지 않은 API
 GET /api/products → MSW가 가로채지 않고 실제 서버로 전달
 ```
+
+## 문제 상황5
+
+serverRouter는 싱글 인스턴스로 사용하는데 main-server에서 serverRouter를 실행하여 query를 저장했지만
+HomePage내부에서는 router에 query가 저장되어 있지 않음
+
+### 에러 메시지
+
+```
+url in server ?search=%EC%A0%A4%EB%A6%AC
+
+create serverRouter
+
+pathname in main-server
+query in main-server { search: '젤리' }
+params in main-server {}
+
+router in HomePage ServerRouter {}
+query in HomePage {}
+searchQuery in SearchBar
+```
+
+### 원인
+
+```
+export const router = isServer ? serverRouter : new ClientRouter(BASE_URL);
+```
+
+이 isServer는 모듈 시점에 평가되기 때문에 처음 router.js가 import될 때 isServer 값이 결정됨. 그렇기 때문에 HomePage에서 사용될 때 serverRouter가 실행되기 전에 평가되므로 query가 없음
+
+### 해결
+
+router.query가 호출될 때마다 router가 평가되어야함
+
+Proxy를 사용하여 기본 동작을 가로채어 매번 평가당할 수 있게 함
+
+```js
+const person = { name: "김철수", age: 25 };
+
+console.log(person.name); // "김철수" 반환
+console.log(person.age); // 25 반환
+```
+
+```js
+const person = { name: "김철수", age: 25 };
+
+const personProxy = new Proxy(person, {
+  get(target, prop) {
+    console.log(`${prop} 속성에 접근했습니다!`);
+    return target[prop]; // 원래 값 반환
+  },
+});
+
+console.log(personProxy.name);
+// 출력: "name 속성에 접근했습니다!"
+// 반환: "김철수"
+
+console.log(personProxy.age);
+// 출력: "age 속성에 접근했습니다!"
+// 반환: 25
+```
+
+## 문제6: 클라이언트 라우터에서 프록시 사용 안됨
+
+```
+Uncaught TypeError: Cannot read private member #baseUrl from an object whose class did not declare it
+    at Proxy.addRoute (ClientRouter.js:67:39)
+    at render.js:7:8
+```
+
+### 원인
+
+클라이언트 라우터를 사용할 떄
+Proxy를 통해 ClientRouter의 private 필드(#baseUrl)에 접근하려고 할 때 발생
+
+### 해결
+
+```
+export const router = isServer ? routerProxy : new ClientRouter(BASE_URL);
+
+export const routerProxy = new Proxy(router, {
+  get(target, prop) {
+    const currentRouter = isServer ? serverRouter : new ClientRouter(BASE_URL);
+    return currentRouter[prop];
+  },
+});
+```

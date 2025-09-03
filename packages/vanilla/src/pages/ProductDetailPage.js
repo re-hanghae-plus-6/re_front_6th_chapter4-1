@@ -1,3 +1,4 @@
+import { getProduct, getProducts } from "../api/productApi.js";
 import { router, withLifecycle } from "../router";
 import { loadProductDetailForPage } from "../services";
 import { productStore } from "../stores";
@@ -237,12 +238,7 @@ function ProductDetail({ product, relatedProducts = [] }) {
 export const ProductDetailPage = withLifecycle(
   {
     onMount: () => {
-      // 서버에서 이미 데이터가 로드되었는지 확인
-      const state = productStore.getState();
-      if (!state.currentProduct) {
-        // 클라이언트에서만 데이터 로드
-        loadProductDetailForPage(router.params.id);
-      }
+      loadProductDetailForPage(router.params.id);
     },
     watches: [() => [router.params.id], () => loadProductDetailForPage(router.params.id)],
   },
@@ -251,9 +247,9 @@ export const ProductDetailPage = withLifecycle(
     const productState = productStore.getState();
 
     const product = serverData?.currentProduct || productState.currentProduct;
-    const relatedProducts = productState.relatedProducts || [];
-    const error = productState.error;
-    const loading = productState.loading;
+    const relatedProducts = serverData?.relatedProducts || productState.relatedProducts || [];
+    const error = serverData ? serverData.error : productState.error;
+    const loading = serverData ? serverData.loading : productState.loading;
 
     return PageWrapper({
       headerLeft: `
@@ -275,3 +271,53 @@ export const ProductDetailPage = withLifecycle(
     });
   },
 );
+
+ProductDetailPage.prefetch = async ({ params }) => {
+  const { id: productId } = params;
+
+  const currentProduct = productStore.getState().currentProduct;
+  if (productId === currentProduct?.productId) {
+    // 관련 상품 로드
+    const relatedProducts = await getRelatedProducts(currentProduct.category2, productId);
+    return {
+      currentProduct,
+      relatedProducts,
+      loading: false,
+      status: "done",
+    };
+  }
+
+  const product = await getProduct(productId);
+  const relatedProducts = await getRelatedProducts(product.category2, productId);
+
+  return {
+    currentProduct: product,
+    relatedProducts,
+    loading: false,
+    status: "done",
+  };
+};
+
+const getRelatedProducts = async (category2, excludeProductId) => {
+  const params = {
+    category2,
+    limit: 20, // 관련 상품 20개
+    page: 1,
+  };
+
+  const response = await getProducts(params);
+
+  // 현재 상품 제외
+  const relatedProducts = response.products.filter((product) => product.productId !== excludeProductId);
+
+  return relatedProducts;
+};
+
+ProductDetailPage.meta = (data) => {
+  const title = data?.currentProduct?.title;
+
+  if (!title) {
+    return `<title>상품 상세 - 쇼핑몰</title>`;
+  }
+  return `<title>${title} - 쇼핑몰</title>`;
+};

@@ -2,18 +2,14 @@ import { getCategories, getProducts } from "../api/productApi.js";
 import { ProductList, SearchBar } from "../components";
 import { router, withLifecycle } from "../router";
 import { loadProducts, loadProductsAndCategories } from "../services";
-import { productStore } from "../stores";
+import { productStore } from "../stores/productStore.js";
+import { isServer } from "../utils/envUtils.js";
 import { PageWrapper } from "./PageWrapper.js";
 
 export const HomePage = withLifecycle(
   {
     onMount: () => {
-      // 서버에서 이미 데이터가 로드되었는지 확인
-      const state = productStore.getState();
-      if (state.products.length === 0) {
-        // 클라이언트에서만 데이터 로드
-        loadProductsAndCategories();
-      }
+      loadProductsAndCategories();
     },
     watches: [
       () => {
@@ -23,17 +19,17 @@ export const HomePage = withLifecycle(
       () => loadProducts(true),
     ],
   },
-  (serverData) => {
+  (serverData, query) => {
     // 서버에서 프리패치된 데이터가 있으면 사용, 없으면 스토어에서 가져옴
     const productState = productStore.getState();
-    const { search: searchQuery, limit, sort, category1, category2 } = router.query;
 
+    const { search: searchQuery, limit, sort, category1, category2 } = isServer ? query : router.query;
     // 서버 데이터 우선, 없으면 스토어 데이터 사용
     const products = serverData?.products || productState.products;
     const categories = serverData?.categories || productState.categories;
     const totalCount = serverData?.totalCount || productState.totalCount;
-    const loading = productState.loading;
-    const error = productState.error;
+    const loading = serverData ? serverData.loading : productState.loading;
+    const error = serverData ? serverData.error : productState.error;
 
     const category = { category1, category2 };
     const hasMore = products.length < totalCount;
@@ -64,6 +60,7 @@ export const HomePage = withLifecycle(
 );
 
 HomePage.prefetch = async ({ query }) => {
+  console.log("query in prefetch", query);
   const [
     {
       products,
@@ -80,3 +77,5 @@ HomePage.prefetch = async ({ query }) => {
     status: "done",
   };
 };
+
+HomePage.meta = () => `<title>쇼핑몰 - 홈</title>`;
