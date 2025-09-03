@@ -39,7 +39,7 @@ if (!isProduction) {
 app.use("*all", async (req, res) => {
   try {
     const url = req.originalUrl.replace(base, "");
-    console.log("QUERY", req.query);
+
     /** @type {string} */
     let template;
     /** @type {import('./src/main-server.js').render} */

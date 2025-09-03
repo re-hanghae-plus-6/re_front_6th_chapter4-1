@@ -13,11 +13,6 @@ export class ServerRouter {
     this.#routes = new Map();
     this.#route = null;
     this.#baseUrl = baseUrl.replace(/\/$/, "");
-
-    // window.addEventListener("popstate", () => {
-    //   this.#route = this.#findRoute();
-    //   this.#observer.notify();
-    // });
   }
 
   get baseUrl() {
@@ -52,6 +47,7 @@ export class ServerRouter {
    */
   addRoute(path, handler) {
     // 경로 패턴을 정규식으로 변환
+
     const paramNames = [];
     const regexPath = path
       .replace(/:\w+/g, (match) => {
@@ -72,7 +68,10 @@ export class ServerRouter {
   findRoute(pathname) {
     for (const [routePath, route] of this.#routes) {
       const match = pathname.match(route.regex);
+      // console.log("PATH NAME:", pathname);
+      console.log("🎯 매칭된 라우트1:", this.#routes);
       if (match) {
+        console.log("🎯 매칭된 라우트2:", route, match);
         // 매치된 파라미터들을 객체로 변환
         const params = {};
         route.paramNames.forEach((name, index) => {
@@ -93,27 +92,7 @@ export class ServerRouter {
    * 라우터 시작
    */
   start() {
-    this.#route = this.findRoute(window.location.pathname);
+    this.#route = this.findRoute(this.#baseUrl);
     this.#observer.notify();
   }
-
-  /**
-   * 쿼리 파라미터를 객체로 파싱
-   * @param {string} search - location.search 또는 쿼리 문자열
-   * @returns {Object} 파싱된 쿼리 객체
-   */
-  static parseQuery = (search = window.location.search) => {
-    const params = new URLSearchParams(search);
-    const query = {};
-    for (const [key, value] of params) {
-      query[key] = value;
-    }
-    return query;
-  };
-
-  /**
-   * 객체를 쿼리 문자열로 변환
-   * @param {Object} query - 쿼리 객체
-   * @returns {string} 쿼리 문자열
-   */
 }

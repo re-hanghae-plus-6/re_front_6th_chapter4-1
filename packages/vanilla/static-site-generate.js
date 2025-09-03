@@ -38,7 +38,7 @@ async function generateStaticSite() {
     fs.writeFileSync("../../dist/vanilla/index.html", result);
   } catch (error) {
     console.error("SSG 생성 실패:", error);
-    throw error;
+    throw new Error(`SSG 생성 중 오류: ${error.message}`);
   } finally {
     // 서버들 종료 (에러 발생 여부와 관계없이 실행)
     if (vite) {

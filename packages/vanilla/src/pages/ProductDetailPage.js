@@ -34,7 +34,7 @@ const ErrorContent = ({ error }) => `
   </div>
 `;
 
-function ProductDetail({ product, relatedProducts = [] }) {
+export function ProductDetail({ product, relatedProducts = [] }) {
   const {
     productId,
     title,

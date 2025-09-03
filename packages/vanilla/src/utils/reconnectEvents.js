@@ -12,7 +12,6 @@ export function reconnectEvents() {
 
   addToCartButtons.forEach((button) => {
     button.addEventListener("click", (e) => {
-      console.log("🛒 장바구니 버튼 클릭됨:", button.dataset.productId);
       e.preventDefault();
       const productId = button.dataset.productId;
       if (productId) {
@@ -107,11 +106,9 @@ export function reconnectEvents() {
 
   productCards.forEach((card) => {
     card.addEventListener("click", (e) => {
-      console.log("📱 상품 카드 클릭됨:", card.dataset.productId);
       e.preventDefault();
       const productId = card.dataset.productId;
       if (productId) {
-        console.log("🚀 라우터 네비게이션 시도:", `/product/${productId}/`);
         router.navigate(`/product/${productId}/`);
       }
     });
