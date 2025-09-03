@@ -314,10 +314,7 @@ const getRelatedProducts = async (category2, excludeProductId) => {
 };
 
 ProductDetailPage.meta = (data) => {
-  const title = data?.currentProduct?.title;
+  const title = data?.currentProduct?.title || "";
 
-  if (!title) {
-    return `<title>상품 상세 - 쇼핑몰</title>`;
-  }
   return `<title>${title} - 쇼핑몰</title>`;
 };

@@ -10,7 +10,7 @@ export async function render(url) {
   // 3. 데이터 프리페칭
   const routeParams = { pathname, query, params };
   const data = await serverRouter.prefetch(routeParams);
-
+  console.log("here data:", data);
   const metaData = serverRouter.target.meta(data);
   const head = metaData;
 

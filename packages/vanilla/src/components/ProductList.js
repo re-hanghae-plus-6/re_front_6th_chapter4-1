@@ -57,7 +57,10 @@ export function ProductList({ products = [], loading = false, error = null, tota
       
       <!-- 상품 그리드 -->
       <div class="grid grid-cols-2 gap-4 mb-6" id="products-grid">
-        ${products.map((product) => ProductCard(product)).join("")}
+        ${products
+          .filter((product) => product != null)
+          .map((product) => ProductCard(product))
+          .join("")}
         
         <!-- 로딩 스켈레톤 -->
         ${loading ? loadingSkeleton : ""}
