@@ -20,6 +20,16 @@ interface ProductsResponse {
   };
 }
 
+// SSR(노드)에서는 절대 URL, 브라우저에서는 상대 URL 사용
+const getBaseUrl = () => {
+  if (typeof window !== "undefined") {
+    return "";
+  }
+  const prod = process.env.NODE_ENV === "production";
+
+  return prod ? "http://localhost:4176" : "http://localhost:5176";
+};
+
 export async function getProducts(params: StringRecord = {}): Promise<ProductsResponse> {
   const { limit = 20, search = "", category1 = "", category2 = "", sort = "price_asc" } = params;
   const page = params.current ?? params.page ?? 1;
@@ -33,19 +43,18 @@ export async function getProducts(params: StringRecord = {}): Promise<ProductsRe
     sort,
   });
 
-  const response = await fetch(`/api/products?${searchParams}`);
-
+  const response = await fetch(`${getBaseUrl()}/api/products?${searchParams.toString()}`);
   return await response.json();
 }
 
 // 상품 상세 조회
 export async function getProduct(productId: string): Promise<Product> {
-  const response = await fetch(`/api/products/${productId}`);
+  const response = await fetch(`${getBaseUrl()}/api/products/${productId}`);
   return await response.json();
 }
 
 // 카테고리 목록 조회
 export async function getCategories(): Promise<Categories> {
-  const response = await fetch("/api/categories");
+  const response = await fetch(`${getBaseUrl()}/api/categories`);
   return await response.json();
 }

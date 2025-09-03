@@ -24,6 +24,8 @@ export function ProductList() {
   const { products, loading, error, totalCount } = useProductStore();
   const hasMore = products.length < totalCount;
 
+  console.log("products", error);
+
   // 에러 상태
   if (error) {
     return (
