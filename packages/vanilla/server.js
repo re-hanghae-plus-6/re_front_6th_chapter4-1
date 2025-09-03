@@ -1,4 +1,5 @@
 import fs from "node:fs/promises";
+import path from "node:path";
 import express from "express";
 import { server } from "./src/mocks/serverBrowser.js";
 // Constants
@@ -34,6 +35,20 @@ if (!isProduction) {
   app.use(compression());
   app.use(base, sirv("./dist/vanilla", { extensions: [] }));
 }
+
+// SSG 파일 우선 서빙 (상품 상세페이지)
+app.get("/product/:id", (req, res, next) => {
+  const staticFile = path.join(process.cwd(), `dist/vanilla/product/${req.params.id}/index.html`);
+
+  // SSG 파일이 존재하면 우선 서빙
+  fs.access(staticFile)
+    .then(() => {
+      res.sendFile(path.resolve(staticFile));
+    })
+    .catch(() => {
+      next(); // SSG 파일이 없으면 SSR로 fallback
+    });
+});
 
 // Serve HTML - SSR 라우팅
 app.use("*all", async (req, res) => {

@@ -4,6 +4,8 @@ import { router, withLifecycle } from "../router";
 import { PageWrapper } from "./PageWrapper.js";
 import { isServer } from "../utils/isServer.js";
 import { PRODUCT_ACTIONS } from "../stores/actionTypes.js";
+import { createMemoryStorage } from "../lib/index.js";
+
 const loadingContent = `
   <div class="min-h-screen bg-gray-50 flex items-center justify-center">
     <div class="text-center">
@@ -238,7 +240,7 @@ export function ProductDetail({ product, relatedProducts = [] }) {
 export const ProductDetailPage = withLifecycle(
   {
     onMount: () => {
-      if (isServer()) return;
+      if (isServer()) createMemoryStorage();
       else {
         loadProductDetailForPage(router.params.id);
       }
