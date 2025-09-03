@@ -1,17 +1,25 @@
 const createMemoryStorage = () => {
   let value = {};
 
+  const getItem = (key) => (key in value ? String(value[key]) : null);
+  const setItem = (key, newValue) => {
+    value[key] = String(newValue);
+  };
+  const removeItem = (key) => {
+    delete value[key];
+  };
+  const clear = () => {
+    value = {};
+  };
+
   return {
-    get: (key) => (key in value ? value[key] : null),
-    set: (key, newValue) => {
-      value[key] = newValue;
-    },
-    remove: (key) => {
-      delete value[key];
-    },
-    clear: () => {
-      value = {};
-    },
+    getItem,
+    setItem,
+    removeItem,
+    clear,
+    get: getItem,
+    set: setItem,
+    remove: removeItem,
   };
 };
 
