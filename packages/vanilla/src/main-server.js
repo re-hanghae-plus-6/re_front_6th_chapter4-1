@@ -8,6 +8,10 @@ router.addRoute("/product/:id/", ProductDetailPage);
 export async function render(url, query = {}) {
   const matched = router.match(url);
 
+  console.log("👉 SSR Matched:", matched);
+  console.log("👉 SSR URL:", url);
+  console.log("👉 SSR Query:", query);
+
   if (!matched) {
     return {
       head: "<title>404</title>",
