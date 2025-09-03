@@ -107,10 +107,8 @@ export class ServerRouter {
    */
   start(pathname) {
     this.#route = this.#findRoute(pathname);
-    // 요청 스코프 컨텍스트 생성 및 params에 주입
     if (this.#route && typeof this.#createContext === "function") {
       const ctx = this.#createContext();
-      // router는 자신으로 설정
       ctx.router = this;
       this.#route.params = { ...(this.#route.params || {}), ctx };
     }
