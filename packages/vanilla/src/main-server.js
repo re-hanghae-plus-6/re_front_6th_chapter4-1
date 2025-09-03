@@ -1,4 +1,4 @@
-import { HomePage } from "./pages";
+import { HomePage } from "./pages/HomePage";
 
 export const render = async (url, query) => {
   console.log({ url, query });
