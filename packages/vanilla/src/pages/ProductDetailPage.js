@@ -240,21 +240,14 @@ export const ProductDetailPage = withLifecycle(
       if (typeof window === "undefined") return;
       loadProductDetailForPage(router.params.id);
     },
-    watches: [
-      () => {
-        [router.params.id];
-      },
-      () => {
-        loadProductDetailForPage(router.params.id);
-      },
-    ],
+    watches: [() => [router.params.id], () => loadProductDetailForPage(router.params.id)],
   },
   ({ initialData } = {}) => {
     // SSR - initialData, CSR - store
     const productDetailState = typeof window === "undefined" ? initialData : productStore.getState();
 
     const { currentProduct: product, relatedProducts = [], error, loading } = productDetailState;
-
+    console.log("product", relatedProducts);
     return PageWrapper({
       headerLeft: `
         <div class="flex items-center space-x-3">
