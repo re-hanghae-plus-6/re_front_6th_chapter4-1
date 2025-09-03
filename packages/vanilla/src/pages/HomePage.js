@@ -1,5 +1,5 @@
 import { ProductList, SearchBar } from "../components";
-import { productStore } from "../stores";
+import { PRODUCT_ACTIONS, productStore } from "../stores";
 import { router, withLifecycle } from "../router";
 import { loadProducts, loadProductsAndCategories } from "../services";
 import { PageWrapper } from "./PageWrapper.js";
@@ -7,19 +7,40 @@ import { PageWrapper } from "./PageWrapper.js";
 export const HomePage = withLifecycle(
   {
     onMount: () => {
+      if (typeof window === "undefined") return;
       loadProductsAndCategories();
     },
     watches: [
-      () => {
-        const { search, limit, sort, category1, category2 } = router.query;
-        return [search, limit, sort, category1, category2];
-      },
-      () => loadProducts(true),
+      [
+        () => {
+          const { search, limit, sort, category1, category2 } = router.query;
+          return [search, limit, sort, category1, category2];
+        },
+        () => {
+          loadProducts(true);
+        },
+      ],
     ],
   },
-  () => {
-    const productState = productStore.getState();
-    const { search: searchQuery, limit, sort, category1, category2 } = router.query;
+  ({ initialData = window.__INITIAL_DATA__, query = router.query } = {}) => {
+    if (!productStore.getState().products.length && initialData) {
+      productStore.dispatch({
+        type: PRODUCT_ACTIONS.SETUP,
+        payload: initialData,
+      });
+    }
+
+    // SSR - initialData, CSR - store
+    const productState = typeof window === "undefined" ? initialData : productStore.getState();
+
+    const {
+      search: searchQuery,
+      limit,
+      sort,
+      category1,
+      category2,
+    } = typeof window === "undefined" ? query : router.query;
+
     const { products, loading, error, totalCount, categories } = productState;
     const category = { category1, category2 };
     const hasMore = products.length < totalCount;
