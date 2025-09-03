@@ -88,7 +88,9 @@ HomePageComponent.ssr = async ({ query }) => {
   );
 
   try {
-    const [productsResponse, categories] = await Promise.all([getProducts(query), getCategories()]);
+    // SSR에서도 클라이언트와 동일한 정렬 기준 사용
+    const queryWithSort = { ...query, sort: query.sort || "price_asc" };
+    const [productsResponse, categories] = await Promise.all([getProducts(queryWithSort), getCategories()]);
 
     productStore.dispatch({
       type: PRODUCT_ACTIONS.SETUP,
