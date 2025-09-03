@@ -1,28 +1,18 @@
 /**
  * 간단한 SPA 라우터
  */
-import { createObserver } from "./createObserver.js";
 
 export class ServerRouter {
   #routes;
   #route;
-  #observer = createObserver();
-  #baseUrl;
 
-  constructor(baseUrl = "") {
+  constructor() {
     this.#routes = new Map();
     this.#route = null;
-    this.#baseUrl = baseUrl.replace(/\/$/, "");
+    // 라우트 등록
   }
 
-  get baseUrl() {
-    return this.#baseUrl;
-  }
-
-  set query(newQuery) {
-    const newUrl = ServerRouter.getUrl(newQuery, this.#baseUrl);
-    this.push(newUrl);
-  }
+  set query(newQuery) {}
 
   get params() {
     return this.#route?.params ?? {};
@@ -36,10 +26,6 @@ export class ServerRouter {
     return this.#route?.handler;
   }
 
-  subscribe(fn) {
-    this.#observer.subscribe(fn);
-  }
-
   /**
    * 라우트 등록
    * @param {string} path - 경로 패턴 (예: "/product/:id")
@@ -47,7 +33,6 @@ export class ServerRouter {
    */
   addRoute(path, handler) {
     // 경로 패턴을 정규식으로 변환
-
     const paramNames = [];
     const regexPath = path
       .replace(/:\w+/g, (match) => {
@@ -68,10 +53,7 @@ export class ServerRouter {
   findRoute(pathname) {
     for (const [routePath, route] of this.#routes) {
       const match = pathname.match(route.regex);
-      // console.log("PATH NAME:", pathname);
-      console.log("🎯 매칭된 라우트1:", this.#routes);
       if (match) {
-        console.log("🎯 매칭된 라우트2:", route, match);
         // 매치된 파라미터들을 객체로 변환
         const params = {};
         route.paramNames.forEach((name, index) => {
@@ -89,10 +71,16 @@ export class ServerRouter {
   }
 
   /**
+   * URL 매칭 (SSR용)
+   */
+  match(url) {
+    return this.findRoute(url);
+  }
+
+  /**
    * 라우터 시작
    */
-  start() {
-    this.#route = this.findRoute(this.#baseUrl);
-    this.#observer.notify();
+  start(pathname) {
+    this.#route = this.findRoute(pathname);
   }
 }

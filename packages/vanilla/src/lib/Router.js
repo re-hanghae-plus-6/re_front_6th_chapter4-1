@@ -99,6 +99,13 @@ export class Router {
   }
 
   /**
+   * URL 매칭 (SSR용)
+   */
+  match(url) {
+    return this.#findRoute(url);
+  }
+
+  /**
    * 네비게이션 실행
    * @param {string} url - 이동할 경로
    */

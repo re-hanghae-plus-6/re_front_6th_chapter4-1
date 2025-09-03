@@ -2,7 +2,8 @@ import { productStore } from "../stores";
 import { loadProductDetailForPage } from "../services";
 import { router, withLifecycle } from "../router";
 import { PageWrapper } from "./PageWrapper.js";
-
+import { isServer } from "../utils/isServer.js";
+import { PRODUCT_ACTIONS } from "../stores/actionTypes.js";
 const loadingContent = `
   <div class="min-h-screen bg-gray-50 flex items-center justify-center">
     <div class="text-center">
@@ -237,11 +238,24 @@ export function ProductDetail({ product, relatedProducts = [] }) {
 export const ProductDetailPage = withLifecycle(
   {
     onMount: () => {
-      loadProductDetailForPage(router.params.id);
+      if (isServer()) return;
+      else {
+        loadProductDetailForPage(router.params.id);
+      }
     },
     watches: [() => [router.params.id], () => loadProductDetailForPage(router.params.id)],
   },
-  () => {
+  (initialData = window.__INITIAL_DATA__) => {
+    if (initialData && initialData.currentProduct) {
+      productStore.dispatch({
+        type: PRODUCT_ACTIONS.SETUP,
+        payload: {
+          ...initialData,
+          loading: false,
+          status: "done",
+        },
+      });
+    }
     const { currentProduct: product, relatedProducts = [], error, loading } = productStore.getState();
 
     return PageWrapper({

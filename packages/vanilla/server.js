@@ -63,15 +63,16 @@ app.use("*all", async (req, res) => {
 
     // SSR 렌더링 수행
     // 인자를 전달도 해야함
-    const rendered = await render(pathname || "/", queryObj);
+    const rendered = await render("/" + pathname || "/", queryObj);
 
     // rendered가 문자열이면 html만, 객체면 html과 head 추출
     const htmlContent = typeof rendered === "string" ? rendered : rendered?.html || "";
     const headContent = typeof rendered === "object" ? rendered?.head || "" : "";
 
+    console.log("rendered", rendered.initialData);
     // 클라이언트용 순수 데이터 추출 (HTML 코드 제외)
-    const clientData = typeof rendered === "object" ? rendered.data || {} : {};
-
+    const clientData = typeof rendered === "object" ? rendered.initialData || {} : {};
+    console.log("clientData", clientData);
     // HTML 템플릿에 렌더링 결과 주입
     const html = template
       .replace(`<!--app-head-->`, headContent)

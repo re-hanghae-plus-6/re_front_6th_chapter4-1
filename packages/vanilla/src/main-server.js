@@ -1,84 +1,47 @@
-import { HomePage, ProductDetailPage, ProductDetail } from "./pages";
-import { PageWrapper } from "./pages/PageWrapper.js";
-import { getCategories, getProducts, getProduct } from "./api/productApi.js";
-import { ServerRouter } from "./lib";
+import { HomePage, ProductDetailPage, NotFoundPage } from "./pages";
+import { fetchProductDataSSR, fetchProductsDataSSR } from "./api/fetchDataSSR.js";
+import { ServerRouter } from "./lib/ServerRouter.js";
 
-export const render = async (url, query) => {
-  // ServerRouter 인스턴스 생성
+export async function render(url, query = {}) {
   const router = new ServerRouter();
-
-  // 라우트 등록 (render.js와 동일하게)
   router.addRoute("/", HomePage);
   router.addRoute("/product/:id/", ProductDetailPage);
+  const matched = router.match(url);
 
-  router.start(url, query);
-  // URL에 맞는 라우트 찾기
-  const route = router.findRoute(url);
-  console.log("🎯 라우트:", route);
-
-  let pageTitle = "쇼핑몰 - 홈";
-  let initialData = {};
-  let htmlContent = "";
-
-  if (route && route.path === "/product/:id/") {
-    // 상품 상세 페이지
-    const productId = route.params.id;
-    const product = await getProduct(productId);
-
-    // 관련 상품도 로드 (같은 category2)
-    const relatedProductsResponse = await getProducts({
-      category2: product.category2,
-      limit: 20,
-    });
-    const relatedProducts = relatedProductsResponse.products.filter((p) => p.productId !== productId);
-
-    pageTitle = `${product.title} - 쇼핑몰`;
-    initialData = {
-      product,
-      relatedProducts: relatedProducts.slice(0, 20),
+  if (!matched) {
+    return {
+      head: "<title>404</title>",
+      html: NotFoundPage(),
+      initialData: null,
     };
+  }
 
-    // 🎯 기존 컴포넌트 재사용으로 하드코딩 제거
-    const headerLeft = `
-      <button onclick="window.history.back()" 
-              class="p-2 text-gray-700 hover:text-gray-900 transition-colors">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-        </svg>
-      </button>
-      <h1 class="text-lg font-bold text-gray-900">상품 상세</h1>
-    `;
+  const { path, params } = matched;
 
-    htmlContent = PageWrapper({
-      headerLeft,
-      children: ProductDetail({ product, relatedProducts }),
-    });
+  let initialData;
+
+  if (path === "/") {
+    initialData = await fetchProductsDataSSR(query);
+  } else if (path === "/product/:id/") {
+    initialData = await fetchProductDataSSR(params.id);
+  }
+
+  let pageTitle;
+  let pageHtml;
+
+  if (path === "/") {
+    pageTitle = "쇼핑몰 - 홈";
+    pageHtml = HomePage(url, query, initialData);
+  } else if (path === "/product/:id/") {
+    pageTitle = initialData?.currentProduct?.title ? `${initialData?.currentProduct?.title} - 쇼핑몰` : "쇼핑몰";
+    pageHtml = ProductDetailPage(initialData);
   } else {
-    // 홈페이지 (기본)
-    const [
-      {
-        products,
-        pagination: { total },
-      },
-      categories,
-    ] = await Promise.all([getProducts(query), getCategories()]);
-
-    initialData = {
-      products,
-      categories,
-      totalCount: total,
-    };
-
-    htmlContent = HomePage(url, query, {
-      ...initialData,
-      loading: false,
-      status: "done",
-    });
+    pageHtml = NotFoundPage();
   }
 
   return {
     head: `<title>${pageTitle}</title>`,
-    html: htmlContent,
-    data: initialData,
+    html: pageHtml,
+    initialData,
   };
-};
+}
