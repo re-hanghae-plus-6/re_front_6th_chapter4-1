@@ -1,39 +1,12 @@
-/**
- * 간단한 SPA 라우터
- */
-
 export class ServerRouter {
-  #routes;
-  #route;
+  #routes = new Map();
+  #baseUrl;
+  #lastMatch = null;
 
-  constructor(routerMatches) {
-    this.#routes = new Map();
-    this.#route = null;
-
-    Object.entries(routerMatches).forEach(([pathname, page]) => {
-      this.addRoute(pathname, page);
-    });
+  constructor(baseUrl = "") {
+    this.#baseUrl = baseUrl.replace(/\/$/, "");
   }
 
-  get params() {
-    return this.#route?.params ?? {};
-  }
-
-  get target() {
-    return this.#route?.handler;
-  }
-
-  get query() {
-    return {};
-  }
-
-  set query(_) {}
-
-  /**
-   * 라우트 등록
-   * @param {string} path
-   * @param {Function} handler
-   */
   addRoute(path, handler) {
     const paramNames = [];
     const regexPath = path
@@ -42,36 +15,57 @@ export class ServerRouter {
         return "([^/]+)";
       })
       .replace(/\//g, "\\/");
-
-    const regex = new RegExp(`^${regexPath}$`);
-
-    this.#routes.set(path, {
-      regex,
-      paramNames,
-      handler,
-    });
+    const regex = new RegExp(`^${this.#baseUrl}${regexPath}$`);
+    this.#routes.set(path, { regex, paramNames, handler });
   }
 
-  #findRoute(pathname) {
+  match(url) {
+    const { pathname, search } = new URL(url, "http://localhost");
     for (const [routePath, route] of this.#routes) {
       const match = pathname.match(route.regex);
       if (match) {
         const params = {};
-        route.paramNames.forEach((name, index) => {
-          params[name] = match[index + 1];
+        route.paramNames.forEach((name, idx) => {
+          params[name] = match[idx + 1];
         });
 
-        return {
+        const matchResult = {
           ...route,
           params,
           path: routePath,
+          query: ServerRouter.parseQuery(search),
         };
+
+        this.#lastMatch = matchResult;
+        return matchResult;
       }
     }
+    this.#lastMatch = null;
     return null;
   }
 
-  start(pathname) {
-    this.#route = this.#findRoute(pathname);
+  get params() {
+    return this.#lastMatch?.params ?? {};
+  }
+
+  get query() {
+    return this.#lastMatch?.query ?? {};
+  }
+
+  get path() {
+    return this.#lastMatch?.path ?? "";
+  }
+
+  get target() {
+    return this.#lastMatch?.handler;
+  }
+
+  static parseQuery(search = "") {
+    const params = new URLSearchParams(search);
+    const query = {};
+    for (const [key, value] of params) {
+      query[key] = value;
+    }
+    return query;
   }
 }

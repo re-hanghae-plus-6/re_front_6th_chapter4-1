@@ -237,15 +237,23 @@ function ProductDetail({ product, relatedProducts = [] }) {
 export const ProductDetailPage = withLifecycle(
   {
     onMount: () => {
-      if (typeof window !== "undefined") return;
+      if (typeof window === "undefined") return;
       loadProductDetailForPage(router.params.id);
     },
-    watches: [() => [router.params.id], () => loadProductDetailForPage(router.params.id)],
+    watches: [
+      () => {
+        [router.params.id];
+      },
+      () => {
+        loadProductDetailForPage(router.params.id);
+      },
+    ],
   },
-  //eslint-disable-next-line no-unused-vars
-  ({ query = router.query, productInfo = null }) => {
-    const state = productInfo ?? productStore.getState();
-    const { currentProduct: product, relatedProducts = [], error, loading } = state;
+  ({ initialData } = {}) => {
+    // SSR - initialData, CSR - store
+    const productDetailState = typeof window === "undefined" ? initialData : productStore.getState();
+
+    const { currentProduct: product, relatedProducts = [], error, loading } = productDetailState;
 
     return PageWrapper({
       headerLeft: `
