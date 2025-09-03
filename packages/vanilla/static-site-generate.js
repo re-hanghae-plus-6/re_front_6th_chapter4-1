@@ -1,8 +1,8 @@
 import { readFileSync, writeFileSync, mkdirSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
-import { render } from "./src/main-server.js";
-import { getProducts } from "./src/api/productApi.js";
+import { createServer } from "vite";
+import { mswServer } from "./src/mocks/node.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -16,16 +16,32 @@ const TEMPLATE_PATH = join(__dirname, "index.html");
 async function generateStaticSite() {
   console.log("정적 사이트 생성 시작...");
 
+  let vite;
   try {
-    // 1. 템플릿 로드
+    // 1. MSW 서버 시작
+    mswServer.listen({
+      onUnhandledRequest: "bypass",
+    });
+    console.log("MSW 서버 시작 완료");
+
+    // 2. Vite 서버 생성
+    vite = await createServer({
+      server: { middlewareMode: true },
+      appType: "custom",
+    });
+
+    // 3. 렌더 함수 로드 (Vite를 통해 모든 import 처리)
+    const { render } = await vite.ssrLoadModule("./src/main-server.js");
+
+    // 4. 템플릿 로드
     const template = readFileSync(TEMPLATE_PATH, "utf-8");
     console.log("HTML 템플릿 로드 완료");
 
-    // 2. 페이지 목록 생성
-    const pages = await getPages();
+    // 5. 페이지 목록 생성
+    const pages = await getPages(vite);
     console.log(`총 ${pages.length}개 페이지 생성 예정`);
 
-    // 3. 각 페이지 렌더링 및 저장
+    // 6. 각 페이지 렌더링 및 저장
     for (const page of pages) {
       console.log(`페이지 생성 중: ${page.url}`);
 
@@ -61,13 +77,19 @@ async function generateStaticSite() {
   } catch (error) {
     console.error("정적 사이트 생성 오류:", error);
     process.exit(1);
+  } finally {
+    // Vite 서버와 MSW 서버 정리
+    if (vite) {
+      await vite.close();
+    }
+    mswServer.close();
   }
 }
 
 /**
  * 생성할 페이지 목록 반환
  */
-async function getPages() {
+async function getPages(vite) {
   const pages = [
     // 홈페이지
     {
@@ -84,7 +106,8 @@ async function getPages() {
   ];
 
   try {
-    // 상품 목록 조회 (동적 라우트용)
+    // 상품 목록 조회 (동적 라우트용) - Vite를 통해 로드
+    const { getProducts } = await vite.ssrLoadModule("./src/api/productApi.js");
     const productsResponse = await getProducts({ limit: 20, page: 1 });
     const products = productsResponse.products;
 
