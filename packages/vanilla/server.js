@@ -62,7 +62,14 @@ async function startServer() {
 
     console.log(" serve html ");
     try {
-      const url = req.originalUrl.replace(base, "");
+      // baseUrl 제거하되 앞의 /는 유지
+      let url = req.originalUrl.replace(base, "");
+      if (!url.startsWith("/")) {
+        url = "/" + url;
+      }
+      if (url === "/" && req.originalUrl !== base) {
+        url = "/";
+      }
 
       /** @type {string} */
       let template;

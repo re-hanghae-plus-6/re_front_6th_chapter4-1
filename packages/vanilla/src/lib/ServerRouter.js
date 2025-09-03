@@ -36,19 +36,13 @@ export class ServerRouter {
    */
   addRoute(path, handler) {
     const paramNames = [];
-    // 앞의 /를 제거하고 정규식 생성 (서버에서 base를 제거한 URL과 매칭하기 위해)
-    const pathWithoutSlash = path.startsWith("/") ? path.slice(1) : path;
-    let regexPath = pathWithoutSlash
+    // 경로 패턴을 정규식으로 변환 (다른 라우터들과 일관성 유지)
+    const regexPath = path
       .replace(/:\w+/g, (match) => {
-        paramNames.push(match.slice(1));
+        paramNames.push(match.slice(1)); // ':id' -> 'id'
         return "([^/]+)";
       })
       .replace(/\//g, "\\/");
-
-    // 홈페이지 라우트 (/)의 경우 빈 문자열과 슬래시 모두 매칭하도록 수정
-    if (path === "/") {
-      regexPath = "(?:^$|^\\/$)";
-    }
 
     const regex = new RegExp(`^${regexPath}$`);
 
@@ -68,7 +62,9 @@ export class ServerRouter {
    */
   findRoute(url) {
     const pathname = url.split("?")[0]; // 쿼리 파라미터 제거
-    const normalizedPath = pathname === "" ? "/" : pathname; // 빈 문자열을 "/"로 정규화
+
+    // baseUrl 제거 (서버에서 baseUrl이 제거된 경로로 전달되는 경우 처리)
+    const normalizedPath = pathname.replace(this.#baseUrl, "") || "/";
 
     console.log("서버 라우트 찾기:", normalizedPath);
     console.log("등록된 서버 라우트들:", Array.from(this.#routes.keys()));
