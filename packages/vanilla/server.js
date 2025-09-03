@@ -92,13 +92,13 @@ app.use((req, res, next) => {
 // 정적 파일 서빙
 // 개발 환경에서는 Vite가 정적 파일을 처리하므로 별도 설정 불필요
 if (prod) {
-  app.use(base, sirv("dist/vanilla", { dev: false }));
+  app.use(base, sirv("dist/vanilla", { extensions: [] }));
 }
 
 // 초기 페이지 로드 시 서버에서 HTML 생성 - SSR
 app.use("*all", async (req, res) => {
   try {
-    const url = req.originalUrl.replace(base, "");
+    const url = req.originalUrl.replace(base, "") || "/";
 
     const { html, head, initialData } = await render(url);
 
