@@ -1,4 +1,4 @@
-import { routerInstance, withLifecycle } from "../router";
+import { routerInstance, withLifecycle, withUniversal } from "../router";
 import { loadProductDetailForPage } from "../services";
 import { productStore } from "../stores";
 import { PageWrapper } from "./PageWrapper";
@@ -236,18 +236,20 @@ function ProductDetail({ product, relatedProducts = [] }) {
 /**
  * 상품 상세 페이지 컴포넌트
  */
-export const ProductDetailPage = withLifecycle(
-  {
-    onMount: () => {
-      loadProductDetailForPage(routerInstance.params.id);
+export const ProductDetailPage = withUniversal(
+  withLifecycle(
+    {
+      onMount: () => {
+        loadProductDetailForPage(routerInstance.params.id);
+      },
+      watches: [() => [routerInstance.params.id], () => loadProductDetailForPage(routerInstance.params.id)],
     },
-    watches: [() => [routerInstance.params.id], () => loadProductDetailForPage(routerInstance.params.id)],
-  },
-  () => {
-    const { currentProduct: product, relatedProducts = [], error, loading } = productStore.getState();
+    ({ data }) => {
+      const storeState = data ? data : productStore.getState();
+      const { currentProduct: product, relatedProducts = [], error, loading } = storeState;
 
-    return PageWrapper({
-      headerLeft: /* HTML */ `
+      return PageWrapper({
+        headerLeft: /* HTML */ `
         <div class="flex items-center space-x-3">
           <button onclick="window.history.back()" 
                   class="p-2 text-gray-700 hover:text-gray-900 transition-colors">
@@ -258,11 +260,12 @@ export const ProductDetailPage = withLifecycle(
           <h1 class="text-lg font-bold text-gray-900">상품 상세</h1>
         </div>
       `.trim(),
-      children: loading
-        ? loadingContent
-        : error && !product
-          ? ErrorContent({ error })
-          : ProductDetail({ product, relatedProducts }),
-    });
-  },
+        children: loading
+          ? loadingContent
+          : error && !product
+            ? ErrorContent({ error })
+            : ProductDetail({ product, relatedProducts }),
+      });
+    },
+  ),
 );
