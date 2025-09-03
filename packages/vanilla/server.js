@@ -1,7 +1,6 @@
 import express from "express";
 import fs from "node:fs/promises";
 import path from "node:path";
-import { mswServer } from "./src/mocks/node.js";
 
 const prod = process.env.NODE_ENV === "production";
 const port = process.env.PORT || 5173;
@@ -10,10 +9,6 @@ const base = process.env.BASE || (prod ? "/front_6th_chapter4-1/vanilla/" : "/")
 const templateHtml = prod ? await fs.readFile("./dist/vanilla/index.html", "utf-8") : "";
 
 const app = express();
-
-mswServer.listen({
-  onUnhandledRequest: "bypass",
-});
 
 // 불필요한 요청 무시
 app.get("/favicon.ico", (_, res) => {
