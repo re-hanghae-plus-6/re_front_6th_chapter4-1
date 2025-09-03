@@ -6,7 +6,7 @@ import { HomePage, ProductDetailPage, NotFoundPage } from "./pages";
 
 export const render = async (url: string, query: Record<string, string>) => {
   const router = createServerRouter(url);
-
+  console.log({ url, query });
   // 라우트 설정
   router.addRoute("/", HomePage);
   router.addRoute("/product/:id/", ProductDetailPage);
