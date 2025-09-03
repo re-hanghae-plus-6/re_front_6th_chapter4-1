@@ -13,7 +13,7 @@ async function startServer() {
   // Cached production assets
   let templateHtml = "";
   if (isProduction) {
-    templateHtml = await fs.readFile("./dist/client/index.html", "utf-8");
+    templateHtml = await fs.readFile("./dist/vanilla/index.html", "utf-8");
   }
 
   // MSW 서버 시작 (항상)
@@ -47,7 +47,7 @@ async function startServer() {
     const compression = (await import("compression")).default;
     const sirv = (await import("sirv")).default;
     app.use(compression());
-    app.use(base, sirv("./dist/client", { extensions: [] }));
+    app.use(base, sirv("./dist/vanilla", { extensions: [] }));
   }
 
   // API 라우트 - 새로운 API 라우터 사용
@@ -77,7 +77,7 @@ async function startServer() {
         template = templateHtml;
         // 빌드된 main-server.js 파일 로드
         const path = await import("node:path");
-        const serverFilePath = "./dist/server/main-server.js";
+        const serverFilePath = "./dist/vanilla-ssr/main-server.js";
         render = (await import(path.resolve(serverFilePath))).render;
       }
 

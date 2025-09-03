@@ -7,12 +7,14 @@ import { BASE_URL } from "./constants.js";
 import { productStore, PRODUCT_ACTIONS } from "./stores";
 
 const enableMocking = () => {
-  // 프로덕션 환경에서는 MSW 비활성화
-  if (import.meta.env.PROD) {
-    console.log("프로덕션 환경: MSW 비활성화");
+  // SSR 환경에서는 이미 서버에서 MSW가 동작하므로 클라이언트 MSW 비활성화
+  // window.__INITIAL_DATA__가 있으면 SSR로 판단
+  if (typeof window !== "undefined" && window.__INITIAL_DATA__) {
+    console.log("SSR 환경: 클라이언트 MSW 비활성화 (서버 MSW 사용)");
     return Promise.resolve();
   }
 
+  console.log("CSR 환경: 클라이언트 MSW 활성화");
   return import("./mocks/browser.js").then(({ worker }) =>
     worker.start({
       serviceWorker: {

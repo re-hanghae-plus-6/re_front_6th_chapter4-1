@@ -7,8 +7,8 @@ import { mswServer } from "./src/mocks/node.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const DIST_DIR = join(__dirname, "dist");
-const TEMPLATE_PATH = join(__dirname, "index.html");
+const DIST_DIR = join(__dirname, "../../dist/vanilla");
+const TEMPLATE_PATH = join(__dirname, "../../dist/vanilla/index.html");
 
 /**
  * 정적 사이트 생성
@@ -46,12 +46,12 @@ async function generateStaticSite() {
       console.log(`페이지 생성 중: ${page.url}`);
 
       try {
-        const { html, head, initialData } = await render(page.url, page.query || {});
+        const { html, head, __INITIAL_DATA__ } = await render(page.url, page.query || {});
 
         // 초기 데이터 스크립트 생성
         const initialDataScript = `
           <script>
-            window.__INITIAL_DATA__ = ${JSON.stringify(initialData)};
+            window.__INITIAL_DATA__ = ${JSON.stringify(__INITIAL_DATA__)};
           </script>
         `;
 

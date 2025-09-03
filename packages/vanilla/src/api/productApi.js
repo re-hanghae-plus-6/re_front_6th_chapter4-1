@@ -1,13 +1,9 @@
-// 서버 환경에서 사용할 baseUrl 생성
-function getServerBaseUrl() {
-  if (typeof window !== "undefined") {
-    return ""; // 클라이언트 환경에서는 빈 문자열
-  }
-
-  // 서버 환경: NODE_ENV에 따라 포트 결정
-  const port = process.env.NODE_ENV === "production" ? "4174" : "5174";
-  return `http://localhost:${port}`;
-}
+// jihoon님 방식: 포트에 상관없이 동작하는 URL 처리
+const withBaseUrl = (url) => {
+  // 서버 환경에서는 절대 경로를 사용해야하기 때문에 localhost 설정
+  // MSW 핸들러에서 포트 상관없이 처리함
+  return typeof window === "undefined" ? new URL(url, `http://localhost`) : url;
+};
 
 export async function getProducts(params = {}) {
   const { limit = 20, search = "", category1 = "", category2 = "", sort = "price_asc" } = params;
@@ -22,20 +18,17 @@ export async function getProducts(params = {}) {
     sort,
   });
 
-  const baseUrl = getServerBaseUrl();
-  const response = await fetch(`${baseUrl}/api/products?${searchParams}`);
+  const response = await fetch(withBaseUrl(`/api/products?${searchParams}`));
 
   return await response.json();
 }
 
 export async function getProduct(productId) {
-  const baseUrl = getServerBaseUrl();
-  const response = await fetch(`${baseUrl}/api/products/${productId}`);
+  const response = await fetch(withBaseUrl(`/api/products/${productId}`));
   return await response.json();
 }
 
 export async function getCategories() {
-  const baseUrl = getServerBaseUrl();
-  const response = await fetch(`${baseUrl}/api/categories`);
+  const response = await fetch(withBaseUrl("/api/categories"));
   return await response.json();
 }
