@@ -7,8 +7,8 @@ import { PageWrapper } from "./PageWrapper.js";
 
 export const HomePage = withLifecycle(
   {
-    ssr: async () => {
-      await loadProductsAndCategories();
+    ssr: async (params) => {
+      await loadProductsAndCategories(params?.query);
       const data = productStore.getState();
       return {
         products: data.products,
@@ -26,7 +26,7 @@ export const HomePage = withLifecycle(
     },
     watches: [
       () => {
-        const { search, limit, sort, category1, category2 } = router.query;
+        const { search, limit, sort, category1, category2 } = router.query || {};
         return [search, limit, sort, category1, category2];
       },
       () => loadProducts(true),
@@ -34,7 +34,7 @@ export const HomePage = withLifecycle(
   },
   () => {
     const productState = productStore.getState();
-    const { search: searchQuery, limit, sort, category1, category2 } = router.query;
+    const { search: searchQuery, limit, sort, category1, category2 } = router.query || {};
     const { products, loading, error, totalCount, categories } = productState;
     const category = { category1, category2 };
     const hasMore = products.length < totalCount;

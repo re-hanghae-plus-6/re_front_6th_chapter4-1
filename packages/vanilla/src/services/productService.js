@@ -2,8 +2,9 @@ import { getCategories, getProduct, getProducts } from "../api/productApi";
 import { initialProductState, productStore, PRODUCT_ACTIONS } from "../stores";
 import { router } from "../router";
 
-export const loadProductsAndCategories = async () => {
-  router.query = { current: undefined }; // 항상 첫 페이지로 초기화
+export const loadProductsAndCategories = async (queryParams = null) => {
+  const query = queryParams || router.query || {};
+  router.query = { ...query, current: undefined };
   productStore.dispatch({
     type: PRODUCT_ACTIONS.SETUP,
     payload: {
