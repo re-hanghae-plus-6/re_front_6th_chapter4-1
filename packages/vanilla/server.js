@@ -1,19 +1,22 @@
 import express from "express";
-import fs from "fs";
+// import { generateCartHTML } from "./src/ssr/ssr-cart.js";
+// import { model } from "./src/model.js";
 
+// const prod = process.env.NODE_ENV === "production";
 const port = process.env.PORT || 5173;
+// const base = process.env.BASE || (prod ? "/front_6th_chapter4-1/vanilla/" : "/");
 
 const app = express();
 
-const render = () => {
-  // 파일 시스템 가져오기.
-  const html = fs.readFileSync("./dist/vanilla/index.html", "utf-8");
-  console.log(html);
-  return html.replace("<!--app-html-->", `<div>hrell</div>`);
-};
+// JSON 요청 본문을 파싱하는 미들웨어 추가
+app.use(express.json());
 
+// static 파일 등록
+
+app.use("/src", express.static("src"));
+app.use(express.static("dist/vanilla"));
 app.get("*all", (req, res) => {
-  res.send(render());
+  res.send("<div>hello</div>");
 });
 
 // Start http server
