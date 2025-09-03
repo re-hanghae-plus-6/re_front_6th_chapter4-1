@@ -1,34 +1,49 @@
 import express from "express";
+import { getConfig } from "./server/config.js";
+import { asyncHandler, errorHandler, notFoundHandler } from "./server/errorHandler.js";
+import { setupMiddleware } from "./server/middleware.js";
+import { renderWithInitialData } from "./server/render.js";
+import { createHTMLTemplate } from "./server/template.js";
+import { server } from "./src/mocks/server-browser.js";
 
-const prod = process.env.NODE_ENV === "production";
-const port = process.env.PORT || 5173;
-const base = process.env.BASE || (prod ? "/front_6th_chapter4-1/vanilla/" : "/");
+// 설정 가져오기
+const config = getConfig();
+const { port, base } = config;
+
+// MSW 서버 시작
+server.listen({
+  onUnhandledRequest: "bypass",
+});
 
 const app = express();
 
-const render = () => {
-  return `<div>안녕하세요</div>`;
-};
+// 미들웨어 설정
+const vite = await setupMiddleware(app, config);
 
-app.get("*all", (req, res) => {
-  res.send(
-    `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Vanilla Javascript SSR</title>
-</head>
-<body>
-<div id="app">${render()}</div>
-</body>
-</html>
-  `.trim(),
-  );
-});
+// 라우트 설정
+app.get(
+  "*all",
+  asyncHandler(async (req, res) => {
+    // SSR 렌더링 (초기 데이터 포함)
+    const { appHtml, initialData } = await renderWithInitialData(req.url, req.query, vite);
 
-// Start http server
+    // HTML 템플릿 생성 (초기 데이터 주입)
+    const html = createHTMLTemplate(appHtml, "", initialData);
+
+    res.send(html);
+  }),
+);
+
+// 404 에러 처리
+app.use(notFoundHandler);
+
+// 에러 처리 미들웨어
+app.use(errorHandler);
+
+// 서버 시작
 app.listen(port, () => {
-  console.log(`React Server started at http://localhost:${port}`);
+  console.log(`🚀 Vanilla SSR Server started at http://localhost:${port}`);
+  console.log(`🌍 Environment: ${process.env.NODE_ENV || "development"}`);
+  console.log(`📍 Base URL: ${base}`);
+  console.log(`⏰ Started at: ${new Date().toISOString()}`);
 });

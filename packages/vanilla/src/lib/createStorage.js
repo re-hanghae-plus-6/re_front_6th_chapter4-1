@@ -33,3 +33,11 @@ export const createStorage = (key, storage = window.localStorage) => {
 
   return { get, set, reset };
 };
+
+export const createSSRStorage = (key) => {
+  return {
+    get: () => null,
+    set: () => {},
+    reset: () => {},
+  };
+};

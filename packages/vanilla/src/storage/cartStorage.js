@@ -1,3 +1,4 @@
-import { createStorage } from "../lib";
+import { createSSRStorage, createStorage } from "../lib/index.js";
 
-export const cartStorage = createStorage("shopping_cart");
+export const cartStorage =
+  typeof window !== "undefined" ? createStorage("shopping_cart") : createSSRStorage("shopping_cart");

@@ -1,6 +1,6 @@
-import { cartStore, productStore, uiStore } from "./stores";
-import { router } from "./router";
-import { HomePage, NotFoundPage, ProductDetailPage } from "./pages";
+import { HomePage, NotFoundPage, ProductDetailPage } from "./pages/index.js";
+import { router } from "./router/index.js";
+import { cartStore, productStore, uiStore } from "./stores/index.js";
 import { withBatch } from "./utils";
 
 // 홈 페이지 (상품 목록)
