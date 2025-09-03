@@ -1,5 +1,5 @@
 import express from "express";
-// import { generateCartHTML } from "./src/ssr/ssr-cart.js";
+import { generateHTML } from "./src/ssr.js";
 // import { model } from "./src/model.js";
 
 // const prod = process.env.NODE_ENV === "production";
@@ -12,11 +12,10 @@ const app = express();
 app.use(express.json());
 
 // static 파일 등록
+app.use("/src", express.static("./src"));
 
-app.use("/src", express.static("src"));
-app.use(express.static("dist/vanilla"));
 app.get("*all", (req, res) => {
-  res.send("<div>hello</div>");
+  res.send(generateHTML({ todoItems: ["test", "test"] }));
 });
 
 // Start http server
