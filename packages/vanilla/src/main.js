@@ -67,7 +67,7 @@ function main() {
   router.start();
 }
 
-if (import.meta.env.MODE !== "test") {
+if (import.meta.env.MODE !== "test" && typeof window !== "undefined") {
   enableMocking().then(main);
 } else {
   main();
