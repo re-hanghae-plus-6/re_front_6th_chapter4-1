@@ -242,7 +242,7 @@ export const ProductDetailPage = withLifecycle(
     },
     watches: [() => [router.params.id], () => loadProductDetailForPage(router.params.id)],
   },
-  ({ initialData } = {}) => {
+  ({ initialData = window.__INITIAL_DATA__ } = {}) => {
     // SSR - initialData, CSR - store
     const productDetailState = typeof window === "undefined" ? initialData : productStore.getState();
 

@@ -31,7 +31,7 @@ export async function render(url, query = {}) {
 
   if (path === "/") {
     pageTitle = "쇼핑몰 - 홈";
-    pageHtml = HomePage({ initialData });
+    pageHtml = HomePage({ initialData, query });
   } else if (path === "/product/:id/") {
     pageTitle = initialData?.currentProduct?.title ? `${initialData?.currentProduct?.title} - 쇼핑몰` : "쇼핑몰";
     pageHtml = ProductDetailPage({ initialData });

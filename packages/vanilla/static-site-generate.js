@@ -10,12 +10,13 @@ const { server } = await vite.ssrLoadModule("/src/mocks/node.js");
 server.listen();
 
 const { getProducts } = await vite.ssrLoadModule("/src/api/productApi.js");
+const { render } = await vite.ssrLoadModule("/src/main-server.js");
+
+const template = fs.readFileSync("../../dist/vanilla/index.html", "utf-8");
 
 async function generateStaticSite(url, query) {
   // HTML 템플릿 읽기
-  const template = fs.readFileSync("../../dist/vanilla/index.html", "utf-8");
 
-  const { render } = await vite.ssrLoadModule("/src/main-server.js");
   const rendered = await render(url, query);
 
   const html = template
