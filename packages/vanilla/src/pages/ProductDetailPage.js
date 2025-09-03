@@ -1,6 +1,6 @@
-import { productStore } from "../stores";
-import { loadProductDetailForPage } from "../services";
 import { router, withLifecycle } from "../router";
+import { loadProductDetailForPage } from "../services";
+import { productStore } from "../stores";
 import { PageWrapper } from "./PageWrapper.js";
 
 const loadingContent = `
@@ -35,6 +35,18 @@ const ErrorContent = ({ error }) => `
 `;
 
 function ProductDetail({ product, relatedProducts = [] }) {
+  // product가 null인 경우 처리
+  if (!product) {
+    return `
+      <div class="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div class="text-center">
+          <h1 class="text-2xl font-bold text-red-600 mb-4">상품을 찾을 수 없습니다</h1>
+          <p class="text-gray-600">요청하신 상품이 존재하지 않거나 삭제되었습니다.</p>
+        </div>
+      </div>
+    `;
+  }
+
   const {
     productId,
     title,

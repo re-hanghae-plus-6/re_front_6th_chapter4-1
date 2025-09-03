@@ -4,10 +4,16 @@ import { asyncHandler, errorHandler, notFoundHandler } from "./server/errorHandl
 import { setupMiddleware } from "./server/middleware.js";
 import { renderWithInitialData } from "./server/render.js";
 import { createHTMLTemplate } from "./server/template.js";
+import { server } from "./src/mocks/server-browser.js";
 
 // 설정 가져오기
 const config = getConfig();
 const { port, base } = config;
+
+// MSW 서버 시작
+server.listen({
+  onUnhandledRequest: "bypass",
+});
 
 const app = express();
 

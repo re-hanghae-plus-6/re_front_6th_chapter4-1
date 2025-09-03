@@ -1,3 +1,4 @@
+import { productStore } from "../src/stores/productStore.js";
 import { serverStateManager } from "./stateManager.js";
 
 /**
@@ -143,6 +144,20 @@ const renderHomePageWithData = async (query, vite = null) => {
   }
 
   console.log("🎨 홈페이지 컴포넌트 렌더링 시작 (초기 데이터 포함)");
+
+  // 서버 상태를 productStore에 주입
+  productStore.dispatch({
+    type: "SETUP",
+    payload: {
+      products: state.products,
+      totalCount: state.totalCount,
+      loading: false,
+      error: null,
+      status: "done",
+      categories: state.categories,
+    },
+  });
+
   const html = HomePage("", query, state);
 
   console.log("✅ 홈페이지 SSR 렌더링 완료 (초기 데이터 포함), HTML 길이:", html.length);
@@ -204,6 +219,20 @@ const renderProductDetailWithData = async (productId, query, vite = null) => {
   }
 
   console.log("🎨 상품 상세 컴포넌트 렌더링 시작 (초기 데이터 포함)");
+
+  // 서버 상태를 productStore에 주입
+  productStore.dispatch({
+    type: "SETUP",
+    payload: {
+      currentProduct: state.product,
+      relatedProducts: [],
+      loading: false,
+      error: null,
+      status: "done",
+      categories: state.categories,
+    },
+  });
+
   const html = ProductDetailPage(`/product/${productId}/`, query, state);
 
   console.log("✅ 상품 상세 SSR 렌더링 완료 (초기 데이터 포함), HTML 길이:", html.length);
