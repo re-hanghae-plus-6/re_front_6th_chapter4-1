@@ -49,72 +49,35 @@ const HomePageComponent = withLifecycle(
   },
 );
 
-// SSR 메서드 추가
+// SSR 메서드 - 로딩 상태 없이 완전한 데이터만 반환
 HomePageComponent.ssr = async ({ query }) => {
   const { getProducts, getCategories } = await import("../api/productApi.js");
-  const { createStore } = await import("../lib/createStore.js");
-  const { PRODUCT_ACTIONS } = await import("../stores/actionTypes.js");
-
-  const productStore = createStore(
-    (state, action) => {
-      switch (action.type) {
-        case PRODUCT_ACTIONS.SET_STATUS:
-          return { ...state, status: action.payload };
-        case PRODUCT_ACTIONS.SET_CATEGORIES:
-          return { ...state, categories: action.payload, loading: false, error: null, status: "done" };
-        case PRODUCT_ACTIONS.SET_PRODUCTS:
-          return {
-            ...state,
-            products: action.payload.products,
-            totalCount: action.payload.totalCount,
-            loading: false,
-            error: null,
-            status: "done",
-          };
-        case PRODUCT_ACTIONS.SETUP:
-          return { ...state, ...action.payload };
-        default:
-          return state;
-      }
-    },
-    {
-      products: [],
-      totalCount: 0,
-      loading: true,
-      error: null,
-      status: "idle",
-      categories: {},
-    },
-  );
 
   try {
-    // SSR에서도 클라이언트와 동일한 정렬 기준 사용
+    // SSR에서는 항상 완전한 데이터를 받아온 후 렌더링
     const queryWithSort = { ...query, sort: query.sort || "price_asc" };
     const [productsResponse, categories] = await Promise.all([getProducts(queryWithSort), getCategories()]);
 
-    productStore.dispatch({
-      type: PRODUCT_ACTIONS.SETUP,
-      payload: {
-        products: productsResponse.products,
-        totalCount: productsResponse.pagination.total,
-        categories,
-        loading: false,
-        status: "done",
-      },
-    });
-
-    return productStore.getState();
+    // SSR에서는 loading: false로 항상 설정 (로딩 상태 없음)
+    return {
+      products: productsResponse.products,
+      totalCount: productsResponse.pagination.total,
+      categories,
+      loading: false, // SSR에서는 항상 false
+      error: null,
+      status: "done",
+    };
   } catch (error) {
     console.error("홈페이지 SSR 데이터 로드 실패:", error);
-    productStore.dispatch({
-      type: PRODUCT_ACTIONS.SETUP,
-      payload: {
-        loading: false,
-        error: error.message,
-        status: "done",
-      },
-    });
-    return productStore.getState();
+    // 에러 발생 시에도 로딩 상태는 false
+    return {
+      products: [],
+      totalCount: 0,
+      categories: {},
+      loading: false, // 에러 시에도 로딩 상태 없음
+      error: error.message,
+      status: "done",
+    };
   }
 };
 

@@ -7,7 +7,46 @@
  */
 async function getProductsHandler(req, res) {
   const items = await import("../mocks/items.json", { with: { type: "json" } });
-  const products = items.default || [];
+  let products = [...(items.default || [])];
+
+  // MSW 핸들러와 동일한 필터링 및 정렬 로직
+  const { search = "", category1 = "", category2 = "", sort = "price_asc" } = req.query;
+
+  // 검색 필터
+  if (search) {
+    products = products.filter(
+      (item) =>
+        item.title.toLowerCase().includes(search.toLowerCase()) ||
+        item.brand.toLowerCase().includes(search.toLowerCase()),
+    );
+  }
+
+  // 카테고리 필터
+  if (category1) {
+    products = products.filter((item) => item.category1 === category1);
+  }
+  if (category2) {
+    products = products.filter((item) => item.category2 === category2);
+  }
+
+  // 정렬 (기본값: price_asc)
+  const sortType = sort || "price_asc";
+  switch (sortType) {
+    case "price_asc":
+      products.sort((a, b) => parseInt(a.lprice) - parseInt(b.lprice));
+      break;
+    case "price_desc":
+      products.sort((a, b) => parseInt(b.lprice) - parseInt(a.lprice));
+      break;
+    case "name_asc":
+      products.sort((a, b) => a.title.localeCompare(b.title, "ko"));
+      break;
+    case "name_desc":
+      products.sort((a, b) => b.title.localeCompare(a.title, "ko"));
+      break;
+    default:
+      products.sort((a, b) => parseInt(a.lprice) - parseInt(b.lprice));
+  }
 
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 20;

@@ -38,25 +38,24 @@ function filterProducts(products, query) {
     filtered = filtered.filter((item) => item.category2 === query.category2);
   }
 
-  // 정렬
-  if (query.sort) {
-    switch (query.sort) {
-      case "price_asc":
-        filtered.sort((a, b) => parseInt(a.lprice) - parseInt(b.lprice));
-        break;
-      case "price_desc":
-        filtered.sort((a, b) => parseInt(b.lprice) - parseInt(a.lprice));
-        break;
-      case "name_asc":
-        filtered.sort((a, b) => a.title.localeCompare(b.title, "ko"));
-        break;
-      case "name_desc":
-        filtered.sort((a, b) => b.title.localeCompare(a.title, "ko"));
-        break;
-      default:
-        // 기본은 가격 낮은 순
-        filtered.sort((a, b) => parseInt(a.lprice) - parseInt(b.lprice));
-    }
+  // 정렬 (기본값: price_asc)
+  const sortType = query.sort || "price_asc";
+  switch (sortType) {
+    case "price_asc":
+      filtered.sort((a, b) => parseInt(a.lprice) - parseInt(b.lprice));
+      break;
+    case "price_desc":
+      filtered.sort((a, b) => parseInt(b.lprice) - parseInt(a.lprice));
+      break;
+    case "name_asc":
+      filtered.sort((a, b) => a.title.localeCompare(b.title, "ko"));
+      break;
+    case "name_desc":
+      filtered.sort((a, b) => b.title.localeCompare(a.title, "ko"));
+      break;
+    default:
+      // 기본은 가격 낮은 순
+      filtered.sort((a, b) => parseInt(a.lprice) - parseInt(b.lprice));
   }
 
   return filtered;

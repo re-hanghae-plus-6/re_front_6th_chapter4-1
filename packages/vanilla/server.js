@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import express from "express";
 import { ApiRouter } from "./src/lib/ApiRouter.js";
 import { registerApiRoutes } from "./src/api/routes.js";
+import { mswServer } from "./src/mocks/node.js";
 
 // Constants
 const isProduction = process.env.NODE_ENV === "production";
@@ -10,6 +11,14 @@ const base = process.env.BASE || "/";
 
 // Cached production assets
 const templateHtml = isProduction ? await fs.readFile("./dist/client/index.html", "utf-8") : "";
+
+// MSW 서버 시작 (개발 환경에서만)
+if (!isProduction) {
+  mswServer.listen({
+    onUnhandledRequest: "bypass",
+  });
+  console.log("MSW 서버 시작 완료");
+}
 
 // Create http server
 const app = express();
@@ -44,6 +53,7 @@ app.use("/api", apiRouter.middleware.bind(apiRouter));
 
 // Serve HTML - 모든 라우트에 대해
 app.use(async (req, res) => {
+  console.log(" serve html ");
   try {
     const url = req.originalUrl.replace(base, "");
 
@@ -63,6 +73,7 @@ app.use(async (req, res) => {
 
     const query = Object.fromEntries(new URLSearchParams(req.url.split("?")[1] || ""));
     const rendered = await render(url, query);
+    console.log(rendered);
 
     // 초기 데이터 스크립트 생성
     const initialDataScript = `

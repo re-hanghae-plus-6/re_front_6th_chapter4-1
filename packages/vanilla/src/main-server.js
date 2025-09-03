@@ -6,7 +6,7 @@ const serverRouter = new ServerRouter();
 registerRoutes(serverRouter);
 
 /**
- * 서버에서 데이터 프리페칭 - 새로운 SSR 메서드 사용
+ * 서버에서 데이터 프리페칭 - SSR에서는 로딩 상태 없이 완전한 데이터만 반환
  */
 async function prefetchData(route, params, query) {
   try {
@@ -15,16 +15,24 @@ async function prefetchData(route, params, query) {
       console.log("SSR 데이터 프리페칭 시작:", route.path);
       const data = await route.handler.ssr({ params, query });
       console.log("SSR 데이터 프리페칭 완료:", route.path);
-      return data;
+
+      // SSR에서는 항상 loading: false로 보장
+      return {
+        ...data,
+        loading: false, // SSR에서는 항상 false
+      };
     }
 
-    // SSR 메서드가 없는 경우 빈 객체 반환
+    // SSR 메서드가 없는 경우 기본 상태 반환 (로딩 상태 없음)
     console.log("SSR 메서드가 없는 페이지:", route.path);
-    return {};
+    return {
+      loading: false, // SSR에서는 항상 false
+      status: "done",
+    };
   } catch (error) {
     console.error("서버 데이터 프리페칭 실패:", error);
     return {
-      loading: false,
+      loading: false, // 에러 시에도 로딩 상태 없음
       error: error.message,
       status: "done",
     };
@@ -74,7 +82,10 @@ export const render = async (pathname, query = {}) => {
             <p class="text-gray-600">페이지를 찾을 수 없습니다.</p>
           </div>
         </div>`,
-        __INITIAL_DATA__: {},
+        __INITIAL_DATA__: {
+          loading: false, // 404 페이지에서도 로딩 상태 없음
+          status: "done",
+        },
       };
     }
 
@@ -108,7 +119,11 @@ export const render = async (pathname, query = {}) => {
           <p class="text-gray-600">잠시 후 다시 시도해주세요.</p>
         </div>
       </div>`,
-      __INITIAL_DATA__: {},
+      __INITIAL_DATA__: {
+        loading: false, // 에러 시에도 로딩 상태 없음
+        error: error.message,
+        status: "done",
+      },
     };
   }
 };

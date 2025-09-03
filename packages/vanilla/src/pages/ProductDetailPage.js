@@ -265,35 +265,9 @@ const ProductDetailPageComponent = withLifecycle(
   },
 );
 
-// SSR 메서드 추가
+// SSR 메서드 - 로딩 상태 없이 완전한 데이터만 반환
 ProductDetailPageComponent.ssr = async ({ params }) => {
   const { getProduct, getProducts } = await import("../api/productApi.js");
-  const { createStore } = await import("../lib/createStore.js");
-  const { PRODUCT_ACTIONS } = await import("../stores/actionTypes.js");
-
-  const productStore = createStore(
-    (state, action) => {
-      switch (action.type) {
-        case PRODUCT_ACTIONS.SET_STATUS:
-          return { ...state, status: action.payload };
-        case PRODUCT_ACTIONS.SET_CURRENT_PRODUCT:
-          return { ...state, currentProduct: action.payload, loading: false, error: null, status: "done" };
-        case PRODUCT_ACTIONS.SET_RELATED_PRODUCTS:
-          return { ...state, relatedProducts: action.payload, status: "done" };
-        case PRODUCT_ACTIONS.SETUP:
-          return { ...state, ...action.payload };
-        default:
-          return state;
-      }
-    },
-    {
-      currentProduct: null,
-      relatedProducts: [],
-      loading: true,
-      error: null,
-      status: "idle",
-    },
-  );
 
   try {
     console.log("상품 상세 페이지 SSR 시작:", params.id);
@@ -305,10 +279,7 @@ ProductDetailPageComponent.ssr = async ({ params }) => {
       throw new Error("Product not found");
     }
 
-    productStore.dispatch({
-      type: PRODUCT_ACTIONS.SET_CURRENT_PRODUCT,
-      payload: product,
-    });
+    let relatedProducts = [];
 
     // 관련 상품 로드
     if (product.category2) {
@@ -319,27 +290,28 @@ ProductDetailPageComponent.ssr = async ({ params }) => {
         page: 1,
       });
 
-      const relatedProducts = relatedResponse.products.filter((p) => p.productId !== params.id);
+      relatedProducts = relatedResponse.products.filter((p) => p.productId !== params.id);
       console.log("관련 상품 로드 완료:", relatedProducts.length, "개");
-
-      productStore.dispatch({
-        type: PRODUCT_ACTIONS.SET_RELATED_PRODUCTS,
-        payload: relatedProducts,
-      });
     }
 
-    return productStore.getState();
+    // SSR에서는 loading: false로 항상 설정 (로딩 상태 없음)
+    return {
+      currentProduct: product,
+      relatedProducts,
+      loading: false, // SSR에서는 항상 false
+      error: null,
+      status: "done",
+    };
   } catch (error) {
     console.error("상품 상세 페이지 SSR 실패:", error);
-    productStore.dispatch({
-      type: PRODUCT_ACTIONS.SETUP,
-      payload: {
-        loading: false,
-        error: error.message,
-        status: "done",
-      },
-    });
-    return productStore.getState();
+    // 에러 발생 시에도 로딩 상태는 false
+    return {
+      currentProduct: null,
+      relatedProducts: [],
+      loading: false, // 에러 시에도 로딩 상태 없음
+      error: error.message,
+      status: "done",
+    };
   }
 };
 
