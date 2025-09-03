@@ -14,6 +14,7 @@ export const RouterProvider = ({
   return <RouterContext.Provider value={router}>{children}</RouterContext.Provider>;
 };
 
+/* eslint-disable react-refresh/only-export-components */
 export const useRouterContext = () => {
   const router = useContext(RouterContext);
   if (!router) {

@@ -6,6 +6,15 @@ const port = process.env.PORT || 5174;
 const base = process.env.BASE || (prod ? "/front_6th_chapter4-1/react/" : "/");
 
 const templateHtml = prod ? await fs.readFile("./dist/react/index.html", "utf-8") : "";
+// Add Vite or respective production middlewares
+/** @type {import('vite').ViteDevServer | undefined} */
+let vite;
+const { createServer } = await import("vite");
+vite = await createServer({
+  server: { middlewareMode: true },
+  appType: "custom",
+  base,
+});
 
 const app = express();
 
@@ -13,16 +22,8 @@ const app = express();
 app.get("/.well-known/appspecific/com.chrome.devtools.json", (_, res) => {
   res.status(204).end();
 });
-// Add Vite or respective production middlewares
-/** @type {import('vite').ViteDevServer | undefined} */
-let vite;
+
 if (!prod) {
-  const { createServer } = await import("vite");
-  vite = await createServer({
-    server: { middlewareMode: true },
-    appType: "custom",
-    base,
-  });
   app.use(vite.middlewares);
 } else {
   const compression = (await import("compression")).default;

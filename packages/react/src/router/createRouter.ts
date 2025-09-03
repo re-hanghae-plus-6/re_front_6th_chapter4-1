@@ -11,11 +11,7 @@ export const createClientRouter = () => {
   return router;
 };
 
-export const createServerRouter = (url?: string) => {
+export const createServerRouter = () => {
   const router = new Router<FunctionComponent>(BASE_URL);
-  // 서버에서는 초기 URL만 설정
-  if (url) {
-    router.push(url);
-  }
   return router;
 };

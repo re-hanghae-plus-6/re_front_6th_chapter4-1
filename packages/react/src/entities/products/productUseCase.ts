@@ -3,12 +3,30 @@ import { router } from "../../router";
 import type { StringRecord } from "../../types";
 import { initialProductState, PRODUCT_ACTIONS, productStore } from "./productStore";
 import { isNearBottom } from "../../utils";
+import { getInitialData } from "../../utils/ssr";
 
 const createErrorMessage = (error: unknown, defaultMessage = "알 수 없는 오류 발생") =>
   error instanceof Error ? error.message : defaultMessage;
 
 export const loadProductsAndCategories = async () => {
   router.query = { current: undefined }; // 항상 첫 페이지로 초기화
+
+  // SSR 데이터가 있는지 확인
+  const ssrData = getInitialData();
+  if (ssrData && router.route?.path === "/") {
+    productStore.dispatch({
+      type: PRODUCT_ACTIONS.SETUP,
+      payload: {
+        products: ssrData.products,
+        categories: ssrData.categories,
+        totalCount: ssrData.totalCount,
+        loading: false,
+        status: "done",
+      },
+    });
+    return;
+  }
+
   productStore.dispatch({
     type: PRODUCT_ACTIONS.SETUP,
     payload: {
@@ -112,6 +130,24 @@ export const loadProductDetailForPage = async (productId: string) => {
       }
       return;
     }
+
+    // SSR 데이터가 있는지 확인
+    const ssrData = getInitialData();
+    if (ssrData && router.route?.path === "/product/:id/" && ssrData.currentProduct?.productId === productId) {
+      productStore.dispatch({
+        type: PRODUCT_ACTIONS.SETUP,
+        payload: {
+          ...initialProductState,
+          currentProduct: ssrData.currentProduct,
+          relatedProducts: ssrData.relatedProducts,
+          loading: false,
+          status: "done",
+          error: null,
+        },
+      });
+      return;
+    }
+
     // 현재 상품 클리어
     productStore.dispatch({
       type: PRODUCT_ACTIONS.SETUP,

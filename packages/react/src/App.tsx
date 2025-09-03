@@ -19,17 +19,25 @@ const CartInitializer = () => {
 /**
  * 전체 애플리케이션 렌더링
  */
-export const App = ({ router }: { router: Router<FunctionComponent> }) => {
+const AppContent = () => {
   const PageComponent = useCurrentPage();
 
   return (
     <>
-      <RouterProvider router={router}>
-        <ToastProvider>
-          <ModalProvider>{PageComponent ? <PageComponent /> : null}</ModalProvider>
-        </ToastProvider>
-        <CartInitializer />
-      </RouterProvider>
+      <ToastProvider>
+        <ModalProvider>{PageComponent ? <PageComponent /> : null}</ModalProvider>
+      </ToastProvider>
+      <CartInitializer />
     </>
+  );
+};
+
+export const App = ({ router: routerProp }: { router?: Router<FunctionComponent> } = {}) => {
+  const currentRouter = routerProp || router;
+
+  return (
+    <RouterProvider router={currentRouter}>
+      <AppContent />
+    </RouterProvider>
   );
 };

@@ -47,7 +47,7 @@ export class Router<Handler extends (...args: any[]) => any> {
   }
 
   get query(): StringRecord {
-    return Router.parseQuery(window.location.search);
+    return Router.parseQuery(typeof window !== "undefined" ? window.location.search : "");
   }
 
   set query(newQuery: QueryPayload) {
@@ -88,8 +88,8 @@ export class Router<Handler extends (...args: any[]) => any> {
     });
   }
 
-  #findRoute(url = window.location.pathname) {
-    const { pathname } = new URL(url, window.location.origin);
+  #findRoute(url = typeof window !== "undefined" ? window.location.pathname : "/") {
+    const { pathname } = new URL(url, typeof window !== "undefined" ? window.location.origin : "http://localhost");
     for (const [routePath, route] of this.#routes) {
       const match = pathname.match(route.regex);
       if (match) {
@@ -114,10 +114,10 @@ export class Router<Handler extends (...args: any[]) => any> {
       // baseUrl이 없으면 자동으로 붙여줌
       const fullUrl = url.startsWith(this.#baseUrl) ? url : this.#baseUrl + (url.startsWith("/") ? url : "/" + url);
 
-      const prevFullUrl = `${window.location.pathname}${window.location.search}`;
+      const prevFullUrl = typeof window !== "undefined" ? `${window.location.pathname}${window.location.search}` : "/";
 
-      // 히스토리 업데이트
-      if (prevFullUrl !== fullUrl) {
+      // 히스토리 업데이트 (브라우저에서만)
+      if (typeof window !== "undefined" && prevFullUrl !== fullUrl) {
         window.history.pushState(null, "", fullUrl);
       }
 
@@ -133,7 +133,7 @@ export class Router<Handler extends (...args: any[]) => any> {
     this.#observer.notify();
   }
 
-  static parseQuery = (search = window.location.search) => {
+  static parseQuery = (search = typeof window !== "undefined" ? window.location.search : "") => {
     const params = new URLSearchParams(search);
     const query: StringRecord = {};
     for (const [key, value] of params) {
@@ -164,6 +164,7 @@ export class Router<Handler extends (...args: any[]) => any> {
     });
 
     const queryString = Router.stringifyQuery(updatedQuery);
-    return `${baseUrl}${window.location.pathname.replace(baseUrl, "")}${queryString ? `?${queryString}` : ""}`;
+    const pathname = typeof window !== "undefined" ? window.location.pathname : "/";
+    return `${baseUrl}${pathname.replace(baseUrl, "")}${queryString ? `?${queryString}` : ""}`;
   };
 }
