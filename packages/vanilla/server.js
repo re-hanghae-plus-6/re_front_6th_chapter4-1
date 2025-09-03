@@ -108,11 +108,10 @@ app.use("*all", async (req, res) => {
       ? `<script>window.__INITIAL_DATA__ = ${JSON.stringify(initialData)};</script>`
       : "";
 
-    const finalHtml = template.replace("<!--app-html-->", html).replace(
-      "<!--app-head-->",
-      `${head}
-      ${initialDataScript}`,
-    );
+    const finalHtml = template
+      .replace("<!--app-html-->", html)
+      .replace("<!--app-head-->", head)
+      .replace("</head>", `${initialDataScript}</head>`);
 
     res.status(200).set({ "Content-Type": "text/html" }).end(finalHtml);
   } catch (error) {

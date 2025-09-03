@@ -1,6 +1,9 @@
 // API 기본 URL 설정
 const getApiBaseUrl = async () => {
-  if (import.meta.env.SSR) {
+  // Node.js 환경(서버 또는 SSG)인지 확인
+  const isServerSide = typeof window === "undefined" || (import.meta.env && import.meta.env.SSR);
+
+  if (isServerSide) {
     // 서버 환경에서는 절대 URL 사용
     // 개발 환경: 5173, SSR 서버: 5174
     const port = process.env.PORT || 5174;
