@@ -44,10 +44,10 @@ async function generateStaticSite(url, query) {
 const { products } = await getProducts();
 
 // 실행
-generateStaticSite("/", {});
-generateStaticSite("/404", {});
+await generateStaticSite("/", {});
+await generateStaticSite("/404", {});
 for (let i = 0; i < products.length; i++) {
-  generateStaticSite(`/product/${products[i].productId}/`, {});
+  await generateStaticSite(`/product/${products[i].productId}/`, {});
 }
 
 vite.close();
