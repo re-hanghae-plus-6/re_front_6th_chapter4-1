@@ -70,7 +70,7 @@ async function mockGetProducts(query = {}) {
     search: query?.search ?? "",
     category1: query?.category1 ?? "",
     category2: query?.category2 ?? "",
-    sort: query?.sort ?? "name_desc",
+    sort: query?.sort ?? "price_asc",
   };
 
   const filteredProducts = filterProducts(items, normalized);
