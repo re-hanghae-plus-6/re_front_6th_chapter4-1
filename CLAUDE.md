@@ -309,27 +309,81 @@ render(); // 클라이언트 렌더링 시작
 
 ### Express SSR 서버
 
-- [ ] Express 미들웨어 기반 서버 구현
-- [ ] 개발/프로덕션 환경 분기 처리
-- [ ] HTML 템플릿 치환 (`<!--app-html-->`, `<!--app-head-->`)
+- [x] Express 미들웨어 기반 서버 구현 (`server.js` 완성)
+- [x] 개발/프로덕션 환경 분기 처리
+- [x] HTML 템플릿 치환 (`<!--app-html-->`, `<!--app-head-->`)
 
 ### 서버 사이드 렌더링
 
-- [ ] 서버에서 동작하는 Router 구현
-- [ ] 서버 데이터 프리페칭 (상품 목록, 상품 상세)
+- [ ] 서버에서 동작하는 Router 구현 (`main-server.js` 플레이스홀더 상태)
+- [ ] 서버 데이터 프리페칭 (상품 목록, 상품 상세) - Mock API 함수 필요
 - [ ] 서버 상태관리 초기화
 
 ### 클라이언트 Hydration
 
-- [ ] `window.__INITIAL_DATA__` 스크립트 주입
-- [ ] 클라이언트 상태 복원
+- [x] `window.__INITIAL_DATA__` 스크립트 주입 구조 (`server.js` 완성)
+- [ ] 클라이언트 상태 복원 (`main.js`에 하이드레이션 로직 없음)
 - [ ] 서버-클라이언트 데이터 일치
 
 ### Static Site Generation
 
-- [ ] 동적 라우트 SSG (상품 상세 페이지들)
+- [ ] 동적 라우트 SSG (`static-site-generate.js` 플레이스홀더 상태)
 - [ ] 빌드 타임 페이지 생성
 - [ ] 파일 시스템 기반 배포
+
+## 현재 구현 상태 분석
+
+### ✅ **구현 완료된 부분**
+
+1. **Express 서버 인프라** (`packages/vanilla/server.js`)
+   - Express 5.x 호환 라우팅 패턴
+   - 개발/프로덕션 환경별 미들웨어 설정
+   - Vite 개발 서버 통합
+   - 템플릿 치환 및 초기 데이터 주입
+
+2. **클라이언트 인프라**
+   - Router 클래스 (파라미터 추출, 네비게이션)
+   - Product Store (상태 관리, 액션 처리)
+   - Product Services (API 호출 로직)
+   - MSW 기반 Mock API
+   - 페이지 컴포넌트들
+
+### ❌ **미완성 부분**
+
+1. **서버 렌더링 로직** (`packages/vanilla/src/main-server.js`)
+   - 현재: 정적 "Hello SSR" 플레이스홀더
+   - 필요: ServerRouter, 데이터 프리페칭, 실제 HTML 생성
+
+2. **서버 호환 Mock API**
+   - 현재: 클라이언트용 MSW 핸들러만 존재
+   - 필요: `mockGetProducts`, `mockGetCategories`, `mockGetProduct` 서버 함수
+
+3. **클라이언트 하이드레이션** (`packages/vanilla/src/main.js`)
+   - 현재: `window.__INITIAL_DATA__` 처리 로직 없음
+   - 필요: 서버 데이터로부터 스토어 복원
+
+4. **정적 사이트 생성** (`packages/vanilla/static-site-generate.js`)
+   - 현재: 기본 플레이스홀더
+   - 필요: 동적 라우트 생성, 실제 페이지 빌드
+
+## 다음 구현 단계
+
+### 1단계: 서버 호환 Mock API 함수 생성
+- `src/api/mockApi.js` 생성 (서버에서 사용 가능한 데이터 함수들)
+- 기존 MSW 핸들러 로직을 서버 환경에 맞게 포팅
+
+### 2단계: 서버 사이드 렌더링 완성
+- `main-server.js`에 ServerRouter 클래스 구현
+- 라우트별 데이터 프리페칭 로직 구현
+- 페이지 컴포넌트 활용한 HTML 생성
+
+### 3단계: 클라이언트 하이드레이션 구현
+- `main.js`에 초기 데이터 복원 로직 추가
+- 서버-클라이언트 상태 동기화
+
+### 4단계: 정적 사이트 생성 완성
+- 동적 라우트 생성 (`/product/:id/` 처리)
+- 서버 렌더링 로직 재활용하여 정적 파일 생성
 
 ## 개발 참고사항
 
