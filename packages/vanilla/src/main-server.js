@@ -5,53 +5,61 @@ import { ProductDetailPage } from "./pages/ProductDetailPage.js";
 import { loadProductDetailForPage, loadProductsAndCategories } from "./services/productService.js";
 import { productStore } from "./stores/productStore.js";
 
-const serverRouter = new ServerRouter();
+export class SSRService {
+  #router = new ServerRouter();
 
-serverRouter.addRoute("/", (_, query) => renderHomePage(query));
-serverRouter.addRoute("/product/:id", (params) => renderProductDetailPage(params.id));
-serverRouter.addRoute(".*", () => render404Page());
-
-export const render = async (url, query) => {
-  serverRouter.push(url);
-  const route = serverRouter.route;
-  return route.handler(route.params, query);
-};
-
-async function renderHomePage(query) {
-  try {
-    await loadProductsAndCategories();
-    const initialData = productStore.getState();
-
-    return {
-      head: /* HTML */ `<title>쇼핑몰</title>`,
-      html: HomePage({ query }),
-      data: initialData,
-    };
-  } catch {
-    return render404Page();
+  constructor() {
+    this.#router.addRoute("/", (_, query) => this.#renderHomePage(query));
+    this.#router.addRoute("/product/:id/", (params) => this.#renderProductDetailPage(params.id));
+    this.#router.addRoute(".*", () => this.#renderNotFoundPage());
   }
-}
 
-async function renderProductDetailPage(productId) {
-  try {
-    await loadProductDetailForPage(productId);
-    const initialData = productStore.getState();
-    const product = initialData.currentProduct;
+  async render(url, query) {
+    this.#router.push(url);
+    const route = this.#router.route;
 
-    return {
-      head: /* HTML */ `<title>${product.title} - 쇼핑몰</title>`,
-      html: ProductDetailPage({ productId }),
-      data: initialData,
-    };
-  } catch {
-    return render404Page();
+    return route.handler(route.params, query);
   }
-}
 
-function render404Page() {
-  return {
-    head: /* HTML */ `<title>페이지를 찾을 수 없습니다 - 쇼핑몰</title>`,
-    html: NotFoundPage(),
-    data: null,
-  };
+  async #renderHomePage(query) {
+    try {
+      await loadProductsAndCategories();
+      const initialData = productStore.getState();
+
+      return {
+        head: /* HTML */ `<title>쇼핑몰</title>`,
+        html: HomePage({ query, data: initialData }),
+        data: initialData,
+      };
+    } catch {
+      return this.#renderNotFoundPage();
+    }
+  }
+
+  async #renderProductDetailPage(productId) {
+    try {
+      await loadProductDetailForPage(productId);
+      const initialData = productStore.getState();
+
+      if (!initialData.currentProduct) {
+        return this.#renderNotFoundPage();
+      }
+
+      return {
+        head: /* HTML */ `<title>${initialData.currentProduct.title} - 쇼핑몰</title>`,
+        html: ProductDetailPage({ data: initialData }),
+        data: initialData,
+      };
+    } catch {
+      return this.#renderNotFoundPage();
+    }
+  }
+
+  async #renderNotFoundPage() {
+    return {
+      head: /* HTML */ `<title>페이지를 찾을 수 없습니다 - 쇼핑몰</title>`,
+      html: NotFoundPage(),
+      data: null,
+    };
+  }
 }

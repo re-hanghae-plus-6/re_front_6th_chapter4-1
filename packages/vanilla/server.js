@@ -34,31 +34,25 @@ if (!prod) {
 app.use("*all", async (req, res) => {
   try {
     const url = req.originalUrl.replace(base, "");
-
-    /** @type {string} */
-    let template;
-    /** @type {import('./src/main-server.js').render} */
-    let render;
+    let template, ssrService;
 
     if (!prod) {
-      template = fs.readFileSync("./index.html", "utf-8");
-      template = await vite.transformIndexHtml(url, template);
-      render = (await vite.ssrLoadModule("/src/main-server.js")).render;
+      const { SSRService } = await vite.ssrLoadModule("/src/main-server.js");
+
+      template = await vite.transformIndexHtml(url, fs.readFileSync("./index.html", "utf-8"));
+      ssrService = new SSRService();
     } else {
+      const { SSRService } = await import("./dist/vanilla-ssr/main-server.js");
+
       template = templateHtml;
-      render = (await import("./dist/vanilla-ssr/main-server.js")).render;
+      ssrService = new SSRService();
     }
 
-    const rendered = await render(url, req.query);
+    const rendered = await ssrService.render(url, req.query);
     const html = template
       .replace(`<!--app-head-->`, rendered.head ?? "")
       .replace(`<!--app-html-->`, rendered.html ?? "")
-      .replace(
-        `<!--app-data-->`,
-        /* HTML */ ` <script>
-          window.__INITIAL_DATA__ = ${JSON.stringify(rendered.data)};
-        </script>`,
-      );
+      .replace(`<!--app-data-->`, `<script>window.__INITIAL_DATA__ = ${JSON.stringify(rendered.data)};</script>`);
 
     res.status(200).set({ "Content-Type": "text/html" }).send(html);
   } catch (e) {
