@@ -26,12 +26,18 @@ class ServerRouter {
       handler,
       path,
     });
+
+    // 디버깅용 로그
+    console.log(`🔧 라우트 등록: ${path} → ${regex}`);
   }
 
   findRoute(url) {
+    console.log(`🔍 라우트 찾기: ${url}`);
     for (const [, route] of this.routes) {
+      console.log(`  테스트: ${url} vs ${route.regex}`);
       const match = url.match(route.regex);
       if (match) {
+        console.log(`  ✅ 매칭됨: ${route.path}`);
         const params = {};
         route.paramNames.forEach((name, index) => {
           params[name] = match[index + 1];
@@ -43,6 +49,7 @@ class ServerRouter {
         };
       }
     }
+    console.log(`  ❌ 매칭 안됨`);
     return null;
   }
 }

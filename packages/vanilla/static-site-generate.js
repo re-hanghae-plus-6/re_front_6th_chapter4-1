@@ -62,7 +62,11 @@ async function generateStaticSite() {
 
     // 3. 상품 상세 페이지들 생성
     console.log("📄 상품 상세 페이지들 생성 중...");
-    const { products } = homeResult.initialData;
+
+    // 모든 상품 데이터 직접 로드
+    const itemsPath = path.join(process.cwd(), "src/mocks/items.json");
+    const items = JSON.parse(fs.readFileSync(itemsPath, "utf-8"));
+    const products = items; // 모든 상품 사용
 
     if (products && products.length > 0) {
       // 상품별 디렉토리 생성 및 HTML 파일 생성
