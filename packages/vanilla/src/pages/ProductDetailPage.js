@@ -304,19 +304,13 @@ ProductDetailPageComponent.ssr = async ({ params }) => {
     return {
       currentProduct: product,
       relatedProducts,
-      loading: false, // SSR에서는 항상 false
-      error: null,
-      status: "done",
     };
   } catch (error) {
     console.error("상품 상세 페이지 SSR 실패:", error);
-    // 에러 발생 시에도 로딩 상태는 false로 설정
+    // 에러 발생 시에도 기본 데이터 구조 유지
     return {
       currentProduct: null,
       relatedProducts: [],
-      loading: false,
-      error: error.message,
-      status: "done",
     };
   }
 };

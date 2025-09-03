@@ -71,14 +71,11 @@ HomePageComponent.ssr = async ({ query }) => {
     };
   } catch (error) {
     console.error("홈페이지 SSR 데이터 로드 실패:", error);
-    // 에러 발생 시에도 로딩 상태는 false로 설정
+    // 에러 발생 시에도 기본 데이터 구조 유지
     return {
       products: [],
-      totalCount: 0,
       categories: {},
-      loading: false,
-      error: error.message,
-      status: "done",
+      totalCount: 0,
     };
   }
 };
