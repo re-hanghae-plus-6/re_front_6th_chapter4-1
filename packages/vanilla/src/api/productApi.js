@@ -11,17 +11,23 @@ export async function getProducts(params = {}) {
     sort,
   });
 
-  const response = await fetch(`/api/products?${searchParams}`);
+  // 서버 환경에서는 절대 URL 사용
+  const baseUrl = typeof window === "undefined" ? "http://localhost:5174" : "";
+  const response = await fetch(`${baseUrl}/api/products?${searchParams}`);
 
   return await response.json();
 }
 
 export async function getProduct(productId) {
-  const response = await fetch(`/api/products/${productId}`);
+  // 서버 환경에서는 절대 URL 사용
+  const baseUrl = typeof window === "undefined" ? "http://localhost:5174" : "";
+  const response = await fetch(`${baseUrl}/api/products/${productId}`);
   return await response.json();
 }
 
 export async function getCategories() {
-  const response = await fetch("/api/categories");
+  // 서버 환경에서는 절대 URL 사용
+  const baseUrl = typeof window === "undefined" ? "http://localhost:5174" : "";
+  const response = await fetch(`${baseUrl}/api/categories`);
   return await response.json();
 }

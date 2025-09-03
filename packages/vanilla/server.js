@@ -33,10 +33,76 @@ if (!isProduction) {
   app.use(base, sirv("./dist/client", { extensions: [] }));
 }
 
-// API 라우트 (MSW 핸들러가 처리)
-app.use("/api", (req, res, next) => {
-  // MSW가 API 요청을 가로채도록 함
-  next();
+// API 라우트 - 간단한 목 데이터 제공
+app.use("/api", async (req, res, next) => {
+  try {
+    if (req.path === "/products") {
+      // 상품 목록 API
+      const items = await import("./src/mocks/items.json", { with: { type: "json" } });
+      const products = items.default || [];
+
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 20;
+      const startIndex = (page - 1) * limit;
+      const endIndex = startIndex + limit;
+
+      res.json({
+        products: products.slice(startIndex, endIndex),
+        pagination: {
+          page,
+          limit,
+          total: products.length,
+          totalPages: Math.ceil(products.length / limit),
+        },
+      });
+      return;
+    }
+
+    if (req.path.startsWith("/products/")) {
+      // 상품 상세 API
+      const productId = req.path.split("/")[2];
+      const items = await import("./src/mocks/items.json", { with: { type: "json" } });
+      const products = items.default || [];
+      const product = products.find((p) => p.productId === productId);
+
+      if (product) {
+        res.json({
+          ...product,
+          description: `${product.title}에 대한 상세 설명입니다.`,
+          rating: 4.5,
+          reviewCount: 123,
+          stock: 50,
+        });
+      } else {
+        res.status(404).json({ error: "Product not found" });
+      }
+      return;
+    }
+
+    if (req.path === "/categories") {
+      // 카테고리 API
+      const items = await import("./src/mocks/items.json", { with: { type: "json" } });
+      const products = items.default || [];
+      const categories = {};
+
+      products.forEach((product) => {
+        if (product.category1) {
+          if (!categories[product.category1]) categories[product.category1] = {};
+          if (product.category2) {
+            categories[product.category1][product.category2] = {};
+          }
+        }
+      });
+
+      res.json(categories);
+      return;
+    }
+
+    next();
+  } catch (error) {
+    console.error("API 라우트 오류:", error);
+    next();
+  }
 });
 
 // Serve HTML - 모든 라우트에 대해

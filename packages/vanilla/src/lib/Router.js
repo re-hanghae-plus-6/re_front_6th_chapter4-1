@@ -14,10 +14,13 @@ export class Router {
     this.#route = null;
     this.#baseUrl = baseUrl.replace(/\/$/, "");
 
-    window.addEventListener("popstate", () => {
-      this.#route = this.#findRoute();
-      this.#observer.notify();
-    });
+    // 서버 환경에서는 이벤트 리스너 등록하지 않음
+    if (typeof window !== "undefined") {
+      window.addEventListener("popstate", () => {
+        this.#route = this.#findRoute();
+        this.#observer.notify();
+      });
+    }
   }
 
   get baseUrl() {
@@ -25,7 +28,7 @@ export class Router {
   }
 
   get query() {
-    return Router.parseQuery(window.location.search);
+    return Router.parseQuery(typeof window !== "undefined" ? window.location.search : "");
   }
 
   set query(newQuery) {
@@ -73,8 +76,8 @@ export class Router {
     });
   }
 
-  #findRoute(url = window.location.pathname) {
-    const { pathname } = new URL(url, window.location.origin);
+  #findRoute(url = typeof window !== "undefined" ? window.location.pathname : "/") {
+    const { pathname } = new URL(url, typeof window !== "undefined" ? window.location.origin : "http://localhost");
     for (const [routePath, route] of this.#routes) {
       const match = pathname.match(route.regex);
       if (match) {
@@ -100,6 +103,11 @@ export class Router {
    */
   push(url) {
     try {
+      // 서버 환경에서는 push 동작하지 않음
+      if (typeof window === "undefined") {
+        return;
+      }
+
       // baseUrl이 없으면 자동으로 붙여줌
       let fullUrl = url.startsWith(this.#baseUrl) ? url : this.#baseUrl + (url.startsWith("/") ? url : "/" + url);
 
@@ -130,7 +138,7 @@ export class Router {
    * @param {string} search - location.search 또는 쿼리 문자열
    * @returns {Object} 파싱된 쿼리 객체
    */
-  static parseQuery = (search = window.location.search) => {
+  static parseQuery = (search = typeof window !== "undefined" ? window.location.search : "") => {
     const params = new URLSearchParams(search);
     const query = {};
     for (const [key, value] of params) {
@@ -166,6 +174,7 @@ export class Router {
     });
 
     const queryString = Router.stringifyQuery(updatedQuery);
-    return `${baseUrl}${window.location.pathname.replace(baseUrl, "")}${queryString ? `?${queryString}` : ""}`;
+    const pathname = typeof window !== "undefined" ? window.location.pathname : "/";
+    return `${baseUrl}${pathname.replace(baseUrl, "")}${queryString ? `?${queryString}` : ""}`;
   };
 }
