@@ -44,7 +44,17 @@ const findCartItem = (items, productId) => {
  * @param {CartAction} action - 액션 객체
  */
 const cartReducer = (_, action) => {
-  const state = cartStorage.get() ?? initialState;
+  let state;
+  try {
+    state = cartStorage.get();
+    // 스토리지에서 가져온 데이터가 올바른 구조인지 확인
+    if (!state || !Array.isArray(state.items)) {
+      state = initialState;
+    }
+  } catch (error) {
+    console.warn("장바구니 스토리지 로드 실패, 초기 상태 사용:", error);
+    state = initialState;
+  }
   switch (action.type) {
     case CART_ACTIONS.ADD_ITEM: {
       const { product, quantity = 1 } = action.payload;

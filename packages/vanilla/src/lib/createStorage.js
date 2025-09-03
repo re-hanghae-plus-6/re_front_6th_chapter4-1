@@ -7,6 +7,10 @@
 export const createStorage = (key, storage = typeof window !== "undefined" ? window.localStorage : null) => {
   const get = () => {
     try {
+      if (!storage) {
+        // SSR 환경이거나 localStorage가 없는 경우
+        return null;
+      }
       const item = storage.getItem(key);
       return item ? JSON.parse(item) : null;
     } catch (error) {
@@ -17,6 +21,10 @@ export const createStorage = (key, storage = typeof window !== "undefined" ? win
 
   const set = (value) => {
     try {
+      if (!storage) {
+        // SSR 환경이거나 localStorage가 없는 경우
+        return;
+      }
       storage.setItem(key, JSON.stringify(value));
     } catch (error) {
       console.error(`Error setting storage item for key "${key}":`, error);
@@ -25,6 +33,10 @@ export const createStorage = (key, storage = typeof window !== "undefined" ? win
 
   const reset = () => {
     try {
+      if (!storage) {
+        // SSR 환경이거나 localStorage가 없는 경우
+        return;
+      }
       storage.removeItem(key);
     } catch (error) {
       console.error(`Error removing storage item for key "${key}":`, error);
