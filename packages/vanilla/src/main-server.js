@@ -10,7 +10,7 @@ import { ProductDetailPageSSR, ProductDetailPage } from "./pages/ProductDetailPa
 export const render = async (url, query, _initialData, ctx = {}) => {
   const doSSR = ctx.doSSR ?? true; // 기본값: SSR
 
-  if (url.split("/")?.[0] === "product") {
+  if (url.split("/").filter((segment) => segment !== "")?.[0] === "product") {
     const title = _initialData.currentProduct.title;
 
     return {

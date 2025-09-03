@@ -86,7 +86,7 @@ app.use("*all", async (req, res) => {
       if (doSSR) {
         // 기존 API 함수들 import (서버에서도 작동하도록 수정된 버전)
 
-        const splitUrl = url.split("/");
+        const splitUrl = url.split("/").filter((segment) => segment !== "");
 
         if (!prod) {
           const { getProducts, getCategories, getProduct } = await vite.ssrLoadModule("./src/api/productApi.js");
@@ -157,6 +157,8 @@ app.use("*all", async (req, res) => {
       console.error("서버 데이터 로드 실패:", error);
       initialData.error = error.message;
     }
+
+    console.log(url);
 
     const rendered = doSSR ? await render(url, query, initialData, { doSSR }) : { head: "", html: "" };
 
