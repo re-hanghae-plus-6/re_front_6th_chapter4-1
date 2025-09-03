@@ -119,9 +119,11 @@ export const setLimit = (limit) => {
  * 상품 상세 페이지용 상품 조회 및 관련 상품 로드
  */
 export const loadProductDetailForPage = async (productId) => {
+  console.log("클라이언트에서 상품 상세 페이지 로드 시작:", productId);
   try {
     const currentProduct = productStore.getState().currentProduct;
     if (productId === currentProduct?.productId) {
+      console.log("이미 로드된 상품:", productId);
       // 관련 상품 로드 (같은 category2 기준)
       if (currentProduct.category2) {
         await loadRelatedProducts(currentProduct.category2, productId);
@@ -140,6 +142,7 @@ export const loadProductDetailForPage = async (productId) => {
     });
 
     const product = await getProduct(productId);
+    console.log("상품 데이터 로드 완료:", product?.title);
 
     // 현재 상품 설정
     productStore.dispatch({

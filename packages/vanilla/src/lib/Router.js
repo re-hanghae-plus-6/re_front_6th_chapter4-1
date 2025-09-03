@@ -108,8 +108,12 @@ export class Router {
         return;
       }
 
+      console.log("라우터 push 호출:", url);
+
       // baseUrl이 없으면 자동으로 붙여줌
       let fullUrl = url.startsWith(this.#baseUrl) ? url : this.#baseUrl + (url.startsWith("/") ? url : "/" + url);
+
+      console.log("전체 URL:", fullUrl);
 
       const prevFullUrl = `${window.location.pathname}${window.location.search}`;
 
@@ -119,6 +123,7 @@ export class Router {
       }
 
       this.#route = this.#findRoute(fullUrl);
+      console.log("찾은 라우트:", this.#route);
       this.#observer.notify();
     } catch (error) {
       console.error("라우터 네비게이션 오류:", error);
