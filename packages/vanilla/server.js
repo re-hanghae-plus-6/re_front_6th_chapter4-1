@@ -51,8 +51,7 @@ app.get("*all", async (request, response) => {
 
     const template = await get.template(viteServer, url);
     const render = await get.render(viteServer);
-
-    const { head, html, initialData, status = 200 } = await render(url);
+    const { head, html, initialData, status = 200 } = await render(url, request.query ?? {});
 
     const initialDataScript = initialData
       ? `<script>window.__INITIAL_DATA__=${JSON.stringify(initialData).replace(/</g, "\\u003c")}</script>`
