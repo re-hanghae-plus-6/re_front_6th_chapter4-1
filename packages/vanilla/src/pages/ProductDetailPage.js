@@ -242,7 +242,7 @@ export const ProductDetailPage = withLifecycle(
     },
     watches: [() => [router.params.id], () => loadProductDetailForPage(router.params.id)],
   },
-  ({ productDetailInfo }) => {
+  ({ productDetailInfo } = {}) => {
     const {
       currentProduct: product,
       relatedProducts = [],
