@@ -1,14 +1,14 @@
-export * from "./actionTypes";
-export * from "./cartStore";
-export * from "./productStore";
-export * from "./uiStore";
+export * from "./actionTypes.js";
+export * from "./cartStore.js";
+export * from "./productStore.js";
+export * from "./uiStore.js";
 
 /**
  * SSR 초기 데이터로 상태 초기화
  */
 export const initializeFromSSR = (initialData) => {
   console.log("🔄 SSR 초기 데이터로 상태 초기화 시작:", initialData);
-
+  console.log(productStore);
   if (!initialData || !initialData.state) {
     console.log("⚠️ 유효하지 않은 초기 데이터");
     return;

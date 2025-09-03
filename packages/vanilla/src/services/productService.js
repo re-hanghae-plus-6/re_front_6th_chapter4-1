@@ -1,6 +1,6 @@
-import { getCategories, getProduct, getProducts } from "../api/productApi";
-import { router } from "../router";
-import { initialProductState, PRODUCT_ACTIONS, productStore } from "../stores";
+import { getCategories, getProduct, getProducts } from "../api/productApi.js";
+import { router } from "../router/index.js";
+import { initialProductState, PRODUCT_ACTIONS, productStore } from "../stores/index.js";
 
 export const loadProductsAndCategories = async () => {
   router.query = { current: undefined }; // 항상 첫 페이지로 초기화
