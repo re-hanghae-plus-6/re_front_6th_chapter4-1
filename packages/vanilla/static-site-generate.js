@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { createServer } from "vite";
-import { mswServer } from "./src/mocks/node.js";
+import { server as mswServer } from "./src/mocks/nodeServer.js";
 
 const DIST_DIR = "../../dist/vanilla";
 

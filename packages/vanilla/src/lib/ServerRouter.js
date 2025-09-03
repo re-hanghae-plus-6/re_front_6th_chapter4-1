@@ -6,11 +6,13 @@ export class ServerRouter {
   #routes;
   #route;
   #notFoundHandler;
+  #createContext;
 
-  constructor(routes = null) {
+  constructor(routes = null, createContext = null) {
     this.#routes = new Map();
     this.#route = null;
     this.#notFoundHandler = null;
+    this.#createContext = createContext;
     if (routes) {
       this.addRoutes(routes);
     }
@@ -105,6 +107,13 @@ export class ServerRouter {
    */
   start(pathname) {
     this.#route = this.#findRoute(pathname);
+    // 요청 스코프 컨텍스트 생성 및 params에 주입
+    if (this.#route && typeof this.#createContext === "function") {
+      const ctx = this.#createContext();
+      // router는 자신으로 설정
+      ctx.router = this;
+      this.#route.params = { ...(this.#route.params || {}), ctx };
+    }
   }
 
   /** 현재 매칭된 라우트 반환 */

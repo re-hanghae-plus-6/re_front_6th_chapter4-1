@@ -1,8 +1,9 @@
-import { ServerRouter } from "./lib";
-import { routes } from "./router/router";
+import { createRequestContextBase } from "./ssr/context.js";
+import { ServerRouter } from "./lib/ServerRouter.js";
+import { routes } from "./router/router.js";
 
 export const render = async (pathname, query) => {
-  const router = new ServerRouter(routes);
+  const router = new ServerRouter(routes, createRequestContextBase);
   router.start(pathname);
   const params = { pathname, query, params: router.params };
 

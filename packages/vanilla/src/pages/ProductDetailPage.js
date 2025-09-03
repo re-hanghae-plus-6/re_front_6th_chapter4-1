@@ -239,12 +239,13 @@ function ProductDetail({ product, relatedProducts = [] }) {
 export const ProductDetailPage = withLifecycle(
   {
     ssr: async (params) => {
+      const ctx = params?.params?.ctx;
       const productId = params.params?.id;
       if (!productId) {
-        return productStore.getState();
+        return (ctx?.store || productStore).getState();
       }
-      await loadProductDetailForPage(productId);
-      return productStore.getState();
+      await loadProductDetailForPage(productId, ctx);
+      return (ctx?.store || productStore).getState();
     },
     metadata: async (params) => {
       try {
@@ -262,8 +263,9 @@ export const ProductDetailPage = withLifecycle(
     },
     watches: [() => [router.params.id], () => loadProductDetailForPage(router.params.id)],
   },
-  () => {
-    const { currentProduct: product, relatedProducts = [], error, loading } = productStore.getState();
+  (params, props) => {
+    const state = props?.data || productStore.getState();
+    const { currentProduct: product, relatedProducts = [], error, loading } = state;
 
     return PageWrapper({
       headerLeft: `

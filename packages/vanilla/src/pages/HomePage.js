@@ -8,8 +8,9 @@ import { PageWrapper } from "./PageWrapper.js";
 export const HomePage = withLifecycle(
   {
     ssr: async (params) => {
-      await loadProductsAndCategories(params?.query);
-      const data = productStore.getState();
+      const ctx = params?.params?.ctx;
+      await loadProductsAndCategories(params?.query, ctx);
+      const data = (ctx?.store || productStore).getState();
       return {
         products: data.products,
         categories: data.categories,
@@ -32,10 +33,16 @@ export const HomePage = withLifecycle(
       () => loadProducts(true),
     ],
   },
-  () => {
-    const productState = productStore.getState();
-    const { search: searchQuery, limit, sort, category1, category2 } = router.query || {};
-    const { products, loading, error, totalCount, categories } = productState;
+  (params, props) => {
+    const source = props?.data || productStore.getState();
+    const { products, loading, error, totalCount, categories } = source;
+    const {
+      search: searchQuery,
+      limit,
+      sort,
+      category1,
+      category2,
+    } = props?.data ? params?.query || {} : router.query || {};
     const category = { category1, category2 };
     const hasMore = products.length < totalCount;
 
