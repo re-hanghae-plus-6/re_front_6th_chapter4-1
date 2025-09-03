@@ -1,6 +1,6 @@
-import { productStore } from "../stores";
-import { loadProductDetailForPage } from "../services";
 import { router, withLifecycle } from "../router";
+import { loadProductDetailForPage } from "../services";
+import { productStore } from "../stores";
 import { PageWrapper } from "./PageWrapper.js";
 
 const loadingContent = `
@@ -237,12 +237,26 @@ function ProductDetail({ product, relatedProducts = [] }) {
 export const ProductDetailPage = withLifecycle(
   {
     onMount: () => {
-      loadProductDetailForPage(router.params.id);
+      // 서버에서 이미 데이터가 로드되었는지 확인
+      const state = productStore.getState();
+      if (!state.currentProduct) {
+        // 클라이언트에서만 데이터 로드
+        loadProductDetailForPage(router.params.id);
+      }
     },
     watches: [() => [router.params.id], () => loadProductDetailForPage(router.params.id)],
   },
-  () => {
-    const { currentProduct: product, relatedProducts = [], error, loading } = productStore.getState();
+  (serverData) => {
+    // 서버에서 프리패치된 데이터가 있으면 사용, 없으면 스토어에서 가져옴
+    const productState = productStore.getState();
+
+    const product = serverData?.currentProduct || productState.currentProduct;
+    const relatedProducts = productState.relatedProducts || [];
+    const error = productState.error;
+    const loading = productState.loading;
+
+    console.log("ProductDetailPage render - serverData:", serverData);
+    console.log("ProductDetailPage render - product:", product);
 
     return PageWrapper({
       headerLeft: `

@@ -54,6 +54,9 @@ const uiReducer = (state, action) => {
         },
       };
 
+    case UI_ACTIONS.RESET:
+      return { ...initialState };
+
     default:
       return state;
   }

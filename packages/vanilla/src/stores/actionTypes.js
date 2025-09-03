@@ -18,6 +18,7 @@ export const PRODUCT_ACTIONS = {
   // 리셋
   RESET_FILTERS: "products/resetFilters",
   SETUP: "products/setup",
+  RESET: "products/reset",
 
   // status 관리
   SET_STATUS: "products/setStatus",
@@ -42,6 +43,7 @@ export const CART_ACTIONS = {
   // 상태 동기화
   LOAD_FROM_STORAGE: "cart/loadFromStorage",
   SYNC_TO_STORAGE: "cart/syncToStorage",
+  RESET: "cart/reset",
 };
 
 /**
@@ -58,4 +60,5 @@ export const UI_ACTIONS = {
   // 알림
   SHOW_TOAST: "ui/showToast",
   HIDE_TOAST: "ui/hideToast",
+  RESET: "ui/reset",
 };

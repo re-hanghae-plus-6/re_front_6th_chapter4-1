@@ -95,6 +95,9 @@ const productReducer = (state, action) => {
     case PRODUCT_ACTIONS.SETUP:
       return { ...state, ...action.payload };
 
+    case PRODUCT_ACTIONS.RESET:
+      return { ...initialProductState };
+
     default:
       return state;
   }

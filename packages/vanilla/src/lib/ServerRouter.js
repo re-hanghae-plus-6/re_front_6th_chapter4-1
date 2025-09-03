@@ -22,12 +22,13 @@ class ServerRouter {
       .replace(/\//g, "\\/");
 
     const regex = new RegExp(`^${regexPath}$`);
-
+    console.log("paramNames", paramNames);
     this.routes.set(path, { regex, paramNames, handler });
   }
 
   // URL과 매칭되는 라우트 찾기
   findRoute(url) {
+    console.log("url", url);
     for (const [routePath, route] of this.routes) {
       const match = url.match(route.regex);
 
@@ -37,7 +38,7 @@ class ServerRouter {
         route.paramNames.forEach((name, index) => {
           params[name] = match[index + 1];
         });
-
+        console.log("params", params);
         return {
           ...route,
           params,
@@ -54,15 +55,17 @@ class ServerRouter {
 const serverRouter = new ServerRouter();
 
 // 라우트 등록 + 데이터 프리페칭
-serverRouter.addRoute("/", async () => {
+serverRouter.addRoute("/", async (params) => {
   // 홈페이지 - 상품 목록
   const {
     products,
     pagination: { total },
-  } = await getProducts({ limit: 20 });
+  } = await getProducts(params.query);
   const categories = await getCategories();
 
-  // ! 여기서 dispatch된 products는 main-server.js에서 initialData에 들어가지 않음
+  // ! 문제: 여기서 dispatch된 products는 main-server.js에서 initialData에 들어가지 않음
+  // ! 원인: payload 형식이 잘못됨
+  // ! 해결: payload 형식을 수정
   // productStore.dispatch({ type: "SETUP", payload: products  });
   productStore.dispatch({
     type: "SETUP",
