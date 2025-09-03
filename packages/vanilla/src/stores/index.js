@@ -1,3 +1,6 @@
+import { productStore } from "./productStore.js";
+import { uiStore } from "./uiStore.js";
+
 export * from "./actionTypes.js";
 export * from "./cartStore.js";
 export * from "./productStore.js";
