@@ -1,5 +1,7 @@
 import fs from "node:fs/promises";
 import express from "express";
+import { ApiRouter } from "./src/lib/ApiRouter.js";
+import { registerApiRoutes } from "./src/api/routes.js";
 
 // Constants
 const isProduction = process.env.NODE_ENV === "production";
@@ -14,6 +16,10 @@ const app = express();
 
 // JSON 요청 본문을 파싱하는 미들웨어 추가
 app.use(express.json());
+
+// API 라우터 초기화
+const apiRouter = new ApiRouter("/api");
+registerApiRoutes(apiRouter);
 
 // Add Vite or respective production middlewares
 /** @type {import('vite').ViteDevServer | undefined} */
@@ -33,77 +39,8 @@ if (!isProduction) {
   app.use(base, sirv("./dist/client", { extensions: [] }));
 }
 
-// API 라우트 - 간단한 목 데이터 제공
-app.use("/api", async (req, res, next) => {
-  try {
-    if (req.path === "/products") {
-      // 상품 목록 API
-      const items = await import("./src/mocks/items.json", { with: { type: "json" } });
-      const products = items.default || [];
-
-      const page = parseInt(req.query.page) || 1;
-      const limit = parseInt(req.query.limit) || 20;
-      const startIndex = (page - 1) * limit;
-      const endIndex = startIndex + limit;
-
-      res.json({
-        products: products.slice(startIndex, endIndex),
-        pagination: {
-          page,
-          limit,
-          total: products.length,
-          totalPages: Math.ceil(products.length / limit),
-        },
-      });
-      return;
-    }
-
-    if (req.path.startsWith("/products/")) {
-      // 상품 상세 API
-      const productId = req.path.split("/")[2];
-      const items = await import("./src/mocks/items.json", { with: { type: "json" } });
-      const products = items.default || [];
-      const product = products.find((p) => p.productId === productId);
-
-      if (product) {
-        res.json({
-          ...product,
-          description: `${product.title}에 대한 상세 설명입니다.`,
-          rating: 4.5,
-          reviewCount: 123,
-          stock: 50,
-        });
-      } else {
-        res.status(404).json({ error: "Product not found" });
-      }
-      return;
-    }
-
-    if (req.path === "/categories") {
-      // 카테고리 API
-      const items = await import("./src/mocks/items.json", { with: { type: "json" } });
-      const products = items.default || [];
-      const categories = {};
-
-      products.forEach((product) => {
-        if (product.category1) {
-          if (!categories[product.category1]) categories[product.category1] = {};
-          if (product.category2) {
-            categories[product.category1][product.category2] = {};
-          }
-        }
-      });
-
-      res.json(categories);
-      return;
-    }
-
-    next();
-  } catch (error) {
-    console.error("API 라우트 오류:", error);
-    next();
-  }
-});
+// API 라우트 - 새로운 API 라우터 사용
+app.use("/api", apiRouter.middleware.bind(apiRouter));
 
 // Serve HTML - 모든 라우트에 대해
 app.use(async (req, res) => {
@@ -130,7 +67,7 @@ app.use(async (req, res) => {
     // 초기 데이터 스크립트 생성
     const initialDataScript = `
       <script>
-        window.__INITIAL_DATA__ = ${JSON.stringify(rendered.initialData || {})};
+        window.__INITIAL_DATA__ = ${JSON.stringify(rendered.__INITIAL_DATA__ || {})};
       </script>
     `;
 

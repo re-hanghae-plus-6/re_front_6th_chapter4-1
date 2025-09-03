@@ -4,7 +4,7 @@ import { router, withLifecycle } from "../router";
 import { loadProducts, loadProductsAndCategories } from "../services";
 import { PageWrapper } from "./PageWrapper.js";
 
-export const HomePage = withLifecycle(
+const HomePageComponent = withLifecycle(
   {
     onMount: () => {
       loadProductsAndCategories();
@@ -48,3 +48,77 @@ export const HomePage = withLifecycle(
     });
   },
 );
+
+// SSR 메서드 추가
+HomePageComponent.ssr = async ({ query }) => {
+  const { getProducts, getCategories } = await import("../api/productApi.js");
+  const { createStore } = await import("../lib/createStore.js");
+  const { PRODUCT_ACTIONS } = await import("../stores/actionTypes.js");
+
+  const productStore = createStore(
+    (state, action) => {
+      switch (action.type) {
+        case PRODUCT_ACTIONS.SET_STATUS:
+          return { ...state, status: action.payload };
+        case PRODUCT_ACTIONS.SET_CATEGORIES:
+          return { ...state, categories: action.payload, loading: false, error: null, status: "done" };
+        case PRODUCT_ACTIONS.SET_PRODUCTS:
+          return {
+            ...state,
+            products: action.payload.products,
+            totalCount: action.payload.totalCount,
+            loading: false,
+            error: null,
+            status: "done",
+          };
+        case PRODUCT_ACTIONS.SETUP:
+          return { ...state, ...action.payload };
+        default:
+          return state;
+      }
+    },
+    {
+      products: [],
+      totalCount: 0,
+      loading: true,
+      error: null,
+      status: "idle",
+      categories: {},
+    },
+  );
+
+  try {
+    const [productsResponse, categories] = await Promise.all([getProducts(query), getCategories()]);
+
+    productStore.dispatch({
+      type: PRODUCT_ACTIONS.SETUP,
+      payload: {
+        products: productsResponse.products,
+        totalCount: productsResponse.pagination.total,
+        categories,
+        loading: false,
+        status: "done",
+      },
+    });
+
+    return productStore.getState();
+  } catch (error) {
+    console.error("홈페이지 SSR 데이터 로드 실패:", error);
+    productStore.dispatch({
+      type: PRODUCT_ACTIONS.SETUP,
+      payload: {
+        loading: false,
+        error: error.message,
+        status: "done",
+      },
+    });
+    return productStore.getState();
+  }
+};
+
+HomePageComponent.metadata = () => ({
+  title: "쇼핑몰 - 상품 목록",
+  description: "다양한 상품을 만나보세요",
+});
+
+export const HomePage = HomePageComponent;

@@ -234,7 +234,7 @@ function ProductDetail({ product, relatedProducts = [] }) {
 /**
  * 상품 상세 페이지 컴포넌트
  */
-export const ProductDetailPage = withLifecycle(
+const ProductDetailPageComponent = withLifecycle(
   {
     onMount: () => {
       loadProductDetailForPage(router.params.id);
@@ -264,3 +264,97 @@ export const ProductDetailPage = withLifecycle(
     });
   },
 );
+
+// SSR 메서드 추가
+ProductDetailPageComponent.ssr = async ({ params }) => {
+  const { getProduct, getProducts } = await import("../api/productApi.js");
+  const { createStore } = await import("../lib/createStore.js");
+  const { PRODUCT_ACTIONS } = await import("../stores/actionTypes.js");
+
+  const productStore = createStore(
+    (state, action) => {
+      switch (action.type) {
+        case PRODUCT_ACTIONS.SET_STATUS:
+          return { ...state, status: action.payload };
+        case PRODUCT_ACTIONS.SET_CURRENT_PRODUCT:
+          return { ...state, currentProduct: action.payload, loading: false, error: null, status: "done" };
+        case PRODUCT_ACTIONS.SET_RELATED_PRODUCTS:
+          return { ...state, relatedProducts: action.payload, status: "done" };
+        case PRODUCT_ACTIONS.SETUP:
+          return { ...state, ...action.payload };
+        default:
+          return state;
+      }
+    },
+    {
+      currentProduct: null,
+      relatedProducts: [],
+      loading: true,
+      error: null,
+      status: "idle",
+    },
+  );
+
+  try {
+    console.log("상품 상세 페이지 SSR 시작:", params.id);
+
+    const product = await getProduct(params.id);
+    console.log("상품 데이터 로드 완료:", product?.title);
+
+    if (!product) {
+      throw new Error("Product not found");
+    }
+
+    productStore.dispatch({
+      type: PRODUCT_ACTIONS.SET_CURRENT_PRODUCT,
+      payload: product,
+    });
+
+    // 관련 상품 로드
+    if (product.category2) {
+      console.log("관련 상품 로드 시작:", product.category2);
+      const relatedResponse = await getProducts({
+        category2: product.category2,
+        limit: 20,
+        page: 1,
+      });
+
+      const relatedProducts = relatedResponse.products.filter((p) => p.productId !== params.id);
+      console.log("관련 상품 로드 완료:", relatedProducts.length, "개");
+
+      productStore.dispatch({
+        type: PRODUCT_ACTIONS.SET_RELATED_PRODUCTS,
+        payload: relatedProducts,
+      });
+    }
+
+    return productStore.getState();
+  } catch (error) {
+    console.error("상품 상세 페이지 SSR 실패:", error);
+    productStore.dispatch({
+      type: PRODUCT_ACTIONS.SETUP,
+      payload: {
+        loading: false,
+        error: error.message,
+        status: "done",
+      },
+    });
+    return productStore.getState();
+  }
+};
+
+ProductDetailPageComponent.metadata = ({ data }) => {
+  const product = data?.currentProduct;
+  if (product) {
+    return {
+      title: `${product.title} - 쇼핑몰`,
+      description: product.description || `${product.title} 상품 정보`,
+    };
+  }
+  return {
+    title: "상품 상세 - 쇼핑몰",
+    description: "상품 정보를 확인하세요",
+  };
+};
+
+export const ProductDetailPage = ProductDetailPageComponent;
