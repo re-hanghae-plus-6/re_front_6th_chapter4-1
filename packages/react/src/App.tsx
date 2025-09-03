@@ -7,25 +7,16 @@ const CartInitializer = () => {
   return null;
 };
 
-interface Props {
-  data?: unknown;
-}
-
 /**
  * 전체 애플리케이션 렌더링
  */
-export const App = ({ data }: Props) => {
+export const App = () => {
   const PageComponent = useCurrentPage();
 
   return (
     <>
       <ToastProvider>
-        <ModalProvider>
-          {PageComponent ? (
-            // @ts-expect-error initialData is unknowns
-            <PageComponent data={data} />
-          ) : null}
-        </ModalProvider>
+        <ModalProvider>{PageComponent ? <PageComponent /> : null}</ModalProvider>
       </ToastProvider>
       <CartInitializer />
     </>

@@ -28,7 +28,7 @@ function main() {
     return (
       <RouterContext value={router}>
         <ProductProvider productStore={createProductStore(initData)}>
-          <App data={initData} />
+          <App />
         </ProductProvider>
       </RouterContext>
     );

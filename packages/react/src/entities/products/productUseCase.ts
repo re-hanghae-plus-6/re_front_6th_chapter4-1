@@ -10,6 +10,10 @@ const createErrorMessage = (error: unknown, defaultMessage = "알 수 없는 오
   error instanceof Error ? error.message : defaultMessage;
 
 export const loadProductsAndCategories = async (productStore: ProductStore, router: RouterInstance<FC>) => {
+  if (productStore.getState().products.length) {
+    return;
+  }
+
   router.query = { current: undefined }; // 항상 첫 페이지로 초기화
   productStore.dispatch({
     type: PRODUCT_ACTIONS.SETUP,

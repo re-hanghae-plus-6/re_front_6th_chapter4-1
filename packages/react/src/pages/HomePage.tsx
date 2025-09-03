@@ -74,19 +74,17 @@ export const HomePage = withServer(
       };
     },
   },
-  ({ data }: { data: ServerResponse }) => {
+  () => {
     const productStore = useProductStoreContext();
 
     const router = useRouterContext();
 
     useEffect(() => {
       registerScrollHandler(productStore, router);
-      if (!data) {
-        loadProductsAndCategories(productStore, router);
-      }
+      loadProductsAndCategories(productStore, router);
 
       return unregisterScrollHandler;
-    }, [productStore, router, data]);
+    }, [productStore, router]);
 
     return (
       <PageWrapper headerLeft={headerLeft}>

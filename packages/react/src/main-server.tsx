@@ -26,7 +26,7 @@ export const render = async (url: string, query: Record<string, string>) => {
   const html = renderToString(
     <RouterProvider router={router}>
       <ProductProvider productStore={createProductStore(data)}>
-        <App data={data} />
+        <App />
       </ProductProvider>
     </RouterProvider>,
   );
