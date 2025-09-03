@@ -51,4 +51,3 @@ for (let i = 0; i < products.length; i++) {
 }
 
 vite.close();
-server.close();
