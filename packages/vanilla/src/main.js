@@ -4,6 +4,7 @@ import { registerAllEvents } from "./events";
 import { loadCartFromStorage } from "./services";
 import { router } from "./router";
 import { BASE_URL } from "./constants.js";
+import { setupRouter } from "./setupRouter.js";
 
 const enableMocking = () =>
   import("./mocks/browser.js").then(({ worker }) =>
@@ -20,6 +21,7 @@ function main() {
   registerGlobalEvents();
   loadCartFromStorage();
   initRender();
+  setupRouter();
   router.start();
 }
 
