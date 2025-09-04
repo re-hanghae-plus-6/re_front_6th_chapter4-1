@@ -3,10 +3,10 @@ import { App } from "./App";
 import { BASE_URL } from "./constants.ts";
 import { Providers } from "./core/providers.tsx";
 import { createProductStore } from "./entities/index.ts";
-import { HomePage } from "./pages/HomePage.tsx";
-import { NotFoundPage } from "./pages/NotFoundPage.tsx";
-import { ProductDetailPage } from "./pages/ProductDetailPage.tsx";
-import { router } from "./router";
+import * as Home from "./pages/home/page";
+import { NotFoundPage } from "./pages/not-found.tsx";
+import * as ProductDetail from "./pages/product/detail.page";
+import { router } from "./core/router/instance.ts";
 
 const enableMocking = () =>
   import("./mocks/browser").then(({ worker }) =>
@@ -18,8 +18,8 @@ const enableMocking = () =>
     }),
   );
 
-router.addRoute("/", HomePage);
-router.addRoute("/product/:id/", ProductDetailPage);
+router.addRoute("/", Home.PageComponent);
+router.addRoute("/product/:id/", ProductDetail.PageComponent);
 router.addRoute(".*", NotFoundPage);
 
 function main() {
