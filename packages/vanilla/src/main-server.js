@@ -106,8 +106,7 @@ export const render = async (url) => {
           query: result.data.filters,
           totalCount: result.data.pagination.total,
         })}</div>`;
-        title = "Shopping Mall - Home";
-        // 테스트에서 기대하는 형태로 initialData 구성
+        title = "쇼핑몰 - 홈";
         initialData = {
           products: result.data.products,
           categories: result.data.categories,
@@ -120,8 +119,7 @@ export const render = async (url) => {
           product: result.data.currentProduct,
           relatedProducts: result.data.relatedProducts || [],
         })}</div>`;
-        title = `${result.data.currentProduct.title} - Shopping Mall`;
-        // 상품 상세 페이지용 initialData
+        title = `${result.data.currentProduct.title} - 쇼핑몰`;
         initialData = {
           currentProduct: result.data.currentProduct,
         };
