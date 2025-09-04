@@ -3,7 +3,7 @@ import { createObserver } from "./createObserver.js";
 /**
  * 기본 라우터 - 공통 기능을 제공하는 추상 클래스
  */
-export class BaseRouter {
+export class DefaultRouter {
   #routes = new Map(); // 등록된 라우트들 저장
   #route = null; // 현재 매칭된 라우트
   #observer = createObserver(); // 라우트 변경 구독자들 관리

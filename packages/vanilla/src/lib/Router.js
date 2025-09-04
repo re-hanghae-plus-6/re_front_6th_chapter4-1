@@ -1,10 +1,10 @@
-import { BaseRouter } from "../lib";
+import { DefaultRouter } from "../lib";
 
 /**
  * 클라이언트사이드 SPA 라우터
  */
 
-export class Router extends BaseRouter {
+export class Router extends DefaultRouter {
   constructor(baseUrl = "") {
     super(baseUrl);
 
@@ -16,12 +16,12 @@ export class Router extends BaseRouter {
 
   // 현재 URL의 쿼리 파라미터 반환
   get query() {
-    return BaseRouter.parseQuery(window.location.search);
+    return DefaultRouter.parseQuery(window.location.search);
   }
 
   // 쿼리 파라미터 변경 시 URL 업데이트
   set query(newQuery) {
-    const newUrl = BaseRouter.getUrl(newQuery, this.baseUrl, window.location.pathname, window.location.search);
+    const newUrl = DefaultRouter.getUrl(newQuery, this.baseUrl, window.location.pathname, window.location.search);
     this.push(newUrl);
   }
 

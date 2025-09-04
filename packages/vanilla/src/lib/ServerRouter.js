@@ -1,10 +1,10 @@
-import { BaseRouter } from "../lib";
+import { DefaultRouter } from "../lib";
 
 /**
  * 서버사이드 라우터 - SSR 환경에서 사용
  */
 
-export class ServerRouter extends BaseRouter {
+export class ServerRouter extends DefaultRouter {
   #currentUrl = "/"; // 현재 처리 중인 요청 URL
   #origin = "http://localhost"; // 서버 origin
   #query = {}; // Express에서 파싱된 쿼리 객체
