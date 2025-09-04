@@ -427,3 +427,13 @@ export const routerProxy = new Proxy(router, {
   },
 });
 ```
+
+## 문제 로컬에서는 되는데 CI 환경에선 안됨
+
+### 원인
+
+```
+CI에서 Playwright가 4173(바닐라)만 준비될 때까지 기다리고, React CSR(5175/4175)은 준비되기 전에 테스트가 시작되어 초기 모듈 트랜스폼/번들이 끝나기 전에 DOM 검사(waitForSelector)가 실행됩니다. 그래서 #products-grid가 아직 렌더되지 않아 타임아웃이 납니다.
+```
+
+### 해결
