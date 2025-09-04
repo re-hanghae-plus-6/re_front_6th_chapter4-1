@@ -2,9 +2,11 @@ import { useRouterParams } from "../../../../router";
 import { useEffect } from "react";
 import { loadProductDetailForPage } from "../../productUseCase";
 
-export const useLoadProductDetail = () => {
-  const productId = useRouterParams((params) => params.id);
+export const useLoadProductDetail = (shouldLoad: boolean = true) => {
+  const productId = useRouterParams((params) => params.id) as string;
   useEffect(() => {
-    loadProductDetailForPage(productId);
-  }, [productId]);
+    if (shouldLoad) {
+      loadProductDetailForPage(productId);
+    }
+  }, [productId, shouldLoad]);
 };

@@ -6,12 +6,19 @@ declare global {
   }
 }
 
-window.__spyCalls = [];
-window.__spyCallsClear = () => {
+// SSR 환경 체크
+const isClient = typeof window !== "undefined";
+
+if (isClient) {
   window.__spyCalls = [];
-};
+  window.__spyCallsClear = () => {
+    window.__spyCalls = [];
+  };
+}
 
 export const log: typeof console.log = (...args) => {
-  window.__spyCalls.push(args);
+  if (isClient) {
+    window.__spyCalls.push(args);
+  }
   return console.log(...args);
 };

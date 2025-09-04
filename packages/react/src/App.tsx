@@ -1,12 +1,12 @@
-import { router, useCurrentPage } from "./router";
-import { HomePage, NotFoundPage, ProductDetailPage } from "./pages";
+import { router, useCurrentPage, registerClientRoutes } from "./router";
 import { useLoadCartStore } from "./entities";
 import { ModalProvider, ToastProvider } from "./components";
+import { isClient } from "./utils/runtime";
 
-// 홈 페이지 (상품 목록)
-router.addRoute("/", HomePage);
-router.addRoute("/product/:id/", ProductDetailPage);
-router.addRoute(".*", NotFoundPage);
+// 클라이언트에서만 라우트 등록
+if (isClient) {
+  registerClientRoutes(router);
+}
 
 const CartInitializer = () => {
   useLoadCartStore();
