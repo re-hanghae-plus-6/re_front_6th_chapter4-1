@@ -1,7 +1,7 @@
 import { getProduct, getProducts } from "../api/productApi.js";
 import { withIsomorphicLifecycle } from "../router/withLifecycle.js";
 import { loadProductDetailForPage } from "../services";
-import { initialProductState, productStore } from "../stores";
+import { initialProductState, PRODUCT_ACTIONS, productStore } from "../stores";
 import { isServer } from "../utils/runtime.js";
 import { PageWrapper } from "./PageWrapper.js";
 
@@ -275,9 +275,14 @@ export const ProductDetailPage = withIsomorphicLifecycle(
         title: `${product.title} - 쇼핑몰`,
       };
     },
-    initStore: () => {},
-    onMount: ({ params }) => {
-      loadProductDetailForPage(params.id);
+    initStore: ({ data }) => {
+      productStore.dispatch({
+        type: PRODUCT_ACTIONS.SETUP,
+        payload: { ...productStore.getState(), ...data },
+      });
+    },
+    onMount: ({ params, data }) => {
+      loadProductDetailForPage(params.id, data);
     },
     watches: [
       ({ params }) => [params.id],

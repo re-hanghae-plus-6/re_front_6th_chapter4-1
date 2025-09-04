@@ -45,8 +45,8 @@ export const HomePage = withIsomorphicLifecycle(
     initStore: ({ data }) => {
       initProductsAndCategories(data);
     },
-    onMount: () => {
-      loadProductsAndCategories();
+    onMount: ({ data }) => {
+      loadProductsAndCategories(data);
     },
     watches: [
       ({ query }) => {

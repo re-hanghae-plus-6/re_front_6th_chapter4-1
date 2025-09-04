@@ -14,20 +14,18 @@ export const initProductsAndCategories = async (data) => {
   });
 };
 
-export const loadProductsAndCategories = async () => {
-  // if (productStore.getState().products.length) {
-  //   return;
-  // }
-
-  router.query = { current: undefined }; // 항상 첫 페이지로 초기화
-  productStore.dispatch({
-    type: PRODUCT_ACTIONS.SETUP,
-    payload: {
-      ...initialProductState,
-      loading: true,
-      status: "pending",
-    },
-  });
+export const loadProductsAndCategories = async (initData) => {
+  if (!initData) {
+    router.query = { current: undefined }; // 항상 첫 페이지로 초기화
+    productStore.dispatch({
+      type: PRODUCT_ACTIONS.SETUP,
+      payload: {
+        ...initialProductState,
+        loading: true,
+        status: "pending",
+      },
+    });
+  }
 
   try {
     const [
@@ -134,7 +132,7 @@ export const setLimit = (limit) => {
 /**
  * 상품 상세 페이지용 상품 조회 및 관련 상품 로드
  */
-export const loadProductDetailForPage = async (productId) => {
+export const loadProductDetailForPage = async (productId, initData) => {
   try {
     const currentProduct = productStore.getState().currentProduct;
     if (productId === currentProduct?.productId) {
@@ -144,16 +142,19 @@ export const loadProductDetailForPage = async (productId) => {
       }
       return;
     }
-    // 현재 상품 클리어
-    productStore.dispatch({
-      type: PRODUCT_ACTIONS.SETUP,
-      payload: {
-        // ...initialProductState,
-        currentProduct: null,
-        loading: true,
-        status: "pending",
-      },
-    });
+
+    if (!initData) {
+      // 현재 상품 클리어
+      productStore.dispatch({
+        type: PRODUCT_ACTIONS.SETUP,
+        payload: {
+          // ...initialProductState,
+          currentProduct: null,
+          loading: true,
+          status: "pending",
+        },
+      });
+    }
 
     const product = await getProduct(productId);
 
