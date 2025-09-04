@@ -1,3 +1,4 @@
+import { createObserver } from "./createObserver";
 import type { AnyFunction, StringRecord } from "./types";
 
 interface Route<Handler extends AnyFunction> {
@@ -13,6 +14,7 @@ type QueryPayload = Record<string, string | number | undefined>;
 export class ServerRouter<Handler extends (...args: any[]) => any> {
   readonly #routes: Map<string, Route<Handler>>;
   readonly #baseUrl;
+  readonly #observer = createObserver();
 
   #route: null | (Route<Handler> & { params: StringRecord; path: string });
   #currentUrl = "/";
@@ -21,16 +23,6 @@ export class ServerRouter<Handler extends (...args: any[]) => any> {
     this.#routes = new Map();
     this.#route = null;
     this.#baseUrl = baseUrl.replace(/\/$/, "");
-  }
-
-  get url() {
-    return this.#currentUrl;
-  }
-
-  set url(newUrl: string) {
-    if (this.#currentUrl.toString() !== newUrl) {
-      this.#currentUrl = newUrl;
-    }
   }
 
   get query(): StringRecord {
@@ -54,6 +46,8 @@ export class ServerRouter<Handler extends (...args: any[]) => any> {
     return this.#route?.handler;
   }
 
+  readonly subscribe = this.#observer.subscribe;
+
   addRoute(path: string, handler: Handler) {
     // 경로 패턴을 정규식으로 변환
     const paramNames: string[] = [];
@@ -74,7 +68,7 @@ export class ServerRouter<Handler extends (...args: any[]) => any> {
   }
 
   #findRoute(url = this.#baseUrl) {
-    const { pathname } = new URL(url, "localhost");
+    const { pathname } = new URL(url, "http://localhost");
     for (const [routePath, route] of this.#routes) {
       const match = pathname.match(route.regex);
       if (match) {
@@ -95,21 +89,23 @@ export class ServerRouter<Handler extends (...args: any[]) => any> {
   }
 
   push(url: string) {
+    this.#currentUrl = url;
     try {
       // baseUrl이 없으면 자동으로 붙여줌
       const fullUrl = url.startsWith(this.#baseUrl) ? url : this.#baseUrl + (url.startsWith("/") ? url : "/" + url);
 
       this.#route = this.#findRoute(fullUrl);
+      this.#observer.notify();
     } catch (error) {
       console.error("라우터 네비게이션 오류:", error);
     }
   }
 
   start() {
-    this.#route = this.#findRoute();
+    this.#route = this.#findRoute("/");
   }
 
-  static parseQuery = (search = window.location.search) => {
+  static parseQuery = (search: string) => {
     const params = new URLSearchParams(search);
     const query: StringRecord = {};
     for (const [key, value] of params) {
@@ -128,10 +124,7 @@ export class ServerRouter<Handler extends (...args: any[]) => any> {
     return params.toString();
   };
 
-  static getUrl = (newQuery: QueryPayload, pathname = "/", baseUrl = "") => {
-    const currentQuery = ServerRouter.parseQuery();
-    const updatedQuery = { ...currentQuery, ...newQuery };
-
+  static getUrl = (updatedQuery: QueryPayload, pathname = "/", baseUrl = "") => {
     // 빈 값들 제거
     Object.keys(updatedQuery).forEach((key) => {
       if (updatedQuery[key] === null || updatedQuery[key] === undefined || updatedQuery[key] === "") {

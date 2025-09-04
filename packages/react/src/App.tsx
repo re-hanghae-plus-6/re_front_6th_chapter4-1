@@ -1,10 +1,32 @@
 import { router, useCurrentPage } from "./router";
 import { HomePage, NotFoundPage, ProductDetailPage } from "./pages";
-import { useLoadCartStore } from "./entities";
+import { PRODUCT_ACTIONS, productStore, useLoadCartStore } from "./entities";
 import { ModalProvider, ToastProvider } from "./components";
+import { getProducts, getUniqueCategories } from "./mocks/server";
 
 // 홈 페이지 (상품 목록)
-router.addRoute("/", HomePage);
+router.addRoute("/", () => {
+  if (typeof window === "undefined") {
+    const {
+      products,
+      pagination: { total: totalCount },
+    } = getProducts();
+
+    const categories = getUniqueCategories();
+
+    productStore.dispatch({
+      type: PRODUCT_ACTIONS.SETUP,
+      payload: {
+        products,
+        categories,
+        totalCount,
+        loading: false,
+        status: "done",
+      },
+    });
+  }
+  return HomePage();
+});
 router.addRoute("/product/:id/", ProductDetailPage);
 router.addRoute(".*", NotFoundPage);
 

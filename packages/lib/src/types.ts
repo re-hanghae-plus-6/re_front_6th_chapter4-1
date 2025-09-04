@@ -9,5 +9,5 @@ export type Selector<T, S = T> = (state: T) => S;
 
 export type RouterInstance<
   T extends AnyFunction,
-  R extends typeof Router<T> | typeof ServerRouter<T>,
+  R extends typeof Router<T> | typeof ServerRouter<T> = typeof Router<T>,
 > = InstanceType<R>;

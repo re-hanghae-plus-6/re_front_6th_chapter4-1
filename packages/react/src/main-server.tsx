@@ -2,9 +2,23 @@ import { renderToString } from "react-dom/server";
 import { App } from "./App";
 import { loadHomePageData, loadProductDetailData } from "./ssr-data";
 import type { HomePageData, ProductDetailData } from "./ssr-data";
+import { ServerRouter } from "@hanghae-plus/lib";
+import { HomePage, NotFoundPage, ProductDetailPage } from "./pages";
+// import { productStore } from "./entities";
 
 export const render = async (url: string, query: Record<string, string>) => {
   try {
+    // 서버 라우터 초기화
+    const serverRouter = new ServerRouter();
+
+    // 라우트 등록
+    serverRouter.addRoute("/", HomePage);
+    serverRouter.addRoute("/product/:id/", ProductDetailPage);
+    serverRouter.addRoute(".*", NotFoundPage);
+
+    // 현재 URL 설정
+    serverRouter.push(url);
+
     // URL에 따라 데이터 로딩
     let initialData: HomePageData | ProductDetailData | Record<string, unknown> = {};
     let title = "쇼핑몰";
@@ -12,6 +26,7 @@ export const render = async (url: string, query: Record<string, string>) => {
     if (url === "/") {
       // 홈페이지 데이터 로딩
       const homeData = await loadHomePageData(url, query);
+      // initialData: productStore.getState();
       initialData = {
         products: homeData.products,
         categories: homeData.categories,

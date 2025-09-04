@@ -1,5 +1,12 @@
 import { useEffect } from "react";
-import { loadNextProducts, loadProductsAndCategories, ProductList, SearchBar } from "../entities";
+import {
+  hydrateProduct,
+  loadNextProducts,
+  loadProductsAndCategories,
+  ProductList,
+  // productStore,
+  SearchBar,
+} from "../entities";
 import { PageWrapper } from "./PageWrapper";
 
 const headerLeft = (
@@ -29,7 +36,11 @@ const unregisterScrollHandler = () => {
 export const HomePage = () => {
   useEffect(() => {
     registerScrollHandler();
-    loadProductsAndCategories();
+    if (window.__INITIAL_DATA__?.productStore.length === 0) {
+      loadProductsAndCategories();
+    } else {
+      hydrateProduct();
+    }
 
     return unregisterScrollHandler;
   }, []);
