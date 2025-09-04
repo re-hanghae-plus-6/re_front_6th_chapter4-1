@@ -127,3 +127,35 @@ const productReducer = (state: typeof initialProductState, action: any) => {
  * 상품 스토어 생성
  */
 export const productStore = createStore(productReducer, initialProductState);
+
+export const hydrateProductStore = () => {
+  if (typeof window === "undefined") return false;
+  const data = window.__INITIAL_DATA__;
+  if (!data) return false;
+
+  if (data.products && data.categories) {
+    productStore.dispatch({
+      type: PRODUCT_ACTIONS.SETUP,
+      payload: {
+        products: data.products as unknown as Product[],
+        categories: data.categories as Categories,
+        totalCount: data.totalCount ?? 0,
+        loading: false,
+        status: "done",
+      },
+    });
+    delete window.__INITIAL_DATA__;
+    return true;
+  }
+
+  if (data.currentProduct) {
+    productStore.dispatch({ type: PRODUCT_ACTIONS.SET_CURRENT_PRODUCT, payload: data.currentProduct as Product });
+    productStore.dispatch({
+      type: PRODUCT_ACTIONS.SET_RELATED_PRODUCTS,
+      payload: (data.relatedProducts ?? []) as Product[],
+    });
+    delete window.__INITIAL_DATA__;
+    return true;
+  }
+  return false;
+};

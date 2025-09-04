@@ -4,7 +4,6 @@ import { route } from "./router/serverRouter";
 import { HomePage, NotFoundPage, ProductDetailPage } from "./pages";
 import { loadHomePageData, loadProductDetailData } from "./mocks/mockApi";
 import { productStore, PRODUCT_ACTIONS } from "./entities/products/productStore";
-import { setSsrQuery } from "./ssrContext";
 
 route.add("/", HomePage);
 route.add("/product/:id", ProductDetailPage);
@@ -38,12 +37,11 @@ export const render = async (url: string, query: Record<string, string>) => {
       status: 200,
       head: "<title>상품 상세 - React 쇼핑몰</title>",
       html,
-      initialData: detail,
+      initialData: { ...detail, params: { id }, query: { ...(query || {}) } },
     };
   }
 
   const initialData = await loadHomePageData(query || {});
-  setSsrQuery(query || {});
   productStore.dispatch({
     type: PRODUCT_ACTIONS.SETUP,
     payload: {
@@ -59,6 +57,6 @@ export const render = async (url: string, query: Record<string, string>) => {
     status: 200,
     head: "<title>쇼핑몰 - 홈</title>",
     html,
-    initialData,
+    initialData: { ...initialData, query: { ...(query || {}) } },
   };
 };

@@ -1,7 +1,8 @@
 import { App } from "./App";
 import { router } from "./router";
+import { hydrateProductStore } from "./entities/products/productStore";
 import { BASE_URL } from "./constants.ts";
-import { createRoot } from "react-dom/client";
+import { hydrateRoot } from "react-dom/client";
 
 const enableMocking = () =>
   import("./mocks/browser").then(({ worker }) =>
@@ -14,12 +15,11 @@ const enableMocking = () =>
   );
 
 function main() {
-  if (typeof window !== "undefined") {
-    router.start();
-  }
+  router.start();
+  hydrateProductStore();
 
   const rootElement = document.getElementById("root")!;
-  createRoot(rootElement).render(<App />);
+  hydrateRoot(rootElement, <App />);
 }
 
 // 애플리케이션 시작
