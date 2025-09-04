@@ -2,6 +2,4 @@
 import { Router, ServerRouter } from "../lib";
 import { BASE_URL } from "../constants.js";
 
-const CurrentRouter = typeof window !== "undefined" ? Router : ServerRouter;
-
-export const router = new CurrentRouter(BASE_URL);
+export const router = typeof window === "undefined" ? new ServerRouter(BASE_URL) : new Router(BASE_URL);
