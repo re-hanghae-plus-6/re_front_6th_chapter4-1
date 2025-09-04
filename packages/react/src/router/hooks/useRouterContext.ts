@@ -1,7 +1,7 @@
-import { createContext, useContext } from "react";
-import type { ServerRouter } from "../ServerRouter";
+import type { RouterInstance } from "@hanghae-plus/lib";
+import { createContext, useContext, type FC } from "react";
 
-export const RouterContext = createContext<ServerRouter | null>(null);
+export const RouterContext = createContext<RouterInstance<FC> | null>(null);
 
 export const useRouterContext = () => {
   const router = useContext(RouterContext);

@@ -2,7 +2,6 @@ import { renderToString } from "react-dom/server";
 import { ServerApp } from "./ServerApp";
 import { PRODUCT_ACTIONS, productStore } from "./entities/products/productStore";
 import { HomePage, NotFoundPage, ProductDetailPage } from "./pages";
-import { RouterProvider } from "./router/RouterCountext";
 import { ServerRouter } from "./router/ServerRouter";
 
 export const render = async (url: string) => {
@@ -34,11 +33,7 @@ export const render = async (url: string) => {
   const PageComponent = serverRouter.target;
 
   const html = PageComponent
-    ? renderToString(
-        <RouterProvider router={serverRouter}>
-          <ServerApp PageComponent={PageComponent} />
-        </RouterProvider>,
-      )
+    ? renderToString(<ServerApp PageComponent={PageComponent} query={query} pathname={pathname} />)
     : "";
 
   return { html, head, initialData: data };

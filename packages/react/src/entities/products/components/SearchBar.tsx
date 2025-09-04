@@ -1,8 +1,8 @@
-import { type ChangeEvent, Fragment, type KeyboardEvent, type MouseEvent } from "react";
+import { Fragment, type ChangeEvent, type KeyboardEvent, type MouseEvent } from "react";
 import { PublicImage } from "../../../components";
 import { useProductStore } from "../hooks";
-import { useProductFilter } from "./hooks";
 import { searchProducts, setCategory, setLimit, setSort } from "../productUseCase";
+import { useProductFilter } from "./hooks";
 
 const OPTION_LIMITS = [10, 20, 50, 100];
 const OPTION_SORTS = [

@@ -1,10 +1,15 @@
 import compression from "compression";
 import express from "express";
 import fs from "fs";
-import { join } from "path";
+import { dirname, join } from "path";
 import sirv from "sirv";
+import { fileURLToPath } from "url";
 import { createServer } from "vite";
 import { setupServerJsdom } from "../vanilla/src/utils/setupJsDom.js";
+
+// ES 모듈에서 __dirname 대체
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 await setupServerJsdom();
 
@@ -14,20 +19,19 @@ const base = process.env.BASE || (prod ? "/front_6th_chapter4-1/react/" : "/");
 
 const app = express();
 
-let vite;
+const vite = await createServer({
+  server: { middlewareMode: true },
+  appType: "custom",
+  base,
+});
 
 if (prod) {
   // 프로덕션: 빌드된 정적 파일 서빙
   // compression + sirv 사용
   app.use(compression());
-  app.use(base, sirv("./dist/vanilla", { extensions: [] }));
+  app.use(base, sirv("./dist/react", { extensions: [] }));
 } else {
   // Vite dev server + middleware 사용
-  vite = await createServer({
-    server: { middlewareMode: true },
-    appType: "custom",
-    base,
-  });
 
   app.use(vite.middlewares);
 }
