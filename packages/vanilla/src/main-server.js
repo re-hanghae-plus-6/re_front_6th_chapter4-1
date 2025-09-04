@@ -1,6 +1,6 @@
-import { HomePage, NotFoundPage, ProductDetailPageSSR } from "./pages";
-import { router } from "./router";
-import { getProductsOnServer, getUniqueCategories, getProductDetailOnServer } from "/src/mocks/server.js";
+import { HomePage, NotFoundPage, ProductDetailPageSSR } from "./pages/index.js";
+import { router } from "./router/index.js";
+import { getProductsOnServer, getUniqueCategories, getProductDetailOnServer } from "./mocks/server.js";
 
 router.addRoute("/", () => {
   const {
