@@ -11,10 +11,7 @@ interface ServerConfig {
   metadata?: (params: ServerParams) => Promise<{ title: string }>;
 }
 
-export interface PageWithServer<P = Record<string, unknown>> extends FC<P> {
-  ssr?: (params: ServerParams) => Promise<unknown>;
-  metadata?: (params: ServerParams) => Promise<{ title: string }>;
-}
+export interface PageWithServer<P = Record<string, unknown>> extends FC<P>, ServerConfig {}
 
 export const withServerSideProps = <P extends Record<string, unknown>>(
   serverOptions: ServerConfig,
