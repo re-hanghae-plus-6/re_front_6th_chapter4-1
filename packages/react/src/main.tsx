@@ -5,7 +5,7 @@ import { BASE_URL } from "./constants.ts";
 import { ProductProvider } from "./entities/products/context/ProductContext.tsx";
 import { createProductStore } from "./entities/index.ts";
 import { RouterContext } from "./router/hooks/useRouterContext.ts";
-import { routes } from "./router/router.ts";
+import { routes } from "./router/routes.ts";
 import { hasInitialData } from "./utils/hydration.ts";
 
 const enableMocking = () =>

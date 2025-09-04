@@ -1,4 +1,4 @@
-import { router } from "../router";
+import { router } from "../routes";
 import { useRouter } from "@hanghae-plus/lib";
 
 type Params = Record<string, string | undefined>;

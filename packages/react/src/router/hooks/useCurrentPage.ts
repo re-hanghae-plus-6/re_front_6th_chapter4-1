@@ -1,4 +1,4 @@
-import { router } from "../router";
+import { router } from "../routes";
 import { useRouter } from "@hanghae-plus/lib";
 
 export const useCurrentPage = () => {
