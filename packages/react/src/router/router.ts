@@ -11,6 +11,9 @@ const createRouter = () => ({
   get route() {
     return { path: "/" } as const;
   },
+  get params() {
+    return {} as const;
+  },
   get query() {
     return {} as const;
   },

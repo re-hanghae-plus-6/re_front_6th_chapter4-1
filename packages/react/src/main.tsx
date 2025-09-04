@@ -28,7 +28,7 @@ function main() {
 }
 
 // 애플리케이션 시작
-if (typeof window !== "undefined" && !window.__INITIAL_DATA__) {
+if (import.meta.env.DEV || (typeof window !== "undefined" && !window.__INITIAL_DATA__)) {
   enableMocking().then(main);
 } else {
   main();
