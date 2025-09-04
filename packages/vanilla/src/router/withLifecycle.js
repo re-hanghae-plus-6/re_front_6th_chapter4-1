@@ -49,6 +49,11 @@ const unmount = (pageFunction) => {
 };
 
 export const withLifecycle = ({ onMount, onUnmount, watches } = {}, page) => {
+  // 서버 환경에서는 라이프사이클을 무시하고 페이지 함수만 반환
+  if (typeof window === "undefined") {
+    return page;
+  }
+
   const lifecycle = getPageLifecycle(page);
   if (typeof onMount === "function") {
     lifecycle.mount = onMount;

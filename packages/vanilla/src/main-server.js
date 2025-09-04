@@ -100,8 +100,8 @@ const routeHandlers = {
       };
 
       // 서버사이드 HTML 렌더링
-      const { ServerHomePage } = await import("./pages/ServerPages.js");
-      const html = ServerHomePage(initialData);
+      const { HomePage } = await import("./pages/HomePage.js");
+      const html = HomePage(initialData);
 
       return {
         head: `<title>쇼핑몰 - 홈</title>`,
@@ -146,8 +146,8 @@ const routeHandlers = {
       };
 
       // 서버사이드 HTML 렌더링
-      const { ServerProductDetailPage } = await import("./pages/ServerPages.js");
-      const html = ServerProductDetailPage(initialData);
+      const { ProductDetailPage } = await import("./pages/ProductDetailPage.js");
+      const html = ProductDetailPage(initialData);
 
       return {
         head: `<title>${productState.currentProduct?.title || "상품"} - 쇼핑몰</title>`,
@@ -166,18 +166,31 @@ const routeHandlers = {
 
   // 404 페이지
   ".*": async () => {
-    return {
-      head: `<title>404 - 페이지를 찾을 수 없습니다</title>`,
-      html: `
-        <div class="min-h-screen bg-gray-50 flex items-center justify-center">
-          <div class="text-center">
-            <h1 class="text-2xl font-bold text-gray-900 mb-4">404 - 페이지를 찾을 수 없습니다</h1>
-            <a href="/" class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700">홈으로 돌아가기</a>
+    try {
+      // 서버사이드 HTML 렌더링
+      const { NotFoundPage } = await import("./pages/NotFoundPage.js");
+      const html = NotFoundPage();
+
+      return {
+        head: `<title>404 - 페이지를 찾을 수 없습니다</title>`,
+        html,
+        initialData: { error: "Page not found" },
+      };
+    } catch (error) {
+      console.error("404 페이지 렌더링 오류:", error);
+      return {
+        head: `<title>404 - 페이지를 찾을 수 없습니다</title>`,
+        html: `
+          <div class="min-h-screen bg-gray-50 flex items-center justify-center">
+            <div class="text-center">
+              <h1 class="text-2xl font-bold text-gray-900 mb-4">404 - 페이지를 찾을 수 없습니다</h1>
+              <a href="/" class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700">홈으로 돌아가기</a>
+            </div>
           </div>
-        </div>
-      `,
-      initialData: { error: "Page not found" },
-    };
+        `,
+        initialData: { error: "Page not found" },
+      };
+    }
   },
 };
 
@@ -202,7 +215,6 @@ export const render = async (url) => {
 
     // 라우트 핸들러 실행
     const result = await route.handler(url, serverRouter.params, mergedQuery);
-    console.log("result", result);
 
     return result;
   } catch (error) {
