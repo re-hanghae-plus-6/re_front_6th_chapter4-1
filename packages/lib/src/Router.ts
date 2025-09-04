@@ -161,6 +161,11 @@ export class Router<Handler extends (...args: any[]) => any> {
     });
 
     const queryString = Router.stringifyQuery(updatedQuery);
-    return `${baseUrl}${window.location.pathname.replace(baseUrl, "")}${queryString ? `?${queryString}` : ""}`;
+
+    const pathname = window.location.pathname;
+    const withoutBase = pathname.startsWith(baseUrl) ? pathname.slice(baseUrl.length) : pathname;
+    const normalizedPath = withoutBase === "" ? "/" : withoutBase.startsWith("/") ? withoutBase : `/${withoutBase}`;
+
+    return `${baseUrl}${normalizedPath}${queryString ? `?${queryString}` : ""}`;
   };
 }

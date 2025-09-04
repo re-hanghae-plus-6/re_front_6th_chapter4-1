@@ -23,9 +23,7 @@ export const route = {
     const normalizedPattern = normalizePath(pattern);
 
     const params = Array.from(normalizedPattern.matchAll(/:([A-Za-z0-9_]+)/g)).map(([, name]) => name);
-    const regexPattern = normalizedPattern.replace(/:([A-Za-z0-9_]+)/g, (_, name) =>
-      name === "id" ? "(\\d+)" : "([^/]+)",
-    );
+    const regexPattern = normalizedPattern.replace(/:([A-Za-z0-9_]+)/g, "([^/]+)");
 
     const regex = new RegExp(`^${regexPattern}/?$`);
 

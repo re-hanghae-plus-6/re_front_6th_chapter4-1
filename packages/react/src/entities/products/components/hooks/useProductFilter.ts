@@ -7,6 +7,9 @@ export const useProductFilter = () => {
   const category = { category1, category2 };
 
   useEffect(() => {
+    if (typeof window !== "undefined" && window.__INITIAL_DATA__) {
+      return;
+    }
     loadProducts(true);
   }, [searchQuery, limit, sort, category1, category2]);
 

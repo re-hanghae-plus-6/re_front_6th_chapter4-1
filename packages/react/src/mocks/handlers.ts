@@ -65,8 +65,7 @@ function filterProducts(products: Product[], query: Record<string, string>) {
 }
 
 export const handlers = [
-  // 상품 목록 API
-  http.get("/api/products", async ({ request }) => {
+  http.get(/\/api\/products$/, async ({ request }) => {
     const url = new URL(request.url);
     const page = parseInt(url.searchParams.get("page") ?? url.searchParams.get("current") ?? "1");
     const limit = parseInt(url.searchParams.get("limit") ?? "20");
@@ -112,9 +111,15 @@ export const handlers = [
     return HttpResponse.json(response);
   }),
 
-  // 상품 상세 API
-  http.get("/api/products/:id", ({ params }) => {
-    const { id } = params;
+  // 상품 상세 API: '/api/products/:id' 혹은 '.../react/api/products/:id'
+  http.get(/\/api\/products\/.+$/, ({ params, request }) => {
+    // id 추출 (MSW params 또는 URL 사용)
+    let id = params?.id as string | undefined;
+    if (!id) {
+      const url = new URL(request.url);
+      const match = url.pathname.match(/\/api\/products\/(\w+)/);
+      id = match?.[1];
+    }
     const product = items.find((item) => item.productId === id);
 
     if (!product) {
@@ -134,8 +139,8 @@ export const handlers = [
     return HttpResponse.json(detailProduct);
   }),
 
-  // 카테고리 목록 API
-  http.get("/api/categories", async () => {
+  // 카테고리 목록 API: '/api/categories' 혹은 '.../react/api/categories'
+  http.get(/\/api\/categories$/, async () => {
     const categories = getUniqueCategories();
     await delay();
     return HttpResponse.json(categories);
