@@ -6,17 +6,23 @@ import { ServerProductDetailPage } from "./pages/server/ServerProductDetailPage.
 const serverRouter = new ServerRouter();
 
 serverRouter.addRoute("/", async (params, query) => {
-  const [productsData, categories] = await Promise.all([
-    getProducts({ ...query, limit: query.limit || 20 }),
-    getCategories(),
-  ]);
+  // 쿼리 파라미터 정리 (숫자 변환 포함)
+  const cleanQuery = {
+    search: query.search || "",
+    category1: query.category1 || "",
+    category2: query.category2 || "",
+    sort: query.sort || "price_asc",
+    limit: parseInt(query.limit) || 20,
+  };
+
+  const [productsData, categories] = await Promise.all([getProducts(cleanQuery), getCategories()]);
 
   return {
     type: "homepage",
     data: {
       products: productsData.products,
       pagination: productsData.pagination,
-      filters: productsData.filters,
+      filters: cleanQuery, // 정리된 쿼리를 filters로 전달
       categories,
     },
   };
