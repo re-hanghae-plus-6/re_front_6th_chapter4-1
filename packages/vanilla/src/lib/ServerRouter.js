@@ -1,27 +1,19 @@
 /**
- * 간단한 SPA 라우터
+ * Node.js 서버 라우터
  */
 import { createObserver } from "./createObserver.js";
 
-export class Router {
+export class ServerRouter {
   #routes;
   #route;
   #observer = createObserver();
   #baseUrl;
+  #currentQuery;
 
   constructor(baseUrl = "") {
     this.#routes = new Map();
     this.#route = null;
     this.#baseUrl = baseUrl.replace(/\/$/, "");
-
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    window.addEventListener("popstate", () => {
-      this.#route = this.#findRoute();
-      this.#observer.notify();
-    });
   }
 
   get baseUrl() {
@@ -29,11 +21,11 @@ export class Router {
   }
 
   get query() {
-    return Router.parseQuery(typeof window !== "undefined" ? window.location.search : {});
+    return this.#currentQuery;
   }
 
   set query(newQuery) {
-    const newUrl = Router.getUrl(newQuery, this.#baseUrl);
+    const newUrl = ServerRouter.getUrl(newQuery, this.#baseUrl);
     this.push(newUrl);
   }
 
@@ -77,8 +69,8 @@ export class Router {
     });
   }
 
-  #findRoute(url = typeof window !== "undefined" ? window.location.pathname : "/") {
-    const { pathname } = new URL(url, typeof window !== "undefined" ? window.location.origin : "/");
+  #findRoute(url = "/", origin = "http://localhost") {
+    const { pathname } = new URL(url, origin);
     for (const [routePath, route] of this.#routes) {
       const match = pathname.match(route.regex);
       if (match) {
@@ -102,22 +94,9 @@ export class Router {
    * 네비게이션 실행
    * @param {string} url - 이동할 경로
    */
-  push(url) {
+  push(url = "/") {
     try {
-      // baseUrl이 없으면 자동으로 붙여줌
-      let fullUrl = url.startsWith(this.#baseUrl) ? url : this.#baseUrl + (url.startsWith("/") ? url : "/" + url);
-
-      const prevFullUrl = `${typeof window !== "undefined" ? window.location.pathname : "/"}${
-        typeof window !== "undefined" ? window.location.search : ""
-      }`;
-
-      // 히스토리 업데이트
-      if (prevFullUrl !== fullUrl) {
-        window.history.pushState(null, "", fullUrl);
-      }
-
-      this.#route = this.#findRoute(fullUrl);
-      this.#observer.notify();
+      this.#route = this.#findRoute(url);
     } catch (error) {
       console.error("라우터 네비게이션 오류:", error);
     }
@@ -126,8 +105,9 @@ export class Router {
   /**
    * 라우터 시작
    */
-  start() {
-    this.#route = this.#findRoute();
+  start(url = "/", query = {}) {
+    this.#currentQuery = query;
+    this.#route = this.#findRoute(url);
     this.#observer.notify();
   }
 
@@ -136,7 +116,7 @@ export class Router {
    * @param {string} search - location.search 또는 쿼리 문자열
    * @returns {Object} 파싱된 쿼리 객체
    */
-  static parseQuery = (search = typeof window !== "undefined" ? window.location.search : "") => {
+  static parseQuery = (search = "") => {
     const params = new URLSearchParams(search);
     const query = {};
     for (const [key, value] of params) {
@@ -161,7 +141,7 @@ export class Router {
   };
 
   static getUrl = (newQuery, baseUrl = "") => {
-    const currentQuery = Router.parseQuery();
+    const currentQuery = ServerRouter.parseQuery();
     const updatedQuery = { ...currentQuery, ...newQuery };
 
     // 빈 값들 제거
@@ -171,9 +151,8 @@ export class Router {
       }
     });
 
-    const queryString = Router.stringifyQuery(updatedQuery);
-    return `${baseUrl}${typeof window !== "undefined" ? window.location.pathname.replace(baseUrl, "") : "/"}${
-      queryString ? `?${queryString}` : ""
-    }`;
+    const queryString = ServerRouter.stringifyQuery(updatedQuery);
+    //TODO: 수정해야하나?
+    return `${baseUrl}/${queryString ? `?${queryString}` : ""}`;
   };
 }

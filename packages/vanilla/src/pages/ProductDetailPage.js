@@ -237,7 +237,17 @@ function ProductDetail({ product, relatedProducts = [] }) {
 export const ProductDetailPage = withLifecycle(
   {
     onMount: () => {
-      loadProductDetailForPage(router.params.id);
+      if (typeof window !== "undefined") {
+        if (window.__HYDRATED__) {
+          const { currentProduct, status } = productStore.getState();
+          const productId = router.params.id;
+          if (currentProduct && currentProduct.productId === productId && status === "done") {
+            return;
+          }
+        }
+
+        loadProductDetailForPage(router.params.id);
+      }
     },
     watches: [() => [router.params.id], () => loadProductDetailForPage(router.params.id)],
   },
