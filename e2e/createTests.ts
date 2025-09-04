@@ -743,14 +743,6 @@ export const createSSRTest = (baseUrl: string) => {
           `${baseUrl}?search=%EC%B0%A8%EB%9F%89%EC%9A%A9&category1=%EC%83%9D%ED%99%9C%2F%EA%B1%B4%EA%B0%95&category2=%EC%9E%90%EB%8F%99%EC%B0%A8%EC%9A%A9%ED%92%88&sort=price_desc&limit=10`,
         );
 
-        // 현재 URL 출력
-        const currentUrl = page.url();
-        console.log("here Current URL:", currentUrl);
-
-        // HTML 전체 출력
-        const htmlContent = await page.content();
-        console.log("here Full HTML content:\n", htmlContent);
-
         // URL에서 복원된 상태가 SSR로 렌더링되었는지 확인
         const bodyContent = await page.locator("body").textContent();
         expect(bodyContent).toContain("9개");
@@ -774,13 +766,6 @@ export const createSSRTest = (baseUrl: string) => {
 
         // 직접 상품 상세 URL로 접근
         await page.goto(`${baseUrl}product/85067212996/`);
-        // 현재 URL 출력
-        const currentUrl = page.url();
-        console.log("Current URL:", currentUrl);
-
-        // HTML 전체 출력
-        const htmlContent = await page.content();
-        console.log("Full HTML content:\n", htmlContent);
 
         // SSR로 렌더링된 상품 정보가 즉시 표시되는지 확인
         const bodyContent = await page.locator("body").textContent();
