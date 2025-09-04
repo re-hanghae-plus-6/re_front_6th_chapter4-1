@@ -31,10 +31,12 @@ const mount = (page) => {
   const lifecycle = getPageLifecycle(page);
   if (lifecycle.mounted) return;
 
-  // 마운트 콜백들 실행
-  lifecycle.mount?.();
-  lifecycle.mounted = true;
-  lifecycle.deps = [];
+  // 마운트 콜백들 실행: 서버사이드에서는 돔 추가 및 제거 시 이벤트 발생X
+  if (typeof window !== "undefined") {
+    lifecycle.mount?.();
+    lifecycle.mounted = true;
+    lifecycle.deps = [];
+  }
 };
 
 // 페이지 언마운트 처리
@@ -43,9 +45,11 @@ const unmount = (pageFunction) => {
 
   if (!lifecycle.mounted) return;
 
-  // 언마운트 콜백들 실행
-  lifecycle.unmount?.();
-  lifecycle.mounted = false;
+  // 언마운트 콜백들 실행: 서버사이드에서는 돔 추가 및 제거 시 이벤트 발생X
+  if (typeof window !== "undefined") {
+    lifecycle.unmount?.();
+    lifecycle.mounted = false;
+  }
 };
 
 export const withLifecycle = ({ onMount, onUnmount, watches } = {}, page) => {

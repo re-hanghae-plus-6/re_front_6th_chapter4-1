@@ -7,7 +7,19 @@ import { PageWrapper } from "./PageWrapper.js";
 export const HomePage = withLifecycle(
   {
     onMount: () => {
-      loadProductsAndCategories();
+      if (typeof window !== "undefined") {
+        // Hydration된 데이터가 있으면 API 호출 스킵
+        if (window.__HYDRATED__) {
+          const { products, categories, status } = productStore.getState();
+          if (products.length > 0 && Object.keys(categories).length > 0 && status === "done") {
+            console.log("✅ Skip loading - data already hydrated from SSR");
+            return;
+          }
+        }
+
+        console.log("🔄 Loading data from client");
+        loadProductsAndCategories();
+      }
     },
     watches: [
       () => {

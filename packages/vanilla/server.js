@@ -12,6 +12,7 @@ const app = express();
 const templateHtml = prod ? fs.readFileSync("./dist/vanilla/index.html", "utf-8") : "";
 
 let vite;
+
 if (!prod) {
   const { createServer } = await import("vite");
   vite = await createServer({

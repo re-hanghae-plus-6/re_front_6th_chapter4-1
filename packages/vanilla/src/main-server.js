@@ -1,74 +1,136 @@
-import { PageWrapper } from "./pages/PageWrapper.js";
-import { SearchBar } from "./components/SearchBar.js";
-import items from "./mocks/items.json" with { type: "json" };
+import { HomePage, NotFoundPage, ProductDetailPage } from "./pages";
+import { router } from "./router";
+import { getProducts, getCategories, getProduct } from "./api/productApi.js";
+import { productStore } from "./stores";
+import { PRODUCT_ACTIONS } from "./stores/actionTypes";
 
-// 상품 검색 및 필터링 함수
-function filterProducts(products, query) {
-  let filtered = [...products];
+router.addRoute("/", HomePage);
+router.addRoute("/product/:id/", ProductDetailPage);
+router.addRoute(".*", NotFoundPage);
 
-  // 검색어 필터링
-  if (query.search) {
-    const searchTerm = query.search.toLowerCase();
-    filtered = filtered.filter(
-      (item) => item.title.toLowerCase().includes(searchTerm) || item.brand.toLowerCase().includes(searchTerm),
-    );
+export const render = async (url, query) => {
+  router.start(url, query);
+  const route = router.route;
+  if (!route) {
+    return {
+      head: "",
+      html: NotFoundPage(),
+      initialData: JSON.stringify({}),
+    };
   }
+  let head = "";
+  let data;
 
-  // 카테고리 필터링
-  if (query.category1) {
-    filtered = filtered.filter((item) => item.category1 === query.category1);
-  }
-  if (query.category2) {
-    filtered = filtered.filter((item) => item.category2 === query.category2);
-  }
+  if (route.path === "/") {
+    try {
+      const [productsData, categories] = await Promise.all([getProducts(query), getCategories()]);
 
-  // 정렬
-  if (query.sort) {
-    switch (query.sort) {
-      case "price_asc":
-        filtered.sort((a, b) => parseInt(a.lprice) - parseInt(b.lprice));
-        break;
-      case "price_desc":
-        filtered.sort((a, b) => parseInt(b.lprice) - parseInt(a.lprice));
-        break;
-      case "name_asc":
-        filtered.sort((a, b) => a.title.localeCompare(b.title, "ko"));
-        break;
-      case "name_desc":
-        filtered.sort((a, b) => b.title.localeCompare(a.title, "ko"));
-        break;
-      default:
-        // 기본은 가격 낮은 순
-        filtered.sort((a, b) => parseInt(a.lprice) - parseInt(b.lprice));
+      productStore.dispatch({
+        type: PRODUCT_ACTIONS.SETUP,
+        payload: {
+          products: productsData,
+          categories: categories,
+          totalCount: productsData.pagination.total || 0,
+          loading: false,
+          status: "done",
+          error: null,
+          currentProduct: null,
+          relatedProducts: [],
+        },
+      });
+
+      head = `
+      <title>쇼핑몰 - 홈</title>
+      <meta name="description" content="쇼핑몰 홈">
+    `;
+      data = {
+        products: productsData.products || [],
+        categories: categories || {},
+        totalCount: productsData.pagination.total || 0,
+      };
+    } catch (error) {
+      productStore.dispatch({
+        type: PRODUCT_ACTIONS.SETUP,
+        payload: {
+          currentProduct: null,
+          relatedProducts: [],
+          loading: false,
+          status: "done",
+          error: error.message,
+          categories: {},
+          totalCount: 0,
+          products: [],
+        },
+      });
+
+      data = {
+        products: [],
+        categories: {},
+        totalCount: 0,
+      };
+    }
+  } else if (route.path === "/product/:id/") {
+    const productId = route.params.id;
+
+    try {
+      const product = await getProduct(productId);
+
+      let relatedProducts = [];
+      if (product && product.category2) {
+        relatedProducts = await getProducts({ category2: product.category2, limit: 20, page: 1 }).filter(
+          (p) => p.productId !== productId,
+        );
+      }
+
+      productStore.dispatch({
+        type: PRODUCT_ACTIONS.SETUP,
+        payload: {
+          currentProduct: product,
+          relatedProducts: relatedProducts,
+          loading: false,
+          status: "done",
+          error: null,
+          categories: {},
+          totalCount: 0,
+          products: [],
+        },
+      });
+
+      head = `
+        <title>${product.title} - 쇼핑몰</title>
+        <meta name="description" content="${product.description}">
+      `;
+
+      data = {
+        product: product,
+        relatedProducts: relatedProducts,
+      };
+    } catch (error) {
+      productStore.dispatch({
+        type: PRODUCT_ACTIONS.SETUP,
+        payload: {
+          currentProduct: null,
+          relatedProducts: [],
+          loading: false,
+          status: "done",
+          error: error.message,
+          categories: {},
+          totalCount: 0,
+          products: [],
+        },
+      });
+
+      data = {
+        products: [],
+        categories: {},
+        totalCount: 0,
+      };
     }
   }
 
-  return filtered;
-}
-
-export const render = async (url, query) => {
-  console.log({ url, query });
-
-  const data = filterProducts(items, query);
-
   return {
-    head: "",
-    html: PageWrapper({
-      headerLeft: `
-      <h1 class="text-xl font-bold text-gray-900">
-        <a href="/" data-link>쇼핑몰</a>
-      </h1>
-    `.trim(),
-      children: `
-      <!-- 검색 및 필터 -->
-      ${SearchBar({ searchQuery: "", limit: 20, sort: "price_asc", category: {}, categories: [] })}
-      
-      <!-- 상품 목록 -->
-      <div class="mb-6">
-       안녕하세요
-        </div>
-      `.trim(),
-    }),
-    initialData: data,
+    head: head,
+    html: router.target(),
+    initialData: JSON.stringify(data),
   };
 };
