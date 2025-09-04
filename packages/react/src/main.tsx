@@ -23,7 +23,7 @@ function main() {
 }
 
 // 애플리케이션 시작
-if (import.meta.env.MODE !== "test") {
+if (import.meta.env.DEV) {
   enableMocking().then(main);
 } else {
   main();
