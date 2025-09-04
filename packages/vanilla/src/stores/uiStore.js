@@ -1,4 +1,4 @@
-import { createStore } from "../lib";
+import { createStore } from "../lib/index.js";
 import { UI_ACTIONS } from "./actionTypes";
 
 /**
