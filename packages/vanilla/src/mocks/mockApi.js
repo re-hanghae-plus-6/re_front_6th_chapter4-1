@@ -93,3 +93,12 @@ export async function mockGetCategories() {
   const categories = getUniqueCategories();
   return categories;
 }
+
+export async function loadHomePageData(query = {}) {
+  const {
+    products,
+    pagination: { total },
+  } = await mockGetProducts(query || {});
+  const categories = await mockGetCategories();
+  return { products, categories, totalCount: total };
+}
