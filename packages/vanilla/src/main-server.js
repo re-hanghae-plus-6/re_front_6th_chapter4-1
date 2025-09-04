@@ -105,8 +105,6 @@ async function mockGetCategories() {
 }
 
 route.add("/", async ({ query }) => {
-  if (typeof window === "undefined" && router) router.query = { ...query };
-
   const productsData = await mockGetProducts(query || {});
   const categories = await mockGetCategories();
 
@@ -183,6 +181,11 @@ export const render = async (url, query) => {
       html: NotFoundPage(),
       initialData: null,
     };
+
+  if (typeof window === "undefined" && router) {
+    router.query = { ...(query || {}) };
+    router.params = { ...(matchedRoute.params || {}) };
+  }
 
   return matchedRoute.handler({ params: matchedRoute.params, query });
 };
