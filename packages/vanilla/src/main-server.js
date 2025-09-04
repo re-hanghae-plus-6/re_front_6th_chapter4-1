@@ -10,11 +10,17 @@ router.addRoute(".*", NotFoundPage);
 
 export const render = async (url, query) => {
   try {
+    //console.log("렌더링 URL:", url);
+    //console.log("쿼리 파라미터:", query);
+
+    router.start(url, query);
+
+    //console.log("라우터 쿼리:", router.query);
     //console.log("Rendering URL:", url, "with query:", query);
     router.start(url, query);
 
     const route = router.route;
-    console.log("Matched route:", route);
+    //console.log("Matched route:", route);
     if (!route) {
       return {
         html: NotFoundPage(),
@@ -28,6 +34,7 @@ export const render = async (url, query) => {
 
     // 2. 라우트별 데이터 로드
     if (route.path === "/") {
+      //console.log("검색어:", router.query.search);
       try {
         // router.query를 사용서 검색/필터링 파라미터 포함
         const [productsResponse, categories] = await Promise.all([getProducts(router.query), getCategories()]);
@@ -78,6 +85,7 @@ export const render = async (url, query) => {
       }
     } else if (route.path === "/product/:id/") {
       const productId = route.params.id;
+      console.log("상품 ID:", productId);
 
       try {
         const product = await getProduct(productId);

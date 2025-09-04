@@ -1,4 +1,4 @@
-import { productStore } from "../stores";
+import { productStore, PRODUCT_ACTIONS } from "../stores";
 import { loadProductDetailForPage } from "../services";
 import { router, withLifecycle } from "../router";
 import { PageWrapper } from "./PageWrapper.js";
@@ -237,9 +237,36 @@ function ProductDetail({ product, relatedProducts = [] }) {
 export const ProductDetailPage = withLifecycle(
   {
     onMount: () => {
+      if (typeof window === "undefined") return;
+
+      if (window.__INITIAL_DATA__?.product) {
+        const { product, relatedProducts } = window.__INITIAL_DATA__;
+
+        productStore.dispatch({
+          type: PRODUCT_ACTIONS.SETUP,
+          payload: {
+            products: [],
+            totalCount: 0,
+            categories: {},
+            currentProduct: product,
+            relatedProducts: relatedProducts || [],
+            loading: false,
+            error: null,
+            status: "done",
+          },
+        });
+        return;
+      }
       loadProductDetailForPage(router.params.id);
     },
-    watches: [() => [router.params.id], () => loadProductDetailForPage(router.params.id)],
+    watches: [
+      () => [router.params.id],
+      () => {
+        if (typeof window !== "undefined") {
+          loadProductDetailForPage(router.params.id);
+        }
+      },
+    ],
   },
   () => {
     const { currentProduct: product, relatedProducts = [], error, loading } = productStore.getState();

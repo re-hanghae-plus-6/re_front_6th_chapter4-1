@@ -13,7 +13,11 @@ export const HomePage = withLifecycle(
       }
       if (window.__INITIAL_DATA__?.products?.length > 0) {
         console.log("이 코드는 클라이언트에서 실행이 되는데, __INITIAL_DATA__ 가 있을 때에만!");
-        const { products, categories, totalCount } = window.__INITIAL_DATA__;
+        const [products, categories, totalCount] = [
+          window.__INITIAL_DATA__.products,
+          window.__INITIAL_DATA__.categories,
+          window.__INITIAL_DATA__.totalCount,
+        ];
         productStore.dispatch({
           type: PRODUCT_ACTIONS.SETUP,
           payload: {
@@ -53,6 +57,7 @@ export const HomePage = withLifecycle(
     const category = { category1, category2 };
     const hasMore = products.length < totalCount;
     console.log("개수 : ", totalCount);
+    console.log("카테고리 : ", productStore.getState());
     return PageWrapper({
       headerLeft: `
         <h1 class="text-xl font-bold text-gray-900">
