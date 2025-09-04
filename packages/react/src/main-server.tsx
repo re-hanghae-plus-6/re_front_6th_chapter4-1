@@ -13,14 +13,8 @@ type SSRParams = {
   params: Record<string, string>;
 };
 
-type SSRResult = {
-  metadata?: { title?: string };
-  html: string;
-  data?: Record<string, unknown>;
-};
-
 type SSRComponent = {
-  ssr?: (params: SSRParams) => Promise<SSRResult>;
+  ssr?: (params: SSRParams) => Promise<unknown>;
   metadata?: (params: SSRParams) => Promise<{ title?: string }>;
   (params: SSRParams & { data: Record<string, unknown> }): string;
 };
@@ -36,15 +30,15 @@ export const render = async (pathname: string, query: Record<string, string>) =>
     const result = await target.ssr(params);
 
     return {
-      head: `<title>${result.metadata?.title ?? ""}</title>`,
+      head: `<title>${(await target.metadata?.(params))?.title ?? ""}</title>`,
       html: renderToString(
         <RouterProvider router={router}>
-          <ProductProvider productStore={createProductStore(result.data || {})}>
+          <ProductProvider productStore={createProductStore(result ?? {})}>
             <App />
           </ProductProvider>
         </RouterProvider>,
       ),
-      __INITIAL_DATA__: result ?? {},
+      __INITIAL_DATA__: result,
     };
   }
 
