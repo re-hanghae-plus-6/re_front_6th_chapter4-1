@@ -14,15 +14,15 @@ export const loadProductsAndCategories = async (productStore: ProductStore, rout
   //   return;
   // }
 
-  router.query = { current: undefined }; // 항상 첫 페이지로 초기화
-  productStore.dispatch({
-    type: PRODUCT_ACTIONS.SETUP,
-    payload: {
-      ...initialProductState,
-      loading: true,
-      status: "pending",
-    },
-  });
+  // router.query = { current: undefined }; // 항상 첫 페이지로 초기화
+  // productStore.dispatch({
+  //   type: PRODUCT_ACTIONS.SETUP,
+  //   payload: {
+  //     ...initialProductState,
+  //     loading: true,
+  //     status: "pending",
+  //   },
+  // });
 
   try {
     const [
@@ -118,6 +118,7 @@ export const loadProductDetailForPage = async (productStore: ProductStore, produ
       }
       return;
     }
+
     // 현재 상품 클리어
     productStore.dispatch({
       type: PRODUCT_ACTIONS.SETUP,
