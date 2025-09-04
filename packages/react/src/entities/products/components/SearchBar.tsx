@@ -1,7 +1,6 @@
 import { type ChangeEvent, Fragment, type KeyboardEvent, type MouseEvent } from "react";
 import { PublicImage } from "../../../components";
 import { useProductStoreContext } from "../hooks";
-import { searchProducts, setCategory, setLimit, setSort } from "../productUseCase";
 import { useProductFilter } from "./hooks";
 
 const OPTION_LIMITS = [10, 20, 50, 100];
@@ -12,89 +11,88 @@ const OPTION_SORTS = [
   { value: "name_desc", label: "이름 역순" },
 ];
 
-// 검색 입력 (Enter 키)
-const handleSearchKeyDown = async (e: KeyboardEvent<HTMLInputElement>) => {
-  if (e.key === "Enter") {
-    const query = e.currentTarget.value.trim();
-    try {
-      searchProducts(query);
-    } catch (error) {
-      console.error("검색 실패:", error);
-    }
-  }
-};
-
-// 페이지당 상품 수 변경
-const handleLimitChange = async (e: ChangeEvent<HTMLSelectElement>) => {
-  const limit = parseInt(e.target.value);
-  try {
-    setLimit(limit);
-  } catch (error) {
-    console.error("상품 수 변경 실패:", error);
-  }
-};
-
-// 정렬 변경
-const handleSortChange = async (e: ChangeEvent<HTMLSelectElement>) => {
-  const sort = e.target.value;
-
-  try {
-    setSort(sort);
-  } catch (error) {
-    console.error("정렬 변경 실패:", error);
-  }
-};
-
-// 브레드크럼 카테고리 네비게이션
-const handleBreadCrumbClick = async (e: MouseEvent<HTMLButtonElement>) => {
-  const breadcrumbType = e.currentTarget.getAttribute("data-breadcrumb");
-
-  try {
-    if (breadcrumbType === "reset") {
-      // "전체" 클릭 -> 카테고리 초기화
-      setCategory({ category1: "", category2: "" });
-    } else if (breadcrumbType === "category1") {
-      // 1depth 클릭 -> 2depth 제거하고 1depth만 유지
-      const category1 = e.currentTarget.getAttribute("data-category1");
-      setCategory({ ...(category1 && { category1 }), category2: "" });
-    }
-  } catch (error) {
-    console.error("브레드크럼 네비게이션 실패:", error);
-  }
-};
-
-// 1depth 카테고리 선택
-const handleMainCategoryClick = async (e: MouseEvent<HTMLButtonElement>) => {
-  const category1 = e.currentTarget.getAttribute("data-category1");
-  if (!category1) return;
-
-  try {
-    setCategory({ category1, category2: "" });
-  } catch (error) {
-    console.error("1depth 카테고리 선택 실패:", error);
-  }
-};
-
-const handleSubCategoryClick = async (e: MouseEvent<HTMLButtonElement>) => {
-  const category1 = e.currentTarget.getAttribute("data-category1");
-  const category2 = e.currentTarget.getAttribute("data-category2");
-  if (!category1 || !category2) return;
-
-  try {
-    setCategory({ category1, category2 });
-  } catch (error) {
-    console.error("2depth 카테고리 선택 실패:", error);
-  }
-};
-
 export function SearchBar() {
-  const productStore = useProductStoreContext();
-
-  const { categories } = productStore.getState();
+  const { action, state } = useProductStoreContext();
 
   const { searchQuery, limit = "20", sort, category } = useProductFilter();
 
-  const categoryList = Object.keys(categories).length > 0 ? Object.keys(categories) : [];
+  const categoryList = Object.keys(state.categories).length > 0 ? Object.keys(state.categories) : [];
+
+  // 검색 입력 (Enter 키)
+  const handleSearchKeyDown = async (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      const query = e.currentTarget.value.trim();
+      try {
+        action.searchProducts(query);
+      } catch (error) {
+        console.error("검색 실패:", error);
+      }
+    }
+  };
+
+  // 페이지당 상품 수 변경
+  const handleLimitChange = async (e: ChangeEvent<HTMLSelectElement>) => {
+    const limit = parseInt(e.target.value);
+    try {
+      action.setLimit(limit);
+    } catch (error) {
+      console.error("상품 수 변경 실패:", error);
+    }
+  };
+
+  // 정렬 변경
+  const handleSortChange = async (e: ChangeEvent<HTMLSelectElement>) => {
+    const sort = e.target.value;
+
+    try {
+      action.setSort(sort);
+    } catch (error) {
+      console.error("정렬 변경 실패:", error);
+    }
+  };
+
+  // 브레드크럼 카테고리 네비게이션
+  const handleBreadCrumbClick = async (e: MouseEvent<HTMLButtonElement>) => {
+    const breadcrumbType = e.currentTarget.getAttribute("data-breadcrumb");
+
+    try {
+      if (breadcrumbType === "reset") {
+        // "전체" 클릭 -> 카테고리 초기화
+        action.setCategory({ category1: "", category2: "" });
+      } else if (breadcrumbType === "category1") {
+        // 1depth 클릭 -> 2depth 제거하고 1depth만 유지
+        const category1 = e.currentTarget.getAttribute("data-category1");
+        action.setCategory({ ...(category1 && { category1 }), category2: "" });
+      }
+    } catch (error) {
+      console.error("브레드크럼 네비게이션 실패:", error);
+    }
+  };
+
+  // 1depth 카테고리 선택
+  const handleMainCategoryClick = async (e: MouseEvent<HTMLButtonElement>) => {
+    const category1 = e.currentTarget.getAttribute("data-category1");
+    if (!category1) return;
+
+    try {
+      action.setCategory({ category1, category2: "" });
+    } catch (error) {
+      console.error("1depth 카테고리 선택 실패:", error);
+    }
+  };
+
+  const handleSubCategoryClick = async (e: MouseEvent<HTMLButtonElement>) => {
+    const category1 = e.currentTarget.getAttribute("data-category1");
+    const category2 = e.currentTarget.getAttribute("data-category2");
+    if (!category1 || !category2) return;
+
+    try {
+      action.setCategory({ category1, category2 });
+    } catch (error) {
+      console.error("2depth 카테고리 선택 실패:", error);
+    }
+  };
+
   const limitOptions = OPTION_LIMITS.map((value) => (
     <option key={value} value={value}>
       {value}개
@@ -197,10 +195,10 @@ export function SearchBar() {
           )}
 
           {/* 2depth 카테고리 */}
-          {category.category1 && categories[category.category1] && (
+          {category.category1 && state.categories[category.category1] && (
             <div className="space-y-2">
               <div className="flex flex-wrap gap-2">
-                {Object.keys(categories[category.category1]).map((category2) => {
+                {Object.keys(state.categories[category.category1]).map((category2) => {
                   const isSelected = category.category2 === category2;
                   return (
                     <button

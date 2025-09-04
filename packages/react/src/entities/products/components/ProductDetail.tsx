@@ -12,7 +12,6 @@ export function ProductDetail(product: Readonly<Product>) {
   const addToCart = useCartAddCommand();
   const { productId, title, image, lprice, brand, category1, category2 } = product;
 
-  console.log(product);
   const [cartQuantity, setCartQuantity] = useState(1);
 
   const description = "",

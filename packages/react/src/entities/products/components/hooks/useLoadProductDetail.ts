@@ -1,10 +1,15 @@
 import { useEffect } from "react";
-import { loadProductDetailForPage } from "../../productUseCase";
-import { useRouterContext } from "../../../../core/router";
+import { useRouterParams } from "../../../../hooks";
+import { useProductStoreContext } from "../../hooks";
 
 export const useLoadProductDetail = () => {
-  const router = useRouterContext();
+  const { action } = useProductStoreContext();
+
+  const productId = useRouterParams((params) => params.id);
+
   useEffect(() => {
-    loadProductDetailForPage(router.params.id);
-  }, [router.params.id, router]);
+    if (productId) {
+      action.loadProductDetailForPage(productId);
+    }
+  }, [productId]);
 };

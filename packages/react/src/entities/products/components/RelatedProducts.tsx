@@ -3,9 +3,8 @@ import { useProductStoreContext } from "../hooks";
 
 export default function RelatedProducts() {
   const router = useRouterContext();
-  const productStore = useProductStoreContext();
-  const { relatedProducts } = productStore.getState();
-  if (relatedProducts.length === 0) {
+  const { state } = useProductStoreContext();
+  if (state.relatedProducts.length === 0) {
     return null;
   }
   return (
@@ -16,7 +15,7 @@ export default function RelatedProducts() {
       </div>
       <div className="p-4">
         <div className="grid grid-cols-2 gap-3 responsive-grid">
-          {relatedProducts.slice(0, 20).map((relatedProduct) => (
+          {state.relatedProducts.slice(0, 20).map((relatedProduct) => (
             <div
               key={relatedProduct.productId}
               className="bg-gray-50 rounded-lg p-3 related-product-card cursor-pointer"

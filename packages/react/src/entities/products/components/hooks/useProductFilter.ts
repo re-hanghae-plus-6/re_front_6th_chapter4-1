@@ -1,13 +1,14 @@
 import { useEffect } from "react";
-import { loadProducts } from "../../productUseCase";
 import { useRouterQuery } from "../../../../hooks";
+import { useProductStoreContext } from "../../hooks";
 
 export const useProductFilter = () => {
+  const { action } = useProductStoreContext();
   const { search: searchQuery, limit, sort, category1, category2 } = useRouterQuery();
   const category = { category1, category2 };
 
   useEffect(() => {
-    loadProducts(true);
+    action.loadProducts(true);
   }, [searchQuery, limit, sort, category1, category2]);
 
   return {
