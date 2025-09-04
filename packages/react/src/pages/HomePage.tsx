@@ -46,3 +46,5 @@ export const HomePage = () => {
     </PageWrapper>
   );
 };
+
+HomePage.getTitle = async () => "쇼핑몰 - 홈";
