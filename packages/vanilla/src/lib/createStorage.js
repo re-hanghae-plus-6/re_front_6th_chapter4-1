@@ -4,7 +4,6 @@
  * @param {Storage} storage - 기본값은 localStorage
  * @returns {Object} { get, set, reset }
  */
-
 const memoryStorage = () => {
   const storage = new Map();
 
