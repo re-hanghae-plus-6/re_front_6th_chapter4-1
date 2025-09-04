@@ -70,22 +70,22 @@ async function mockGetProducts(query = {}) {
     search: query?.search ?? "",
     category1: query?.category1 ?? "",
     category2: query?.category2 ?? "",
-    sort: query?.sort ?? "name_desc",
+    sort: query?.sort ?? "price_asc",
   };
 
   const filteredProducts = filterProducts(items, normalized);
-  const startIndex = (normalized.page - 1) * normalized.limit;
-  const endIndex = startIndex + normalized.limit;
-  const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
+
+  const uptoEnd = Math.min(filteredProducts.length, normalized.page * normalized.limit);
+  const productsForResponse = filteredProducts.slice(0, uptoEnd);
 
   return {
-    products: paginatedProducts,
+    products: productsForResponse,
     pagination: {
       page: normalized.page,
       limit: normalized.limit,
       total: filteredProducts.length,
       totalPages: Math.ceil(filteredProducts.length / normalized.limit),
-      hasNext: endIndex < filteredProducts.length,
+      hasNext: uptoEnd < filteredProducts.length,
       hasPrev: normalized.page > 1,
     },
   };

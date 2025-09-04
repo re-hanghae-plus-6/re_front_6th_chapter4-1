@@ -81,11 +81,17 @@ export const withLifecycle = ({ onMount, onUnmount, watches } = {}, page) => {
     // 새 페이지면 마운트, 기존 페이지면 업데이트
     if (wasNewPage) {
       mount(page);
+      if (lifecycle.watches) {
+        lifecycle.watches.forEach(([getDeps], index) => {
+          const initialDeps = getDeps();
+          lifecycle.deps[index] = Array.isArray(initialDeps) ? [...initialDeps] : [];
+        });
+      }
     } else if (lifecycle.watches) {
       lifecycle.watches.forEach(([getDeps, callback], index) => {
         const newDeps = getDeps();
-
-        if (depsChanged(newDeps, lifecycle.deps[index])) {
+        const oldDeps = lifecycle.deps[index];
+        if (depsChanged(newDeps, oldDeps)) {
           callback();
         }
 
