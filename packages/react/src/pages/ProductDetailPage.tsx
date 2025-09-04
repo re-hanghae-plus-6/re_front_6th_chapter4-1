@@ -1,9 +1,10 @@
-import { ProductDetail, useLoadProductDetail, useProductStore } from "../entities";
-import { PageWrapper } from "./PageWrapper";
 import { ErrorContent, PublicImage } from "../components";
+import { ProductDetail, useLoadProductDetail, useProductStoreContext } from "../entities";
+import { PageWrapper } from "./PageWrapper";
 
 export const ProductDetailPage = () => {
-  const { currentProduct: product, error, loading } = useProductStore();
+  const productStore = useProductStoreContext();
+  const { currentProduct: product, error, loading } = productStore.getState();
 
   useLoadProductDetail();
 

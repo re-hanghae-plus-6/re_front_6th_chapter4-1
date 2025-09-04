@@ -1,6 +1,7 @@
 import { useEffect } from "react";
-import { loadNextProducts, loadProductsAndCategories, ProductList, SearchBar } from "../entities";
+import { loadNextProducts, ProductList, SearchBar } from "../entities";
 import { PageWrapper } from "./PageWrapper";
+import { useRouterContext } from "../router/hooks/useRouterContext";
 
 const headerLeft = (
   <h1 className="text-xl font-bold text-gray-900">
@@ -27,12 +28,12 @@ const unregisterScrollHandler = () => {
 };
 
 export const HomePage = () => {
+  const router = useRouterContext();
   useEffect(() => {
     registerScrollHandler();
-    loadProductsAndCategories();
 
     return unregisterScrollHandler;
-  }, []);
+  }, [router]);
 
   return (
     <PageWrapper headerLeft={headerLeft}>
