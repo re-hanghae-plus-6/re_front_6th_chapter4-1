@@ -33,9 +33,13 @@ export const render = async (url: string, query: Record<string, string>) => {
     productStore.dispatch({ type: PRODUCT_ACTIONS.SET_CURRENT_PRODUCT, payload: detail.currentProduct });
     productStore.dispatch({ type: PRODUCT_ACTIONS.SET_RELATED_PRODUCTS, payload: detail.relatedProducts });
     const html = renderToString(createElement(matchedRoute.handler));
+
+    const productTitle = detail.currentProduct?.title ?? "상품 상세";
+    const head = `<title>${productTitle} - 쇼핑몰</title>`;
+
     return {
       status: 200,
-      head: "<title>상품 상세 - React 쇼핑몰</title>",
+      head,
       html,
       initialData: { ...detail, params: { id }, query: { ...(query || {}) } },
     };
