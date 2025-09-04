@@ -11,42 +11,26 @@ interface Route<Handler extends AnyFunction> {
 type QueryPayload = Record<string, string | number | undefined>;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export class Router<Handler extends (...args: any[]) => any> {
+export class ServerRouter<Handler extends (...args: any[]) => any> {
   readonly #routes: Map<string, Route<Handler>>;
-  readonly #observer = createObserver();
   readonly #baseUrl;
+  readonly #observer = createObserver();
 
   #route: null | (Route<Handler> & { params: StringRecord; path: string });
+  #currentUrl = "/";
 
   constructor(baseUrl = "") {
     this.#routes = new Map();
     this.#route = null;
     this.#baseUrl = baseUrl.replace(/\/$/, "");
-
-    window.addEventListener("popstate", () => {
-      this.#route = this.#findRoute();
-      this.#observer.notify();
-    });
-
-    document.addEventListener("click", (e) => {
-      const target = e.target as HTMLElement;
-      if (!target?.closest("[data-link]")) {
-        return;
-      }
-      e.preventDefault();
-      const url = target.getAttribute("href") ?? target.closest("[data-link]")?.getAttribute("href");
-      if (url) {
-        this.push(url);
-      }
-    });
   }
 
   get query(): StringRecord {
-    return Router.parseQuery(window.location.search);
+    return ServerRouter.parseQuery(this.#currentUrl);
   }
 
   set query(newQuery: QueryPayload) {
-    const newUrl = Router.getUrl(newQuery, this.#baseUrl);
+    const newUrl = ServerRouter.getUrl(newQuery, this.#currentUrl, this.#baseUrl);
     this.push(newUrl);
   }
 
@@ -83,8 +67,8 @@ export class Router<Handler extends (...args: any[]) => any> {
     });
   }
 
-  #findRoute(url = window.location.pathname) {
-    const { pathname } = new URL(url, window.location.origin);
+  #findRoute(url = this.#baseUrl) {
+    const { pathname } = new URL(url, "http://localhost");
     for (const [routePath, route] of this.#routes) {
       const match = pathname.match(route.regex);
       if (match) {
@@ -105,16 +89,10 @@ export class Router<Handler extends (...args: any[]) => any> {
   }
 
   push(url: string) {
+    this.#currentUrl = url;
     try {
       // baseUrl이 없으면 자동으로 붙여줌
       const fullUrl = url.startsWith(this.#baseUrl) ? url : this.#baseUrl + (url.startsWith("/") ? url : "/" + url);
-
-      const prevFullUrl = `${window.location.pathname}${window.location.search}`;
-
-      // 히스토리 업데이트
-      if (prevFullUrl !== fullUrl) {
-        window.history.pushState(null, "", fullUrl);
-      }
 
       this.#route = this.#findRoute(fullUrl);
       this.#observer.notify();
@@ -124,11 +102,10 @@ export class Router<Handler extends (...args: any[]) => any> {
   }
 
   start() {
-    this.#route = this.#findRoute();
-    this.#observer.notify();
+    this.#route = this.#findRoute("/");
   }
 
-  static parseQuery = (search = window.location.search) => {
+  static parseQuery = (search: string) => {
     const params = new URLSearchParams(search);
     const query: StringRecord = {};
     for (const [key, value] of params) {
@@ -147,10 +124,7 @@ export class Router<Handler extends (...args: any[]) => any> {
     return params.toString();
   };
 
-  static getUrl = (newQuery: QueryPayload, baseUrl = "") => {
-    const currentQuery = Router.parseQuery();
-    const updatedQuery = { ...currentQuery, ...newQuery };
-
+  static getUrl = (updatedQuery: QueryPayload, pathname = "/", baseUrl = "") => {
     // 빈 값들 제거
     Object.keys(updatedQuery).forEach((key) => {
       if (updatedQuery[key] === null || updatedQuery[key] === undefined || updatedQuery[key] === "") {
@@ -158,7 +132,7 @@ export class Router<Handler extends (...args: any[]) => any> {
       }
     });
 
-    const queryString = Router.stringifyQuery(updatedQuery);
-    return `${baseUrl}${window.location.pathname.replace(baseUrl, "")}${queryString ? `?${queryString}` : ""}`;
+    const queryString = ServerRouter.stringifyQuery(updatedQuery);
+    return `${baseUrl}${pathname.replace(baseUrl, "")}${queryString ? `?${queryString}` : ""}`;
   };
 }

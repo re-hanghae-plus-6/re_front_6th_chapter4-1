@@ -237,9 +237,33 @@ function ProductDetail({ product, relatedProducts = [] }) {
 export const ProductDetailPage = withLifecycle(
   {
     onMount: () => {
-      loadProductDetailForPage(router.params.id);
+      // 서버 환경에서는 이미 데이터가 로드되어 있으므로 추가 로드하지 않음
+      if (typeof window !== "undefined") {
+        loadProductDetailForPage(router.params.id);
+      }
     },
-    watches: [() => [router.params.id], () => loadProductDetailForPage(router.params.id)],
+    watches: [
+      () => [router.params.id],
+      () => {
+        // 서버 환경에서는 추가 로드하지 않음
+        if (typeof window !== "undefined") {
+          loadProductDetailForPage(router.params.id);
+        }
+      },
+    ],
+    metadata: () => {
+      const { currentProduct: product } = productStore.getState();
+      if (product) {
+        return {
+          title: `${product.title} - 쇼핑몰`,
+          description: `${product.title} 상품 정보를 확인해보세요.`,
+        };
+      }
+      return {
+        title: "상품 상세 - 쇼핑몰",
+        description: "상품 정보를 확인해보세요.",
+      };
+    },
   },
   () => {
     const { currentProduct: product, relatedProducts = [], error, loading } = productStore.getState();
