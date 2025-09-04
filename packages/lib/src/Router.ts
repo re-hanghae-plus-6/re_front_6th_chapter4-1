@@ -1,59 +1,86 @@
+import type { FC } from "react";
 import { createObserver } from "./createObserver";
 import type { AnyFunction, StringRecord } from "./types";
 
-interface Route<Handler extends AnyFunction> {
+interface Route<Handler extends FC> {
   regex: RegExp;
   paramNames: string[];
   handler: Handler;
   params?: StringRecord;
 }
 
+const isClient = typeof window !== "undefined";
+
 type QueryPayload = Record<string, string | number | undefined>;
 
 export type RouterInstance<T extends AnyFunction> = InstanceType<typeof Router<T>>;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export class Router<Handler extends (...args: any[]) => any> {
+export class Router<Handler extends FC> {
   readonly #routes: Map<string, Route<Handler>>;
   readonly #observer = createObserver();
   readonly #baseUrl;
+  #serverQuery: StringRecord = {};
 
   #route: null | (Route<Handler> & { params: StringRecord; path: string });
 
-  constructor(baseUrl = "") {
+  constructor(initRoutes: Record<string, Handler>, baseUrl = "") {
     this.#routes = new Map();
     this.#route = null;
     this.#baseUrl = baseUrl.replace(/\/$/, "");
 
-    window.addEventListener("popstate", () => {
-      this.#route = this.#findRoute();
-      this.#observer.notify();
+    Object.entries(initRoutes).forEach(([path, page]) => {
+      this.addRoute(path, page);
     });
 
-    document.addEventListener("click", (e) => {
-      const target = e.target as HTMLElement;
-      if (!target?.closest("[data-link]")) {
-        return;
-      }
-      e.preventDefault();
-      const url = target.getAttribute("href") ?? target.closest("[data-link]")?.getAttribute("href");
-      if (url) {
-        this.push(url);
-      }
-    });
+    if (isClient) {
+      window.addEventListener("popstate", () => {
+        this.#route = this.#findRoute();
+        this.#observer.notify();
+      });
+
+      document.addEventListener("click", (e) => {
+        const target = e.target as HTMLElement;
+        if (!target?.closest("[data-link]")) {
+          return;
+        }
+        e.preventDefault();
+        const url = target.getAttribute("href") ?? target.closest("[data-link]")?.getAttribute("href");
+        if (url) {
+          this.push(url);
+        }
+      });
+    }
   }
 
   get query(): StringRecord {
-    return Router.parseQuery(window.location.search);
+    if (typeof window !== "undefined") {
+      return Router.parseQuery(window.location.search);
+    }
+    return this.#serverQuery;
   }
 
   set query(newQuery: QueryPayload) {
-    const newUrl = Router.getUrl(newQuery, this.#baseUrl);
-    this.push(newUrl);
+    if (isClient) {
+      const newUrl = Router.getUrl(newQuery, this.#baseUrl);
+      this.push(newUrl);
+    } else {
+      this.#serverQuery = Object.entries(newQuery).reduce((acc, [key, value]) => {
+        if (value !== null && value !== undefined && value !== "") {
+          acc[key] = String(value);
+          return acc;
+        }
+        return acc;
+      }, {} as StringRecord);
+    }
   }
 
   get params() {
     return this.#route?.params ?? {};
+  }
+
+  set params(newParams: StringRecord) {
+    this.#route ??= {} as Route<Handler> & { params: StringRecord; path: string };
+    this.#route.params = newParams;
   }
 
   get route() {
@@ -66,7 +93,7 @@ export class Router<Handler extends (...args: any[]) => any> {
 
   readonly subscribe = this.#observer.subscribe;
 
-  addRoute(path: string, handler: Handler) {
+  addRoute<T>(path: string, handler: FC<T>) {
     // 경로 패턴을 정규식으로 변환
     const paramNames: string[] = [];
     const regexPath = path
@@ -76,21 +103,25 @@ export class Router<Handler extends (...args: any[]) => any> {
       })
       .replace(/\//g, "\\/");
 
-    const regex = new RegExp(`^${this.#baseUrl}${regexPath}$`);
+    const regex = isClient ? new RegExp(`^${this.#baseUrl}${regexPath}$`) : new RegExp(`^${regexPath}$`);
 
     this.#routes.set(path, {
       regex,
       paramNames,
-      handler,
+      handler: handler as Handler,
     });
   }
 
-  #findRoute(url = window.location.pathname) {
-    const { pathname } = new URL(url, window.location.origin);
+  #findRoute(url?: string) {
+    const pathname = url
+      ? new URL(url, "http://localhost").pathname
+      : typeof window !== "undefined"
+        ? window.location.pathname
+        : "/";
+
     for (const [routePath, route] of this.#routes) {
       const match = pathname.match(route.regex);
       if (match) {
-        // 매치된 파라미터들을 객체로 변환
         const params: StringRecord = {};
         route.paramNames.forEach((name, index) => {
           params[name] = match[index + 1];
@@ -107,13 +138,13 @@ export class Router<Handler extends (...args: any[]) => any> {
   }
 
   push(url: string) {
+    if (!isClient) return;
+
     try {
-      // baseUrl이 없으면 자동으로 붙여줌
       const fullUrl = url.startsWith(this.#baseUrl) ? url : this.#baseUrl + (url.startsWith("/") ? url : "/" + url);
 
       const prevFullUrl = `${window.location.pathname}${window.location.search}`;
 
-      // 히스토리 업데이트
       if (prevFullUrl !== fullUrl) {
         window.history.pushState(null, "", fullUrl);
       }
@@ -125,13 +156,14 @@ export class Router<Handler extends (...args: any[]) => any> {
     }
   }
 
-  start() {
-    this.#route = this.#findRoute();
+  start(url?: string) {
+    this.#route = this.#findRoute(url);
     this.#observer.notify();
   }
 
-  static parseQuery = (search = window.location.search) => {
-    const params = new URLSearchParams(search);
+  static parseQuery = (search?: string) => {
+    const searchString = search || (isClient ? window.location.search : "");
+    const params = new URLSearchParams(searchString);
     const query: StringRecord = {};
     for (const [key, value] of params) {
       query[key] = value;
@@ -161,6 +193,7 @@ export class Router<Handler extends (...args: any[]) => any> {
     });
 
     const queryString = Router.stringifyQuery(updatedQuery);
-    return `${baseUrl}${window.location.pathname.replace(baseUrl, "")}${queryString ? `?${queryString}` : ""}`;
+    const pathname = isClient ? window.location.pathname : "/";
+    return `${baseUrl}${pathname.replace(baseUrl, "")}${queryString ? `?${queryString}` : ""}`;
   };
 }
