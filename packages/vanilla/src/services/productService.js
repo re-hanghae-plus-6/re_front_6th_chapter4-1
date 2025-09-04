@@ -2,9 +2,17 @@ import { getCategories, getProduct, getProducts } from "../api/productApi";
 import { routerInstance } from "../router";
 import { initialProductState, PRODUCT_ACTIONS, productStore } from "../stores";
 
-export const loadProductsAndCategories = async () => {
-  routerInstance.query = { current: undefined }; // 항상 첫 페이지로 초기화
-  productStore.dispatch({
+export const loadProductsAndCategories = async (query = {}, store = productStore) => {
+  // SSR에서는 전달받은 query 사용, CSR에서는 router query 사용
+  const routerQuery = store === productStore ? routerInstance.query : {};
+  const queryParams =
+    Object.keys(query).length > 0 ? { ...query, current: undefined } : { ...routerQuery, current: undefined };
+
+  if (store === productStore) {
+    routerInstance.query = queryParams;
+  }
+
+  store.dispatch({
     type: PRODUCT_ACTIONS.SETUP,
     payload: {
       ...initialProductState,
@@ -20,10 +28,10 @@ export const loadProductsAndCategories = async () => {
         pagination: { total },
       },
       categories,
-    ] = await Promise.all([getProducts(routerInstance.query), getCategories()]);
+    ] = await Promise.all([getProducts(queryParams), getCategories()]);
 
     // 페이지 리셋이면 새로 설정, 아니면 기존에 추가
-    productStore.dispatch({
+    store.dispatch({
       type: PRODUCT_ACTIONS.SETUP,
       payload: {
         products,
@@ -34,7 +42,7 @@ export const loadProductsAndCategories = async () => {
       },
     });
   } catch (error) {
-    productStore.dispatch({
+    store.dispatch({
       type: PRODUCT_ACTIONS.SET_ERROR,
       payload: error.message,
     });
@@ -118,18 +126,18 @@ export const setLimit = (limit) => {
 /**
  * 상품 상세 페이지용 상품 조회 및 관련 상품 로드
  */
-export const loadProductDetailForPage = async (productId) => {
+export const loadProductDetailForPage = async (productId, store = productStore) => {
   try {
-    const currentProduct = productStore.getState().currentProduct;
+    const currentProduct = store.getState().currentProduct;
     if (productId === currentProduct?.productId) {
       // 관련 상품 로드 (같은 category2 기준)
       if (currentProduct.category2) {
-        await loadRelatedProducts(currentProduct.category2, productId);
+        await loadRelatedProducts(currentProduct.category2, productId, store);
       }
       return;
     }
     // 현재 상품 클리어
-    productStore.dispatch({
+    store.dispatch({
       type: PRODUCT_ACTIONS.SETUP,
       payload: {
         ...initialProductState,
@@ -142,18 +150,18 @@ export const loadProductDetailForPage = async (productId) => {
     const product = await getProduct(productId);
 
     // 현재 상품 설정
-    productStore.dispatch({
+    store.dispatch({
       type: PRODUCT_ACTIONS.SET_CURRENT_PRODUCT,
       payload: product,
     });
 
     // 관련 상품 로드 (같은 category2 기준)
     if (product.category2) {
-      await loadRelatedProducts(product.category2, productId);
+      await loadRelatedProducts(product.category2, productId, store);
     }
   } catch (error) {
     console.error("상품 상세 페이지 로드 실패:", error);
-    productStore.dispatch({
+    store.dispatch({
       type: PRODUCT_ACTIONS.SET_ERROR,
       payload: error.message,
     });
@@ -164,7 +172,7 @@ export const loadProductDetailForPage = async (productId) => {
 /**
  * 관련 상품 로드 (같은 카테고리의 다른 상품들)
  */
-export const loadRelatedProducts = async (category2, excludeProductId) => {
+export const loadRelatedProducts = async (category2, excludeProductId, store = productStore) => {
   try {
     const params = {
       category2,
@@ -177,14 +185,14 @@ export const loadRelatedProducts = async (category2, excludeProductId) => {
     // 현재 상품 제외
     const relatedProducts = response.products.filter((product) => product.productId !== excludeProductId);
 
-    productStore.dispatch({
+    store.dispatch({
       type: PRODUCT_ACTIONS.SET_RELATED_PRODUCTS,
       payload: relatedProducts,
     });
   } catch (error) {
     console.error("관련 상품 로드 실패:", error);
     // 관련 상품 로드 실패는 전체 페이지에 영향주지 않도록 조용히 처리
-    productStore.dispatch({
+    store.dispatch({
       type: PRODUCT_ACTIONS.SET_RELATED_PRODUCTS,
       payload: [],
     });

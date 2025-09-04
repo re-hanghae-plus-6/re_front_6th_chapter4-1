@@ -1,9 +1,10 @@
+import { createStore } from "./lib/createStore.js";
 import { ServerRouter } from "./lib/ServerRouter.js";
 import { HomePage } from "./pages/HomePage.js";
 import { NotFoundPage } from "./pages/NotFoundPage.js";
 import { ProductDetailPage } from "./pages/ProductDetailPage.js";
 import { loadProductDetailForPage, loadProductsAndCategories } from "./services/productService.js";
-import { productStore } from "./stores/productStore.js";
+import { initialProductState, productReducer } from "./stores/productStore.js";
 
 export class SSRService {
   #router = new ServerRouter();
@@ -23,8 +24,9 @@ export class SSRService {
 
   async #renderHomePage(query) {
     try {
-      await loadProductsAndCategories();
-      const initialData = productStore.getState();
+      const requestStore = createStore(productReducer, initialProductState);
+      await loadProductsAndCategories(query, requestStore);
+      const initialData = requestStore.getState();
 
       return {
         head: /* HTML */ `<title>쇼핑몰</title>`,
@@ -38,8 +40,9 @@ export class SSRService {
 
   async #renderProductDetailPage(productId) {
     try {
-      await loadProductDetailForPage(productId);
-      const initialData = productStore.getState();
+      const requestStore = createStore(productReducer, initialProductState);
+      await loadProductDetailForPage(productId, requestStore);
+      const initialData = requestStore.getState();
 
       if (!initialData.currentProduct) {
         return this.#renderNotFoundPage();
