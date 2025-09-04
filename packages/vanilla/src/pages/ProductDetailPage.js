@@ -239,6 +239,8 @@ const ProductDetailPageComponent = withLifecycle(
     onMount: () => {
       // 클라이언트에서 초기 데이터 로드 (SSR 데이터가 없거나 부족한 경우)
       const currentState = productStore.getState();
+
+      console.log("currentState-----", currentState);
       if (!currentState.currentProduct) {
         loadProductDetailForPage(router.params.id);
       }
