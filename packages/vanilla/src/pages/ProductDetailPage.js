@@ -1,5 +1,5 @@
 import { productStore, PRODUCT_ACTIONS } from "../stores";
-import { loadProductDetailForPage, loadRelatedProducts } from "../services";
+import { loadProductDetailForPage } from "../services";
 import { router, withLifecycle } from "../router";
 import { PageWrapper } from "./PageWrapper.js";
 
@@ -35,16 +35,6 @@ const ErrorContent = ({ error }) => `
 `;
 
 function ProductDetail({ product, relatedProducts = [] }) {
-  if (!product) {
-    return `
-      <div class="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div class="text-center">
-          <p class="text-gray-600">상품 정보를 불러오는 중...</p>
-        </div>
-      </div>
-    `;
-  }
-
   const {
     productId,
     title,
@@ -247,57 +237,39 @@ function ProductDetail({ product, relatedProducts = [] }) {
 export const ProductDetailPage = withLifecycle(
   {
     onMount: () => {
-      if (typeof window === "undefined") {
-        console.log("이 코드는 서버에서 실행이 되고 ");
-        return;
-      }
+      if (typeof window === "undefined") return;
 
-      // __INITIAL_DATA__에서 상품 정보가 있다면 store에 설정
       if (window.__INITIAL_DATA__?.product) {
-        console.log("이 코드는 클라이언트에서 실행이 되는데, __INITIAL_DATA__의 상품 정보가 있을 때!");
-        const { product } = window.__INITIAL_DATA__;
-        productStore.dispatch({
-          type: PRODUCT_ACTIONS.SET_CURRENT_PRODUCT,
-          payload: product,
-        });
+        const { product, relatedProducts } = window.__INITIAL_DATA__;
 
-        // 관련 상품도 로드
-        if (product.category2) {
-          loadRelatedProducts(product.category2, product.productId);
-        }
+        productStore.dispatch({
+          type: PRODUCT_ACTIONS.SETUP,
+          payload: {
+            products: [],
+            totalCount: 0,
+            categories: {},
+            currentProduct: product,
+            relatedProducts: relatedProducts || [],
+            loading: false,
+            error: null,
+            status: "done",
+          },
+        });
         return;
       }
-
-      console.log("이 코드는 __INITIAL_DATA__가 없을 때!");
       loadProductDetailForPage(router.params.id);
     },
     watches: [
       () => [router.params.id],
       () => {
-        // 서버사이드에서는 watches 실행하지 않음
-        if (typeof window === "undefined") {
-          return;
+        if (typeof window !== "undefined") {
+          loadProductDetailForPage(router.params.id);
         }
-
-        // __INITIAL_DATA__가 있다면 watches에서도 체크
-        if (window.__INITIAL_DATA__?.product?.productId === router.params.id) {
-          return;
-        }
-        loadProductDetailForPage(router.params.id);
       },
     ],
   },
-  (props = {}) => {
-    // SSR에서 props로 받은 product 또는 store의 currentProduct 사용
-    const productState = productStore.getState();
-    const product = props.product || productState.currentProduct;
-
-    // SSR에서 props로 받은 relatedProducts 또는 store의 relatedProducts 사용
-    const relatedProducts = props.relatedProducts || productState.relatedProducts || [];
-    const { error } = productState;
-
-    // SSR에서 props로 product가 전달되면 loading 상태 무시
-    const loading = props.product ? false : productState.loading;
+  () => {
+    const { currentProduct: product, relatedProducts = [], error, loading } = productStore.getState();
 
     return PageWrapper({
       headerLeft: `
