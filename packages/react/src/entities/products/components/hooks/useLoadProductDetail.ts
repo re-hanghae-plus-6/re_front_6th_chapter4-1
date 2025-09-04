@@ -1,17 +1,11 @@
 import { useEffect } from "react";
 import { loadProductDetailForPage } from "../../productUseCase";
-import { BASE_URL } from "../../../../constants";
+import { useRouterParams } from "../../../../router";
 
 export const useLoadProductDetail = () => {
+  const productId = useRouterParams((params) => params.id);
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const rawPath = window.location.pathname;
-    const base = BASE_URL.replace(/\/$/, "");
-    const normalizedPath = base && rawPath.startsWith(base) ? rawPath.slice(base.length) || "/" : rawPath;
-    const match = normalizedPath.match(/^\/product\/(\d+)(?:\/?|\?|$)/);
-    const productId = match ? match[1] : undefined;
-    if (productId) {
-      loadProductDetailForPage(productId);
-    }
-  }, []);
+    if (!productId) return;
+    loadProductDetailForPage(productId);
+  }, [productId]);
 };
