@@ -1,15 +1,14 @@
 import express from "express";
 import fs from "fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-import { mswServer } from "./src/mocks/server.js";
 
 //핵심 키워드: middleware, template, render, hydration
 
 const prod = process.env.NODE_ENV === "production";
-const port = process.env.PORT || 5173;
+const port = process.env.PORT || 5174;
 const base = process.env.BASE || (prod ? "/front_6th_chapter4-1/vanilla/" : "/");
 
+// MSW 서버를 가장 먼저 시작하여 모든 fetch 요청을 인터셉트할 수 있도록 함
+const { mswServer } = await import("./src/mocks/server.js");
 mswServer.listen({
   onUnhandledRequest: "bypass",
 });
@@ -42,23 +41,20 @@ if (!prod) {
 } else {
   const compression = (await import("compression")).default;
   app.use(compression());
-  app.use(
-    base,
-    express.static("./dist/vanilla", {
-      maxAge: "1d", // 브라우저 캐시 설정
-      etag: true, // ETag 헤더 생성
-    }),
-  );
+
+  // 프로덕션에서 정적 파일 처리 (JS, CSS 등)
+  const sirv = (await import("sirv")).default;
+  app.use(base, sirv("./dist/vanilla", { extensions: [] }));
 }
 
-app.use("*all", async (req, res) => {
+// 모든 페이지 라우트를 SSR로 처리
+app.get("/{*splat}", async (req, res) => {
   // index.html 파일을 제공합니다
   try {
     // 1. index.html 파일을 읽어들입니다.
-    const __dirname = path.dirname(fileURLToPath(import.meta.url));
-    const templateHtml = prod ? fs.readFileSync(path.resolve(__dirname, "./dist/vanilla/index.html"), "utf-8") : "";
+    const templateHtml = prod ? fs.readFileSync("./dist/vanilla/index.html", "utf-8") : "";
 
-    const url = req.originalUrl.replace(base, "");
+    const url = req.originalUrl.replace(base, "/");
 
     /** @type {string} */
     let template;
@@ -84,7 +80,12 @@ app.use("*all", async (req, res) => {
     // 4. 앱의 HTML을 렌더링합니다.
     //    이는 entry-server.js에서 내보낸(Export) `render` 함수가
     //    ReactDOMServer.renderToString()과 같은 적절한 프레임워크의 SSR API를 호출한다고 가정합니다.
+    console.log("🔍 Rendering URL:", url, "Query:", req.query, "Prod:", prod);
+    console.log("📦 Template length:", template?.length);
+    console.log("🎯 Render function:", typeof render);
+
     const rendered = await render(url, req.query);
+    console.log("✅ Rendered result:", rendered ? Object.keys(rendered) : "null");
 
     // 5. 렌더링된 HTML을 템플릿에 주입합니다.
     const html = template
@@ -109,6 +110,8 @@ app.use("*all", async (req, res) => {
     res.status(500).end(e.stack);
   }
 });
+
+// 프로덕션 모드에서는 정적 파일을 별도로 처리하지 않음 (SSR 우선)
 
 // Start http server
 app.listen(port, () => {

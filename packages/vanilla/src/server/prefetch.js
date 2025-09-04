@@ -1,17 +1,16 @@
 // 홈페이지 데이터 페칭
-export async function prefetchHomePage() {
+export async function prefetchHomePage(query = {}) {
   const { getProducts, getCategories } = await import("../api/productApi.js");
   const { productStore, PRODUCT_ACTIONS } = await import("../stores/index.js");
-  const { router } = await import("../router/index.js");
 
-  const [productsResponse, categories] = await Promise.all([getProducts(router.query), getCategories()]);
+  const [productsResponse, categories] = await Promise.all([getProducts(query), getCategories()]);
 
   productStore.dispatch({
     type: PRODUCT_ACTIONS.SETUP,
     payload: {
       products: productsResponse.products,
-      categories,
       totalCount: productsResponse.pagination.total,
+      categories,
       loading: false,
       status: "done",
     },
@@ -22,6 +21,7 @@ export async function prefetchHomePage() {
     products: productState.products,
     categories: productState.categories,
     totalCount: productState.totalCount,
+    query: query,
   };
 }
 
