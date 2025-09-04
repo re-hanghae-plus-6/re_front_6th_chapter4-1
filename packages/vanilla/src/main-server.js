@@ -1,7 +1,7 @@
 // ===== 간단한 라우터 =====
 import { HomePage, NotFoundPage, ProductDetailPage } from "./pages";
 import { router } from "./router";
-import { getProductsOnServer, getUniqueCategories } from "./mocks/server.js";
+import { getProductsOnServer, getUniqueCategories, getProductById } from "./mocks/server.js";
 
 // ===== 라우트 등록 =====
 router.addRoute("/", () => {
@@ -20,14 +20,24 @@ router.addRoute("/", () => {
   return {
     initialData: results,
     html: HomePage(results),
-    head: "<title>쇼핑몰 홈</title>",
+    head: "<title>쇼핑몰 - 홈</title>",
   };
 });
-router.addRoute("/product/:id/", () => {
+router.addRoute("/product/:id/", (params) => {
+  const product = getProductById(params.id);
+
+  if (!product) {
+    return {
+      initialData: {},
+      html: NotFoundPage(),
+      head: "<title>페이지 없음</title>",
+    };
+  }
+
   return {
-    initialData: { products: [] },
+    initialData: { product },
     html: ProductDetailPage(),
-    head: "<title>쇼핑몰 상세페이지</title>",
+    head: `<title>${product.title} - 쇼핑몰</title>`,
   };
 });
 router.addRoute(".*", () => {
