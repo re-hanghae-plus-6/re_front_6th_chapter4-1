@@ -1,17 +1,31 @@
 import { getCategories, getProduct, getProducts } from "../api/productApi";
-import { initialProductState, productStore, PRODUCT_ACTIONS } from "../stores";
-import { router } from "../router";
+import { router } from "../router/router";
+import { PRODUCT_ACTIONS, initialProductState, productStore } from "../stores";
 
-export const loadProductsAndCategories = async () => {
-  router.query = { current: undefined }; // 항상 첫 페이지로 초기화
+// 상품 목록 초기 설정
+export const initProductsAndCategories = async (data) => {
+  if (!data) {
+    return;
+  }
+
   productStore.dispatch({
     type: PRODUCT_ACTIONS.SETUP,
-    payload: {
-      ...initialProductState,
-      loading: true,
-      status: "pending",
-    },
+    payload: data,
   });
+};
+
+export const loadProductsAndCategories = async (initData) => {
+  if (!initData) {
+    router.query = { current: undefined }; // 항상 첫 페이지로 초기화
+    productStore.dispatch({
+      type: PRODUCT_ACTIONS.SETUP,
+      payload: {
+        ...initialProductState,
+        loading: true,
+        status: "pending",
+      },
+    });
+  }
 
   try {
     const [
@@ -118,7 +132,7 @@ export const setLimit = (limit) => {
 /**
  * 상품 상세 페이지용 상품 조회 및 관련 상품 로드
  */
-export const loadProductDetailForPage = async (productId) => {
+export const loadProductDetailForPage = async (productId, initData) => {
   try {
     const currentProduct = productStore.getState().currentProduct;
     if (productId === currentProduct?.productId) {
@@ -128,16 +142,19 @@ export const loadProductDetailForPage = async (productId) => {
       }
       return;
     }
-    // 현재 상품 클리어
-    productStore.dispatch({
-      type: PRODUCT_ACTIONS.SETUP,
-      payload: {
-        ...initialProductState,
-        currentProduct: null,
-        loading: true,
-        status: "pending",
-      },
-    });
+
+    if (!initData) {
+      // 현재 상품 클리어
+      productStore.dispatch({
+        type: PRODUCT_ACTIONS.SETUP,
+        payload: {
+          // ...initialProductState,
+          currentProduct: null,
+          loading: true,
+          status: "pending",
+        },
+      });
+    }
 
     const product = await getProduct(productId);
 
