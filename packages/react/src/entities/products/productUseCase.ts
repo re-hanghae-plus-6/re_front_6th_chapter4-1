@@ -1,8 +1,9 @@
 import { getCategories, getProduct, getProducts } from "../../api/productApi";
-import { router } from "../../router";
+
 import type { StringRecord } from "../../types";
 import { initialProductState, PRODUCT_ACTIONS, productStore } from "./productStore";
 import { isNearBottom } from "../../utils";
+import { router } from "../../core/router";
 
 const createErrorMessage = (error: unknown, defaultMessage = "알 수 없는 오류 발생") =>
   error instanceof Error ? error.message : defaultMessage;
@@ -105,6 +106,8 @@ export const setLimit = (limit: number) => {
 export const loadProductDetailForPage = async (productId: string) => {
   try {
     const currentProduct = productStore.getState().currentProduct;
+
+    console.log("통과1");
     if (productId === currentProduct?.productId) {
       // 관련 상품 로드 (같은 category2 기준)
       if (currentProduct.category2) {
@@ -112,6 +115,7 @@ export const loadProductDetailForPage = async (productId: string) => {
       }
       return;
     }
+    console.log("통과2");
     // 현재 상품 클리어
     productStore.dispatch({
       type: PRODUCT_ACTIONS.SETUP,
@@ -122,14 +126,19 @@ export const loadProductDetailForPage = async (productId: string) => {
         status: "pending",
       },
     });
+    console.log("통과3");
 
     const product = await getProduct(productId);
+
+    console.log("통과4");
 
     // 현재 상품 설정
     productStore.dispatch({
       type: PRODUCT_ACTIONS.SET_CURRENT_PRODUCT,
       payload: product,
     });
+
+    console.log("통과5", product);
 
     // 관련 상품 로드 (같은 category2 기준)
     if (product.category2) {

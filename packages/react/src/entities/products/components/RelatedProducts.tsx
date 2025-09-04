@@ -1,7 +1,8 @@
-import { router } from "../../../router";
+import { useRouterContext } from "../../../core/router";
 import { useProductStoreContext } from "../hooks";
 
 export default function RelatedProducts() {
+  const router = useRouterContext();
   const productStore = useProductStoreContext();
   const { relatedProducts } = productStore.getState();
   if (relatedProducts.length === 0) {

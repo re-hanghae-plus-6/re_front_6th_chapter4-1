@@ -1,6 +1,6 @@
 import { useEffect } from "react";
-import { useRouterQuery } from "../../../../router";
 import { loadProducts } from "../../productUseCase";
+import { useRouterQuery } from "../../../../hooks";
 
 export const useProductFilter = () => {
   const { search: searchQuery, limit, sort, category1, category2 } = useRouterQuery();
