@@ -9,6 +9,7 @@ import {
   type ProductsSSRResult,
 } from "./api/ssrProductApi";
 import { renderToString } from "react-dom/server";
+import { PRODUCT_ACTIONS, productStore } from "./entities";
 
 router.addRoute("/", HomePage);
 router.addRoute("/product/:id/", ProductDetailPage);
@@ -27,7 +28,9 @@ export const render = async (url: string, query: Record<string, string>) => {
   }
 
   const { path, params, component } = matched;
-
+  console.log("👉 path", path);
+  console.log("👉 params", params);
+  console.log("👉 component", component);
   let initialData;
   let pageTitle;
   const PageComponent = component as FunctionComponent<{
@@ -36,17 +39,41 @@ export const render = async (url: string, query: Record<string, string>) => {
 
   if (path === "/") {
     initialData = await fetchProductsDataSSR(query);
-
     pageTitle = "쇼핑몰 - 홈";
-  } else if (path === "/product/:id") {
-    initialData = await fetchProductDataSSR(params.id);
 
+    // ✅ 서버 스토어 주입
+    productStore.dispatch({
+      type: PRODUCT_ACTIONS.SETUP,
+      payload: {
+        products: initialData.products,
+        categories: initialData.categories,
+        totalCount: initialData.totalCount,
+        loading: false,
+        status: "done",
+        error: null,
+      },
+    });
+  } else if (path === "/product/:id/") {
+    initialData = await fetchProductDataSSR(params.id);
+    console.log("✅ 상세페이지 데이터", initialData);
     pageTitle = initialData?.currentProduct?.title ? `${initialData?.currentProduct?.title} - 쇼핑몰` : "쇼핑몰";
+
+    productStore.dispatch({
+      type: PRODUCT_ACTIONS.SET_CURRENT_PRODUCT,
+      payload: initialData.currentProduct,
+    });
+
+    if (initialData.relatedProducts) {
+      productStore.dispatch({
+        type: PRODUCT_ACTIONS.SET_RELATED_PRODUCTS,
+        payload: initialData.relatedProducts,
+      });
+    }
   }
 
   return {
     head: `<title>${pageTitle}</title>`,
-    html: renderToString(<PageComponent initialData={initialData} />),
+    html: renderToString(<PageComponent />),
     initialData,
   };
 };

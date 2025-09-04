@@ -1,23 +1,25 @@
 import { App } from "./App";
 import { router } from "./router";
 import { BASE_URL } from "./constants.ts";
-import { createRoot } from "react-dom/client";
+import { createRoot, hydrateRoot } from "react-dom/client";
 import { PRODUCT_ACTIONS, productStore } from "./entities/index.ts";
 import type { Router } from "@hanghae-plus/lib";
 import type { FunctionComponent } from "react";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 if (typeof window !== "undefined" && window.__INITIAL_DATA__) {
-  const data = window.__INITIAL_DATA__;
-  console.log("Hydrating with server data:", data);
+  const initialData = window.__INITIAL_DATA__;
+  console.log("Hydrating with server data:", initialData);
 
   // 홈(initial products)용 데이터 복원
-  if (data.products) {
+  if (initialData.products) {
     productStore.dispatch({
       type: PRODUCT_ACTIONS.SETUP,
       payload: {
-        products: data.products,
-        categories: data.categories,
-        totalCount: data.totalCount,
+        products: initialData.products,
+        categories: initialData.categories,
+        totalCount: initialData.totalCount,
         loading: false,
         status: "done",
         error: null,
@@ -26,20 +28,21 @@ if (typeof window !== "undefined" && window.__INITIAL_DATA__) {
   }
 
   // 상품 상세(initial product detail)용 데이터 복원
-  if (data.currentProduct) {
+  if (initialData.currentProduct) {
     productStore.dispatch({
       type: PRODUCT_ACTIONS.SET_CURRENT_PRODUCT,
-      payload: data.currentProduct,
+      payload: initialData.currentProduct,
     });
 
-    if (data.relatedProducts) {
+    if (initialData.relatedProducts) {
       productStore.dispatch({
         type: PRODUCT_ACTIONS.SET_RELATED_PRODUCTS,
-        payload: data.relatedProducts,
+        payload: initialData.relatedProducts,
       });
     }
   }
-  // 초기 데이터 정리
+  // 초기 데이터를 소비한 뒤에 지우기로 결정
+  // // 초기 데이터 정리
   delete window.__INITIAL_DATA__;
 }
 
@@ -57,7 +60,18 @@ function main() {
   (router as Router<FunctionComponent>).start();
 
   const rootElement = document.getElementById("root")!;
-  createRoot(rootElement).render(<App />);
+
+  if (rootElement.hasChildNodes()) {
+    hydrateRoot(rootElement, <App />);
+  } else {
+    createRoot(rootElement).render(<App />);
+  }
+
+  // 초기 데이터 정리
+  // if (typeof window !== "undefined" && window.__INITIAL_DATA__) {
+  //   delete window.__INITIAL_DATA__;
+  // }
+  // createRoot(rootElement).render(<App />);
 }
 
 // 애플리케이션 시작

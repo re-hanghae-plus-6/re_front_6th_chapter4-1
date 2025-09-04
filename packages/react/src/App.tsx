@@ -16,13 +16,14 @@ const CartInitializer = () => {
 /**
  * 전체 애플리케이션 렌더링
  */
-export const App = () => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const App = ({ initialData }: { initialData?: any }) => {
   const PageComponent = useCurrentPage();
 
   return (
     <>
       <ToastProvider>
-        <ModalProvider>{PageComponent ? <PageComponent /> : null}</ModalProvider>
+        <ModalProvider>{PageComponent ? <PageComponent initialData={initialData} /> : null}</ModalProvider>
       </ToastProvider>
       <CartInitializer />
     </>

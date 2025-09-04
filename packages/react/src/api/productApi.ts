@@ -37,6 +37,7 @@ export async function getProducts(params: StringRecord = {}): Promise<ProductsRe
 
   const response = await fetch(`${BASE_URL}/api/products?${searchParams}`);
   console.log("✅ product list Response : ", response);
+  console.trace(); // 여기서 누가 호출했는지 추적
   return await response.json();
 }
 
