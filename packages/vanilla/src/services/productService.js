@@ -15,9 +15,9 @@ export const initProductsAndCategories = async (data) => {
 };
 
 export const loadProductsAndCategories = async () => {
-  if (productStore.getState().products.length) {
-    return;
-  }
+  // if (productStore.getState().products.length) {
+  //   return;
+  // }
 
   router.query = { current: undefined }; // 항상 첫 페이지로 초기화
   productStore.dispatch({
