@@ -14,145 +14,6 @@ let template;
 let render;
 let vite;
 
-// API 라우트 추가
-app.use(express.json());
-
-// 상품 상세 API
-app.get("/api/products/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-    console.log("📡 API 요청 - 상품 상세:", id);
-
-    // items.json 로드
-    const items = JSON.parse(await fs.readFile("./src/mocks/items.json", "utf-8"));
-
-    const product = items.find((item) => String(item.productId) === String(id));
-
-    if (!product) {
-      console.log("❌ API - 상품을 찾을 수 없음:", id);
-      return res.status(404).json({ error: "Product not found" });
-    }
-
-    // 상세 정보에 추가 데이터 포함
-    const detailProduct = {
-      ...product,
-      description: `${product.title}에 대한 상세 설명입니다. ${product.brand} 브랜드의 우수한 품질을 자랑하는 상품으로, 고객 만족도가 높은 제품입니다.`,
-      rating: Math.floor(Math.random() * 2) + 4,
-      reviewCount: Math.floor(Math.random() * 1000) + 50,
-      stock: Math.floor(Math.random() * 100) + 10,
-      images: [product.image, product.image.replace(".jpg", "_2.jpg"), product.image.replace(".jpg", "_3.jpg")],
-    };
-
-    console.log("✅ API - 상품 응답 성공:", product.title);
-    res.json(detailProduct);
-  } catch (error) {
-    console.error("❌ API 에러:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-// 상품 목록 API
-app.get("/api/products", async (req, res) => {
-  try {
-    console.log("📡 API 요청 - 상품 목록");
-
-    // 동적 import로 서버 함수 로드
-    const serverModule = await import("./src/mocks/server.js");
-    const result = serverModule.getProductsOnServer(req.query);
-
-    console.log("✅ API - 상품 목록 응답 성공");
-    res.json(result);
-  } catch (error) {
-    console.error("❌ API 에러:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-// 카테고리 API
-app.get("/api/categories", async (req, res) => {
-  try {
-    console.log("📡 API 요청 - 카테고리");
-
-    // 동적 import로 서버 함수 로드
-    const serverModule = await import("./src/mocks/server.js");
-    const categories = serverModule.getUniqueCategories();
-
-    console.log("✅ API - 카테고리 응답 성공");
-    res.json(categories);
-  } catch (error) {
-    console.error("❌ API 에러:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-// 프로덕션 환경에서 base 경로를 포함한 API 라우트도 추가
-if (isProduction && base !== "/") {
-  app.get(`${base}api/products/:id`, async (req, res) => {
-    try {
-      const { id } = req.params;
-      console.log("📡 API 요청 - 상품 상세 (base 경로):", id);
-
-      // items.json 로드
-      const items = JSON.parse(await fs.readFile("./src/mocks/items.json", "utf-8"));
-
-      const product = items.find((item) => String(item.productId) === String(id));
-
-      if (!product) {
-        console.log("❌ API - 상품을 찾을 수 없음:", id);
-        return res.status(404).json({ error: "Product not found" });
-      }
-
-      // 상세 정보에 추가 데이터 포함
-      const detailProduct = {
-        ...product,
-        description: `${product.title}에 대한 상세 설명입니다. ${product.brand} 브랜드의 우수한 품질을 자랑하는 상품으로, 고객 만족도가 높은 제품입니다.`,
-        rating: Math.floor(Math.random() * 2) + 4,
-        reviewCount: Math.floor(Math.random() * 1000) + 50,
-        stock: Math.floor(Math.random() * 100) + 10,
-        images: [product.image, product.image.replace(".jpg", "_2.jpg"), product.image.replace(".jpg", "_3.jpg")],
-      };
-
-      console.log("✅ API - 상품 응답 성공 (base 경로):", product.title);
-      res.json(detailProduct);
-    } catch (error) {
-      console.error("❌ API 에러 (base 경로):", error);
-      res.status(500).json({ error: "Internal server error" });
-    }
-  });
-
-  app.get(`${base}api/products`, async (req, res) => {
-    try {
-      console.log("📡 API 요청 - 상품 목록 (base 경로)");
-
-      // 동적 import로 서버 함수 로드
-      const serverModule = await import("./src/mocks/server.js");
-      const result = serverModule.getProductsOnServer(req.query);
-
-      console.log("✅ API - 상품 목록 응답 성공 (base 경로)");
-      res.json(result);
-    } catch (error) {
-      console.error("❌ API 에러 (base 경로):", error);
-      res.status(500).json({ error: "Internal server error" });
-    }
-  });
-
-  app.get(`${base}api/categories`, async (req, res) => {
-    try {
-      console.log("📡 API 요청 - 카테고리 (base 경로)");
-
-      // 동적 import로 서버 함수 로드
-      const serverModule = await import("./src/mocks/server.js");
-      const categories = serverModule.getUniqueCategories();
-
-      console.log("✅ API - 카테고리 응답 성공 (base 경로)");
-      res.json(categories);
-    } catch (error) {
-      console.error("❌ API 에러 (base 경로):", error);
-      res.status(500).json({ error: "Internal server error" });
-    }
-  });
-}
-
 // 환경별 설정
 if (!isProduction) {
   // 개발 환경: Vite 개발 서버 연동
@@ -181,23 +42,14 @@ if (!isProduction) {
 app.use(/^(?!.*\/api).*$/, async (req, res) => {
   try {
     // URL에서 베이스 경로 제거 (정규화)
-    let normalizedUrl = req.originalUrl;
-
-    // 프로덕션 환경에서 base 경로가 포함된 경우에만 제거
-    if (isProduction && base !== "/" && normalizedUrl.startsWith(base)) {
-      normalizedUrl = normalizedUrl.replace(base, "");
-    } else if (!isProduction && base === "/") {
-      // 개발 환경에서는 그대로 사용
-      normalizedUrl = req.originalUrl;
-    }
-
+    let normalizedUrl = req.originalUrl.replace(base, "");
     // 빈 문자열이거나 슬래시로 시작하지 않는 경우 처리
     if (!normalizedUrl || !normalizedUrl.startsWith("/")) {
       normalizedUrl = "/" + (normalizedUrl || "");
     }
     // 연속된 슬래시 제거
     const url = normalizedUrl.replace(/\/+/g, "/");
-    console.log("🌐 SSR 요청:", req.originalUrl, "-> 정규화됨:", url);
+    console.log("🌐 SSR 요청:", url);
 
     if (!isProduction) {
       // 개발 환경: 매 요청마다 최신 템플릿과 렌더 함수 로드

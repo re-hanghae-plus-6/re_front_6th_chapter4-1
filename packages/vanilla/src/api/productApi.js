@@ -1,9 +1,6 @@
 // 서버 환경 체크
 const isServer = typeof window === "undefined";
 
-// BASE_URL import
-import { BASE_URL } from "../constants.js";
-
 export async function getProducts(params = {}) {
   const { limit = 20, search = "", category1 = "", category2 = "", sort = "price_asc" } = params;
   const page = params.current ?? params.page ?? 1;
@@ -30,7 +27,7 @@ export async function getProducts(params = {}) {
     sort,
   });
 
-  const response = await fetch(`${BASE_URL}api/products?${searchParams}`);
+  const response = await fetch(`/api/products?${searchParams}`);
   return await response.json();
 }
 
@@ -61,7 +58,7 @@ export async function getProduct(productId) {
   }
 
   // 브라우저 환경에서는 fetch 사용
-  const response = await fetch(`${BASE_URL}api/products/${productId}`);
+  const response = await fetch(`/api/products/${productId}`);
   return await response.json();
 }
 
@@ -78,6 +75,6 @@ export async function getCategories() {
   }
 
   // 브라우저 환경에서는 fetch 사용
-  const response = await fetch(`${BASE_URL}api/categories`);
+  const response = await fetch("/api/categories");
   return await response.json();
 }

@@ -24,37 +24,24 @@ router.addRoute("/", () => {
   };
 });
 router.addRoute("/product/:id/", (params) => {
-  console.log("📦 상품 상세 페이지 요청:", params.id);
+  const product = getProductById(params.id);
 
-  try {
-    const product = getProductById(params.id);
-
-    if (!product) {
-      console.log("⚠️ 상품을 찾을 수 없음:", params.id);
-      return {
-        initialData: {},
-        html: NotFoundPage(),
-        head: "<title>페이지 없음</title>",
-      };
-    }
-
-    // 관련 상품 로드
-    const relatedProducts = getRelatedProducts(product.category2, product.productId);
-
-    console.log("✅ 상품 상세 페이지 렌더링 완료:", product.title);
+  if (!product) {
     return {
-      initialData: { product, relatedProducts },
-      html: ProductDetailPage({ product, relatedProducts }),
-      head: `<title>${product.title} - 쇼핑몰</title>`,
-    };
-  } catch (error) {
-    console.error("❌ 상품 상세 페이지 에러:", error);
-    return {
-      initialData: { error: error.message },
+      initialData: {},
       html: NotFoundPage(),
-      head: "<title>에러 - 쇼핑몰</title>",
+      head: "<title>페이지 없음</title>",
     };
   }
+
+  // 관련 상품 로드
+  const relatedProducts = getRelatedProducts(product.category2, product.productId);
+
+  return {
+    initialData: { product, relatedProducts },
+    html: ProductDetailPage({ product, relatedProducts }),
+    head: `<title>${product.title} - 쇼핑몰</title>`,
+  };
 });
 router.addRoute(".*", () => {
   return {
