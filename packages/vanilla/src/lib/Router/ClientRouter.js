@@ -116,6 +116,7 @@ export class ClientRouter {
 
       this.#route = this.#findRoute(fullUrl);
       this.#observer.notify();
+      window.scrollTo(0, 0);
     } catch (error) {
       console.error("라우터 네비게이션 오류:", error);
     }
