@@ -6,8 +6,9 @@ import { isNearBottom } from "../../utils";
 
 const createErrorMessage = (error: unknown, defaultMessage = "알 수 없는 오류 발생") =>
   error instanceof Error ? error.message : defaultMessage;
+
 export const hydrateProduct = () => {
-  if (window.__INITIAL_DATA__?.products.length === 0) {
+  if (window.__INITIAL_DATA__?.products.length > 0) {
     productStore.dispatch({
       type: PRODUCT_ACTIONS.SETUP,
       payload: window.__INITIAL_DATA__,
