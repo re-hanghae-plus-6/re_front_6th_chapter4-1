@@ -1,5 +1,5 @@
 /**
- * 간단한 SPA 라우터
+ * 간단한 SPA 라우터 (서버/클라이언트 환경 지원)
  */
 import { createObserver } from "./createObserver.js";
 
@@ -8,16 +8,22 @@ export class Router {
   #route;
   #observer = createObserver();
   #baseUrl;
+  #pathname;
+  #search;
 
   constructor(baseUrl = "") {
     this.#routes = new Map();
     this.#route = null;
     this.#baseUrl = baseUrl.replace(/\/$/, "");
+    this.#pathname = null;
+    this.#search = "";
 
-    window.addEventListener("popstate", () => {
-      this.#route = this.#findRoute();
-      this.#observer.notify();
-    });
+    if (typeof window !== "undefined") {
+      window.addEventListener("popstate", () => {
+        this.#route = this.#findRoute();
+        this.#observer.notify();
+      });
+    }
   }
 
   get baseUrl() {
@@ -25,11 +31,15 @@ export class Router {
   }
 
   get query() {
-    return Router.parseQuery(window.location.search);
+    const search = this.#search !== null ? this.#search : typeof window !== "undefined" ? window.location.search : "";
+    return Router.parseQuery(search);
   }
 
   set query(newQuery) {
-    const newUrl = Router.getUrl(newQuery, this.#baseUrl);
+    const pathname =
+      this.#pathname !== null ? this.#pathname : typeof window !== "undefined" ? window.location.pathname : "/";
+    const search = this.#search !== null ? this.#search : typeof window !== "undefined" ? window.location.search : "";
+    const newUrl = Router.getUrl(newQuery, this.#baseUrl, pathname, search);
     this.push(newUrl);
   }
 
@@ -73,8 +83,21 @@ export class Router {
     });
   }
 
-  #findRoute(url = window.location.pathname) {
-    const { pathname } = new URL(url, window.location.origin);
+  #findRoute(url) {
+    let pathname;
+    if (url) {
+      if (typeof window !== "undefined") {
+        const { pathname: urlPathname } = new URL(url, window.location.origin);
+        pathname = urlPathname;
+      } else {
+        const { pathname: urlPathname } = new URL(url, "http://localhost");
+        pathname = urlPathname;
+      }
+    } else {
+      pathname =
+        this.#pathname !== null ? this.#pathname : typeof window !== "undefined" ? window.location.pathname : "/";
+    }
+
     for (const [routePath, route] of this.#routes) {
       const match = pathname.match(route.regex);
       if (match) {
@@ -103,11 +126,18 @@ export class Router {
       // baseUrl이 없으면 자동으로 붙여줌
       let fullUrl = url.startsWith(this.#baseUrl) ? url : this.#baseUrl + (url.startsWith("/") ? url : "/" + url);
 
-      const prevFullUrl = `${window.location.pathname}${window.location.search}`;
+      if (typeof window !== "undefined") {
+        const prevFullUrl = `${window.location.pathname}${window.location.search}`;
 
-      // 히스토리 업데이트
-      if (prevFullUrl !== fullUrl) {
-        window.history.pushState(null, "", fullUrl);
+        // 히스토리 업데이트
+        if (prevFullUrl !== fullUrl) {
+          window.history.pushState(null, "", fullUrl);
+        }
+      } else {
+        // 서버 환경에서는 내부 상태 업데이트
+        const newURL = new URL(fullUrl, "http://localhost");
+        this.#pathname = newURL.pathname;
+        this.#search = newURL.search;
       }
 
       this.#route = this.#findRoute(fullUrl);
@@ -119,8 +149,15 @@ export class Router {
 
   /**
    * 라우터 시작
+   * @param {string} pathname - 서버 환경에서의 초기 경로
+   * @param {string} search - 서버 환경에서의 초기 쿼리 문자열
    */
-  start() {
+  start(pathname, search) {
+    if (typeof window === "undefined") {
+      // 서버 환경
+      this.#pathname = pathname || "/";
+      this.#search = search || "";
+    }
     this.#route = this.#findRoute();
     this.#observer.notify();
   }
@@ -130,7 +167,7 @@ export class Router {
    * @param {string} search - location.search 또는 쿼리 문자열
    * @returns {Object} 파싱된 쿼리 객체
    */
-  static parseQuery = (search = window.location.search) => {
+  static parseQuery = (search) => {
     const params = new URLSearchParams(search);
     const query = {};
     for (const [key, value] of params) {
@@ -154,8 +191,8 @@ export class Router {
     return params.toString();
   };
 
-  static getUrl = (newQuery, baseUrl = "") => {
-    const currentQuery = Router.parseQuery();
+  static getUrl = (newQuery, baseUrl = "", pathname, search) => {
+    const currentQuery = Router.parseQuery(search);
     const updatedQuery = { ...currentQuery, ...newQuery };
 
     // 빈 값들 제거
@@ -166,6 +203,6 @@ export class Router {
     });
 
     const queryString = Router.stringifyQuery(updatedQuery);
-    return `${baseUrl}${window.location.pathname.replace(baseUrl, "")}${queryString ? `?${queryString}` : ""}`;
+    return `${baseUrl}${pathname.replace(baseUrl, "")}${queryString ? `?${queryString}` : ""}`;
   };
 }

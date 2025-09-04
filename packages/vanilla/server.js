@@ -3,7 +3,7 @@ import express from "express";
 import compression from "compression";
 import sirv from "sirv";
 import { normalize } from "node:path";
-import { mswServer } from "./src/mocks/node";
+import { mswServer } from "./src/mocks/node.js";
 
 const prod = process.env.NODE_ENV === "production";
 const port = process.env.PORT || 5173;
