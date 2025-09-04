@@ -16,6 +16,7 @@ export class ServerRouter<Handler extends (...args: any[]) => any> {
 
   #route: null | (Route<Handler> & { params: StringRecord; path: string });
   #currentUrl = "/";
+  #query: StringRecord = {};
 
   constructor(baseUrl = "") {
     this.#routes = new Map();
@@ -24,12 +25,13 @@ export class ServerRouter<Handler extends (...args: any[]) => any> {
   }
 
   get query(): StringRecord {
-    return ServerRouter.parseQuery(this.#currentUrl);
+    return this.#query;
   }
 
   set query(newQuery: QueryPayload) {
     const newUrl = ServerRouter.getUrl(newQuery, this.#currentUrl, this.#baseUrl);
     this.push(newUrl);
+    this.#query = newQuery as StringRecord;
   }
 
   get params() {
