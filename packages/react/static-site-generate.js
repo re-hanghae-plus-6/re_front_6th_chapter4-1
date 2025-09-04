@@ -9,18 +9,18 @@ async function generateStaticSite() {
 
   try {
     // 홈페이지 렌더링
-    const { html: appHtml, head, initialData } = await render("/", {});
+    const { html: appHtml, head, __INITIAL_DATA__ } = await render("/", {});
 
     // 초기 데이터 스크립트 생성
-    const initialDataScript = initialData
-      ? `<script>window.__INITIAL_DATA__ = ${JSON.stringify(initialData)}</script>`
+    const initialDataScript = __INITIAL_DATA__
+      ? `<script>window.__INITIAL_DATA__ = ${JSON.stringify(__INITIAL_DATA__)}</script>`
       : "";
 
     // 결과 HTML 생성하기
     const result = template
       .replace("<!--app-head-->", head ?? "")
       .replace("<!--app-html-->", appHtml ?? "")
-      .replace("</head>", `${initialDataScript}</head>`);
+      .replace("<!-- app-data -->", initialDataScript);
 
     fs.writeFileSync("../../dist/react/index.html", result);
 
@@ -32,15 +32,15 @@ async function generateStaticSite() {
         const productResult = await render(`/product/${productId}/`, {});
 
         // 상품별 초기 데이터 스크립트 생성
-        const productInitialDataScript = productResult.initialData
-          ? `<script>window.__INITIAL_DATA__ = ${JSON.stringify(productResult.initialData)}</script>`
+        const productInitialDataScript = productResult.__INITIAL_DATA__
+          ? `<script>window.__INITIAL_DATA__ = ${JSON.stringify(productResult.__INITIAL_DATA__)}</script>`
           : "";
 
         // 상품 상세 페이지 HTML 생성
         const productHtml = template
           .replace("<!--app-head-->", productResult.head ?? "")
           .replace("<!--app-html-->", productResult.html ?? "")
-          .replace("</head>", `${productInitialDataScript}</head>`);
+          .replace("<!-- app-data -->", productInitialDataScript);
 
         // product 디렉토리 생성
         const productDir = `../../dist/react/product/${productId}`;
