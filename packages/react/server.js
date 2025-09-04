@@ -21,10 +21,6 @@ if (!prod) {
     base,
   });
   app.use(vite.middlewares);
-
-  // Mock server setup for development
-  const { server } = await vite.ssrLoadModule("/src/mocks/serverBrowser.js");
-  server.listen();
 } else {
   const compression = (await import("compression")).default;
   const sirv = (await import("sirv")).default;
@@ -41,8 +37,8 @@ app.use("*all", async (req, res) => {
     let template;
     /** @type {import('./src/main-server.js').render} */
     let render;
+    // Always read fresh template in development
     if (!prod) {
-      // Always read fresh template in development
       template = await fs.readFile("./index.html", "utf-8");
       template = await vite.transformIndexHtml(url, template);
       render = (await vite.ssrLoadModule("/src/main-server.tsx")).render;

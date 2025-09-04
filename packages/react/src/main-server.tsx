@@ -1,6 +1,7 @@
 import { App } from "./App";
 import { router } from "./router/router";
 import { renderToString } from "react-dom/server";
+import { productStore } from "./entities";
 
 export const render = async (url: string, query: Record<string, string>) => {
   console.log({ url, query });
@@ -9,8 +10,8 @@ export const render = async (url: string, query: Record<string, string>) => {
   router.query = query;
 
   return {
-    head: "Hello, world!",
+    head: "<title>쇼핑몰 홈</title>",
     html: renderToString(<App />),
-    initialData: {},
+    initialData: productStore.getState(),
   };
 };

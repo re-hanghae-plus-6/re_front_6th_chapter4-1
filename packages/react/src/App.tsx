@@ -1,12 +1,41 @@
 import { router, useCurrentPage } from "./router";
 import { HomePage, NotFoundPage, ProductDetailPage } from "./pages";
-import { useLoadCartStore } from "./entities";
+import { PRODUCT_ACTIONS, productStore, useLoadCartStore } from "./entities";
 import { ModalProvider, ToastProvider } from "./components";
+import { getProducts, getUniqueCategories } from "./mocks/serverMock";
 
 // 홈 페이지 (상품 목록)
-router.addRoute("/", HomePage);
-router.addRoute("/product/:id/", ProductDetailPage);
-router.addRoute(".*", NotFoundPage);
+router.addRoute("/", () => {
+  if (typeof window === "undefined") {
+    const {
+      products,
+      pagination: { total },
+    } = getProducts();
+
+    const categories = getUniqueCategories();
+
+    productStore.dispatch({
+      type: PRODUCT_ACTIONS.SETUP,
+      payload: {
+        products,
+        categories,
+        totalCount: total,
+        loading: false,
+        status: "done",
+      },
+    });
+  }
+  return HomePage();
+});
+router.addRoute("/product/:id/", () => {
+  if (typeof window === "undefined") {
+    // data 불러오기.
+  }
+  return ProductDetailPage();
+});
+router.addRoute(".*", () => {
+  NotFoundPage();
+});
 
 const CartInitializer = () => {
   useLoadCartStore();

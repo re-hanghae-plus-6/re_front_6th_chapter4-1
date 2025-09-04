@@ -6,8 +6,21 @@ import { isNearBottom } from "../../utils";
 
 const createErrorMessage = (error: unknown, defaultMessage = "알 수 없는 오류 발생") =>
   error instanceof Error ? error.message : defaultMessage;
+export const hydrateProduct = () => {
+  if (window.__INITIAL_DATA__?.products.length === 0) {
+    productStore.dispatch({
+      type: PRODUCT_ACTIONS.SETUP,
+      payload: window.__INITIAL_DATA__,
+    });
+  }
+};
 
 export const loadProductsAndCategories = async () => {
+  if (window.__INITIAL_DATA__?.products.length > 0) {
+    // 이미 초기 데이터가 있으면 초기화하지 않음
+    return;
+  }
+
   router.query = { current: undefined }; // 항상 첫 페이지로 초기화
   productStore.dispatch({
     type: PRODUCT_ACTIONS.SETUP,
