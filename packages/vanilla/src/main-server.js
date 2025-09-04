@@ -64,23 +64,29 @@ function filterProducts(products, query) {
 }
 
 async function mockGetProducts(query = {}) {
-  const page = parseInt(query.page || query.current) || 1;
-  const limit = parseInt(query.limit) || 20;
+  const normalized = {
+    page: Number(query?.page ?? query?.current ?? 1),
+    limit: Number(query?.limit ?? 20),
+    search: query?.search ?? "",
+    category1: query?.category1 ?? "",
+    category2: query?.category2 ?? "",
+    sort: query?.sort ?? "name_desc",
+  };
 
-  const filteredProducts = filterProducts(items, query);
-  const startIndex = (page - 1) * limit;
-  const endIndex = startIndex + limit;
+  const filteredProducts = filterProducts(items, normalized);
+  const startIndex = (normalized.page - 1) * normalized.limit;
+  const endIndex = startIndex + normalized.limit;
   const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
 
   return {
     products: paginatedProducts,
     pagination: {
-      page,
-      limit,
+      page: normalized.page,
+      limit: normalized.limit,
       total: filteredProducts.length,
-      totalPages: Math.ceil(filteredProducts.length / limit),
+      totalPages: Math.ceil(filteredProducts.length / normalized.limit),
       hasNext: endIndex < filteredProducts.length,
-      hasPrev: page > 1,
+      hasPrev: normalized.page > 1,
     },
   };
 }
@@ -105,7 +111,7 @@ async function mockGetCategories() {
 }
 
 route.add("/", async ({ query }) => {
-  const productsData = await mockGetProducts(query);
+  const productsData = await mockGetProducts(query || {});
   const categories = await mockGetCategories();
 
   const stateToSetup = {
@@ -118,7 +124,6 @@ route.add("/", async ({ query }) => {
     error: null,
     status: "done",
   };
-  console.log(stateToSetup);
   productStore.dispatch({
     type: PRODUCT_ACTIONS.SETUP,
     payload: stateToSetup,
