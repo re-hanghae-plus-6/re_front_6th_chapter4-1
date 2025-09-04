@@ -10,7 +10,7 @@ router.addRoute("/", () => {
     const {
       products,
       pagination: { total },
-    } = getProducts();
+    } = getProducts(router.query);
 
     const categories = getUniqueCategories();
 
