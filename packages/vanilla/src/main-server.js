@@ -146,7 +146,7 @@ export const render = async (url, query) => {
     return {
       head: "<title>에러</title>",
       html: "<div>서버 오류가 발생했습니다.</div>",
-      initialData: JSON.stringify({ error: error.message }),
+      initialData: { error: error.message },
     };
   }
 };

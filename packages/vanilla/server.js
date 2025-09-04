@@ -63,7 +63,7 @@ app.use("*all", async (req, res) => {
       .replace(`<!--app-html-->`, rendered.html ?? "")
       .replace(
         `<!-- app-data -->`,
-        `<script>window.__INITIAL_DATA__ = ${JSON.stringify(rendered.__INITIAL_DATA__)};</script>`,
+        `<script>window.__INITIAL_DATA__ = ${JSON.stringify(rendered.initialData)};</script>`,
       );
 
     res.status(200).set({ "Content-Type": "text/html" }).send(html);
