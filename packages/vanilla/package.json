@@ -21,7 +21,8 @@
     "preview:ssg": "vite preview --outDir ../../dist/vanilla --port 4178",
     "preview:ssg-with-build": "pnpm run build && pnpm run preview:ssg",
     "serve:test": "pnpm run build:without-ssg && pnpm run build:ssg && (pnpm run dev & pnpm run dev:ssr & pnpm run preview:csr & pnpm run preview:ssr & pnpm run preview:ssg)",
-    "prepare": "husky"
+    "prepare": "husky",
+    "deploy": "pnpm run build && npx gh-pages -d dist/vanilla --dest vanilla"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
