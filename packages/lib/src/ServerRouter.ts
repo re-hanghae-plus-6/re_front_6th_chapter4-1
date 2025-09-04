@@ -1,5 +1,5 @@
-import { createObserver } from "./createObserver";
 import type { AnyFunction, StringRecord } from "./types";
+import { createObserver } from "./createObserver";
 
 interface Route<Handler extends AnyFunction> {
   regex: RegExp;
@@ -27,15 +27,13 @@ export class ServerRouter<Handler extends (...args: any[]) => any> {
     this.#currentQuery = {};
   }
 
-  get baseUrl() {
-    return this.#currentQuery;
-  }
   get query(): StringRecord {
     return this.#currentQuery;
   }
 
   set query(newQuery: QueryPayload) {
-    const newUrl = ServerRouter.getUrl(newQuery, this.#baseUrl);
+    const pathname = this.#route?.path ?? "/";
+    const newUrl = ServerRouter.getUrl(newQuery, pathname, this.#baseUrl);
     this.push(newUrl);
   }
 
@@ -50,8 +48,6 @@ export class ServerRouter<Handler extends (...args: any[]) => any> {
   get target() {
     return this.#route?.handler;
   }
-
-  readonly subscribe = this.#observer.subscribe;
 
   addRoute(path: string, handler: Handler) {
     // 경로 패턴을 정규식으로 변환
@@ -93,7 +89,7 @@ export class ServerRouter<Handler extends (...args: any[]) => any> {
     return null;
   }
 
-  push(url = "/") {
+  push(url: string = "/") {
     try {
       this.#route = this.#findRoute(url);
     } catch (error) {
@@ -102,12 +98,15 @@ export class ServerRouter<Handler extends (...args: any[]) => any> {
   }
 
   start(url = "/", query = {}) {
-    this.#currentQuery = query;
     this.#route = this.#findRoute(url);
-    this.#observer.notify();
+    this.#currentQuery = query;
   }
 
-  static parseQuery = (search = window.location.search) => {
+  subscribe = (listener: () => void) => {
+    return this.#observer.subscribe(listener);
+  };
+
+  static parseQuery = (search: string = "") => {
     const params = new URLSearchParams(search);
     const query: StringRecord = {};
     for (const [key, value] of params) {
@@ -126,7 +125,7 @@ export class ServerRouter<Handler extends (...args: any[]) => any> {
     return params.toString();
   };
 
-  static getUrl = (newQuery: QueryPayload, baseUrl = "") => {
+  static getUrl = (newQuery: QueryPayload, pathname = "/", baseUrl = "") => {
     const currentQuery = ServerRouter.parseQuery();
     const updatedQuery = { ...currentQuery, ...newQuery };
 
@@ -138,6 +137,6 @@ export class ServerRouter<Handler extends (...args: any[]) => any> {
     });
 
     const queryString = ServerRouter.stringifyQuery(updatedQuery);
-    return `${baseUrl}${window.location.pathname.replace(baseUrl, "")}${queryString ? `?${queryString}` : ""}`;
+    return `${baseUrl}${pathname.replace(baseUrl, "")}${queryString ? `?${queryString}` : ""}`;
   };
 }
