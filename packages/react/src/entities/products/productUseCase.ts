@@ -3,7 +3,6 @@ import { router } from "../../router";
 import type { StringRecord } from "../../types";
 import { initialProductState, PRODUCT_ACTIONS, productStore } from "./productStore";
 import { isNearBottom } from "../../utils";
-import { getInitialData } from "../../utils/ssr";
 
 const createErrorMessage = (error: unknown, defaultMessage = "알 수 없는 오류 발생") =>
   error instanceof Error ? error.message : defaultMessage;
@@ -11,19 +10,16 @@ const createErrorMessage = (error: unknown, defaultMessage = "알 수 없는 오
 export const loadProductsAndCategories = async () => {
   router.query = { current: undefined }; // 항상 첫 페이지로 초기화
 
-  // SSR 데이터가 있는지 확인
-  const ssrData = getInitialData();
-  if (ssrData && router.route?.path === "/") {
-    productStore.dispatch({
-      type: PRODUCT_ACTIONS.SETUP,
-      payload: {
-        products: ssrData.products,
-        categories: ssrData.categories,
-        totalCount: ssrData.totalCount,
-        loading: false,
-        status: "done",
-      },
-    });
+  // 이미 데이터가 있으면 로딩하지 않음 (SSR에서 이미 초기화됨)
+  const currentState = productStore.getState();
+  console.log("loadProductsAndCategories 호출 - 현재 상태:", {
+    products: currentState.products.length,
+    totalCount: currentState.totalCount,
+    status: currentState.status,
+  });
+
+  if (currentState.products.length > 0 && currentState.status === "done") {
+    console.log("이미 초기화된 데이터 사용:", currentState.products.length, "개 상품");
     return;
   }
 
@@ -131,20 +127,9 @@ export const loadProductDetailForPage = async (productId: string) => {
       return;
     }
 
-    // SSR 데이터가 있는지 확인
-    const ssrData = getInitialData();
-    if (ssrData && router.route?.path === "/product/:id/" && ssrData.currentProduct?.productId === productId) {
-      productStore.dispatch({
-        type: PRODUCT_ACTIONS.SETUP,
-        payload: {
-          ...initialProductState,
-          currentProduct: ssrData.currentProduct,
-          relatedProducts: ssrData.relatedProducts,
-          loading: false,
-          status: "done",
-          error: null,
-        },
-      });
+    // 이미 SSR 데이터로 초기화된 상품이 있으면 사용
+    const currentState = productStore.getState();
+    if (currentState.currentProduct?.productId === productId && currentState.status === "done") {
       return;
     }
 
@@ -161,6 +146,7 @@ export const loadProductDetailForPage = async (productId: string) => {
 
     const product = await getProduct(productId);
 
+    console.log("product", product);
     // 현재 상품 설정
     productStore.dispatch({
       type: PRODUCT_ACTIONS.SET_CURRENT_PRODUCT,

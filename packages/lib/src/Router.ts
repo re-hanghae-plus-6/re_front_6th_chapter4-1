@@ -17,8 +17,8 @@ export class Router<Handler extends (...args: any[]) => any> {
   readonly #routes: Map<string, Route<Handler>>;
   readonly #observer = createObserver();
   readonly #baseUrl;
-
   #route: null | (Route<Handler> & { params: StringRecord; path: string });
+  #ssrQuery: StringRecord = {};
 
   constructor(baseUrl = "") {
     this.#routes = new Map();
@@ -47,12 +47,26 @@ export class Router<Handler extends (...args: any[]) => any> {
   }
 
   get query(): StringRecord {
-    return Router.parseQuery(typeof window !== "undefined" ? window.location.search : "");
+    if (typeof window !== "undefined") {
+      return Router.parseQuery(window.location.search);
+    }
+    return this.#ssrQuery;
   }
 
   set query(newQuery: QueryPayload) {
-    const newUrl = Router.getUrl(newQuery, this.#baseUrl);
-    this.push(newUrl);
+    if (typeof window === "undefined") {
+      // 서버에서는 #ssrQuery에 저장
+      this.#ssrQuery = Object.entries(newQuery).reduce((acc, [key, value]) => {
+        if (value !== null && value !== undefined && value !== "") {
+          acc[key] = String(value);
+        }
+        return acc;
+      }, {} as StringRecord);
+    } else {
+      // 브라우저에서는 URL 업데이트
+      const newUrl = Router.getUrl(newQuery, this.#baseUrl);
+      this.push(newUrl);
+    }
   }
 
   get params() {
@@ -165,6 +179,7 @@ export class Router<Handler extends (...args: any[]) => any> {
 
     const queryString = Router.stringifyQuery(updatedQuery);
     const pathname = typeof window !== "undefined" ? window.location.pathname : "/";
-    return `${baseUrl}${pathname.replace(baseUrl, "")}${queryString ? `?${queryString}` : ""}`;
+    // baseUrl이 이미 pathname에 포함되어 있으므로 그대로 사용
+    return `${pathname}${queryString ? `?${queryString}` : ""}`;
   };
 }

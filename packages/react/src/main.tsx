@@ -1,12 +1,13 @@
 import { App } from "./App";
 import { router } from "./router";
 import { BASE_URL } from "./constants.ts";
-import { createRoot } from "react-dom/client";
+import { createRoot, hydrateRoot } from "react-dom/client";
+import { getInitialData } from "./utils/ssr";
+import { productStore, PRODUCT_ACTIONS } from "./entities/products/productStore";
 
 const enableMocking = () =>
   import("./mocks/browser")
     .then(({ worker }) => {
-      console.log("MSW: Starting worker with BASE_URL:", BASE_URL);
       return worker.start({
         serviceWorker: {
           url: `${BASE_URL}mockServiceWorker.js`,
@@ -22,22 +23,38 @@ const enableMocking = () =>
     });
 
 function main() {
-  router.start();
+  // SSR 데이터로 스토어 초기화
+  const ssrData = getInitialData();
 
+  // SSR 데이터가 있으면 라우터 시작 전에 스토어 초기화
+  if (ssrData) {
+    productStore.dispatch({
+      type: PRODUCT_ACTIONS.SETUP,
+      payload: ssrData,
+    });
+  }
+
+  router.start();
   const rootElement = document.getElementById("root")!;
-  createRoot(rootElement).render(<App />);
+
+  // SSR 데이터가 있으면 hydrateRoot, 없으면 createRoot
+  if (ssrData) {
+    hydrateRoot(rootElement, <App />);
+  } else {
+    createRoot(rootElement).render(<App />);
+  }
 }
 
 // 애플리케이션 시작
 if (import.meta.env.MODE !== "test") {
   enableMocking()
     .then(() => {
-      console.log("Starting main application");
       main();
     })
     .catch((error) => {
-      console.error("Failed to initialize application:", error);
+      console.error("MSW 초기화 실패:", error);
       // MSW 실패해도 앱은 시작
+
       main();
     });
 } else {

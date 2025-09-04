@@ -12,6 +12,7 @@ export const createClientRouter = () => {
 };
 
 export const createServerRouter = () => {
-  const router = new Router<FunctionComponent>(BASE_URL);
+  // 서버에서는 BASE_URL 없이 생성 (중복 방지)
+  const router = new Router<FunctionComponent>("");
   return router;
 };

@@ -37,7 +37,6 @@ export async function getProducts(params: StringRecord = {}): Promise<ProductsRe
 
   try {
     const response = await fetch(url);
-    console.log("API: Response status:", response.status);
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -56,8 +55,7 @@ export async function getProduct(productId: string): Promise<Product> {
 
   try {
     const response = await fetch(url);
-    console.log("API: Product response status:", response.status);
-
+    console.log("response", response);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -72,11 +70,9 @@ export async function getProduct(productId: string): Promise<Product> {
 // 카테고리 목록 조회
 export async function getCategories(): Promise<Categories> {
   const url = "/api/categories";
-  console.log("API: Fetching categories from:", url);
 
   try {
     const response = await fetch(url);
-    console.log("API: Categories response status:", response.status);
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);

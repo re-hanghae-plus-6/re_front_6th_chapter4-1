@@ -4,7 +4,6 @@ import { ErrorContent, PublicImage } from "../components";
 
 export const ProductDetailPage = () => {
   const { currentProduct: product, error, loading } = useProductStore();
-
   useLoadProductDetail();
 
   return (
@@ -12,7 +11,7 @@ export const ProductDetailPage = () => {
       headerLeft={
         <div className="flex items-center space-x-3">
           <button
-            onClick={() => window.history.back()}
+            onClick={() => typeof window !== "undefined" && window.history.back()}
             className="p-2 text-gray-700 hover:text-gray-900 transition-colors"
           >
             <PublicImage src="/back-icon.svg" alt="뒤로" className="w-6 h-6" />

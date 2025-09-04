@@ -1,6 +1,6 @@
 import express from "express";
 import fs from "node:fs/promises";
-
+import { createServer } from "vite";
 const prod = process.env.NODE_ENV === "production";
 const port = process.env.PORT || 5174;
 const base = process.env.BASE || (prod ? "/front_6th_chapter4-1/react/" : "/");
@@ -9,12 +9,19 @@ const templateHtml = prod ? await fs.readFile("./dist/react/index.html", "utf-8"
 // Add Vite or respective production middlewares
 /** @type {import('vite').ViteDevServer | undefined} */
 let vite;
-const { createServer } = await import("vite");
-vite = await createServer({
-  server: { middlewareMode: true },
-  appType: "custom",
-  base,
-});
+
+if (!prod) {
+  vite = await createServer({
+    server: { middlewareMode: true },
+    appType: "custom",
+    base,
+  });
+
+  const { server } = await vite.ssrLoadModule("./src/mocks/mswServer");
+  await server.listen({
+    onUnhandledRequest: "bypass",
+  });
+}
 
 const app = express();
 
@@ -36,6 +43,11 @@ app.use("*all", async (req, res) => {
   try {
     const url = req.originalUrl.replace(base, "");
 
+    // favicon 등 정적 파일 요청은 무시
+    if (url.includes(".ico") || url.includes(".png") || url.includes(".jpg") || url.includes(".svg")) {
+      return res.status(404).end();
+    }
+
     /** @type {string} */
     let template;
     /** @type {import('./src/main-server.tsx').render} */
@@ -53,8 +65,10 @@ app.use("*all", async (req, res) => {
     const query = new URLSearchParams(search || "");
     const queryObj = Object.fromEntries(query.entries());
 
-    const rendered = await render("/" + pathname || "/", queryObj);
-    console.log("rendered", rendered);
+    const finalUrl = pathname ? "/" + pathname : "/";
+
+    const rendered = await render(finalUrl, queryObj);
+
     const html = template
       .replace(`<!--app-head-->`, rendered.head ?? "")
       .replace(`<!--app-html-->`, rendered.html ?? "")
@@ -66,7 +80,6 @@ app.use("*all", async (req, res) => {
     res.status(200).set({ "Content-Type": "text/html" }).send(html);
   } catch (e) {
     vite?.ssrFixStacktrace(e);
-    console.log(e.stack);
     res.status(500).end(e.stack);
   }
 });

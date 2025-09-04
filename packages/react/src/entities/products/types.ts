@@ -3,6 +3,11 @@ import type { StringRecord } from "../../types";
 export type Categories = Record<string, Record<string, string | StringRecord>>;
 
 export interface Product {
+  description?: string;
+  rating?: number;
+  reviewCount?: number;
+  stock?: number;
+  images?: string[];
   title: string;
   link: string;
   image: string;

@@ -143,7 +143,7 @@ async function generateStaticSite() {
   try {
     // MSW 서버 시작
     await server.listen({ onUnhandledRequest: "bypass" });
-    console.log("MSW 서버 시작 완료");
+
 
     // Vite 서버 생성 (개발 모드와 동일)
     vite = await createServer({

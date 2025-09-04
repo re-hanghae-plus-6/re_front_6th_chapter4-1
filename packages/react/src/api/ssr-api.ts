@@ -10,6 +10,8 @@ export async function fetchProductsDataSSR(query = {}) {
     totalCount: productsResponse.pagination.total,
     loading: false,
     status: "done",
+    // 쿼리 정보도 포함
+    query: productsResponse.filters,
   };
 }
 
@@ -19,7 +21,9 @@ export async function fetchProductDataSSR(productId: string) {
     category2: product.category2,
     limit: "20",
   });
+
   const relatedProducts = relatedProductsResponse.products.filter((p) => p.productId !== productId).slice(0, 20);
+
   return {
     currentProduct: product,
     relatedProducts,
