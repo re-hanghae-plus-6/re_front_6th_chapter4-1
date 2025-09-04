@@ -4,9 +4,9 @@ import { App } from "./App";
 import { BASE_URL } from "./constants.ts";
 import { ProductProvider } from "./entities/products/context/ProductContext.tsx";
 import { createProductStore } from "./entities/index.ts";
-import { RouterContext } from "./router/hooks/useRouterContext.ts";
 import { routes } from "./router/routes.ts";
 import { hasInitialData } from "./utils/hydration.ts";
+import { RouterProvider } from "./router/RouterContext.tsx";
 
 const enableMocking = () =>
   import("./mocks/browser").then(({ worker }) =>
@@ -26,11 +26,11 @@ function main() {
 
   const renderApp = () => {
     return (
-      <RouterContext value={router}>
+      <RouterProvider router={router}>
         <ProductProvider productStore={createProductStore(initData || {})}>
           <App />
         </ProductProvider>
-      </RouterContext>
+      </RouterProvider>
     );
   };
 

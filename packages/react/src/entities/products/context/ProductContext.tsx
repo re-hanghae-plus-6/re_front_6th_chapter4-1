@@ -208,7 +208,7 @@ export const ProductProvider = ({ children, productStore }: ProductProviderProps
   };
 
   return (
-    <ProductStoreContext
+    <ProductStoreContext.Provider
       value={{
         store: productStore,
         state: productStoreState,
@@ -226,6 +226,6 @@ export const ProductProvider = ({ children, productStore }: ProductProviderProps
       }}
     >
       {children}
-    </ProductStoreContext>
+    </ProductStoreContext.Provider>
   );
 };
