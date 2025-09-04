@@ -36,7 +36,17 @@ const createBaseStoreState = () => ({
  */
 export const render = async (url, query) => {
   try {
-    serverRouter.start(url, query);
+    // URL에서 쿼리 파라미터 추출
+    const urlObj = new URL(url, "http://localhost");
+    const urlQuery = {};
+    urlObj.searchParams.forEach((value, key) => {
+      urlQuery[key] = value;
+    });
+
+    // 전달된 query와 URL의 쿼리를 병합
+    const mergedQuery = { ...urlQuery, ...query };
+
+    serverRouter.start(url, mergedQuery);
 
     const route = serverRouter.route;
     if (!route) {
@@ -64,7 +74,10 @@ export const render = async (url, query) => {
 
         updateStore(storeState);
 
-        head = "<title>쇼핑몰</title>";
+        // withLifecycle의 metadata 함수 호출
+        const metadata = HomePage.metadata ? HomePage.metadata() : {};
+        head = `<title>${metadata.title || "쇼핑몰"}</title>
+<meta name="description" content="${metadata.description || "다양한 상품을 만나보세요"}">`;
         initialData = {
           products: storeState.products,
           categories: storeState.categories,
@@ -111,7 +124,14 @@ export const render = async (url, query) => {
 
         updateStore(storeState);
 
-        head = `<title>쇼핑몰 상세 - ${product.title}</title>`;
+        // 상품 데이터가 있을 때만 동적 메타데이터 생성
+        if (product) {
+          head = `<title>${product.title} - 쇼핑몰</title>
+<meta name="description" content="${product.title} 상품 정보를 확인해보세요.">`;
+        } else {
+          head = `<title>상품 상세 - 쇼핑몰</title>
+<meta name="description" content="상품 정보를 확인해보세요.">`;
+        }
         initialData = {
           product,
           relatedProducts,

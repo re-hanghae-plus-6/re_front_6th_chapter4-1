@@ -82,7 +82,7 @@ async function generateStaticSite() {
           const productHtml = replacePlaceholders(
             template,
             productResult.html,
-            generateHead(`${product.title} - 쇼핑몰`, product.title),
+            productResult.head || generateHead(`${product.title} - 쇼핑몰`, product.title),
             productResult.initialData,
           );
 

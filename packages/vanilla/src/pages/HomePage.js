@@ -36,6 +36,22 @@ export const HomePage = withLifecycle(
       },
       () => loadProducts(true),
     ],
+    metadata: () => {
+      const { search, category1, category2 } = router.query;
+      let title = "쇼핑몰";
+      let description = "다양한 상품을 만나보세요";
+
+      if (search) {
+        title = `"${search}" 검색 결과 - 쇼핑몰`;
+        description = `"${search}" 검색 결과를 확인해보세요.`;
+      } else if (category1 || category2) {
+        const category = category2 || category1;
+        title = `${category} 카테고리 - 쇼핑몰`;
+        description = `${category} 카테고리의 상품들을 확인해보세요.`;
+      }
+
+      return { title, description };
+    },
   },
   (props = {}) => {
     const productState =
