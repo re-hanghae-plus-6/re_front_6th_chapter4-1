@@ -119,15 +119,6 @@ export function SearchBar({ initialCategories }: SearchBarProps = {}) {
       storeLoading: storeState.loading,
       categoriesLength: categoryList.length,
     });
-
-    // 브라우저에서만 alert 표시
-    if (typeof window !== "undefined") {
-      setTimeout(() => {
-        alert(
-          `🔄 SearchBar 카테고리 로딩 중!\nSSR 카테고리: ${hasSSRCategories ? "있음" : "없음"}\n스토어 로딩: ${storeState.loading ? "중" : "완료"}`,
-        );
-      }, 200);
-    }
   } else {
     console.log("✅ SearchBar 카테고리 로딩 완료!", {
       hasSSRCategories,
@@ -233,15 +224,6 @@ export function SearchBar({ initialCategories }: SearchBarProps = {}) {
                   !hasSSRCategories &&
                   (() => {
                     console.log("📂 카테고리 로딩 메시지 표시 중!");
-
-                    // 브라우저에서만 alert 표시 (한 번만)
-                    if (typeof window !== "undefined" && !window.__CATEGORY_LOADING_ALERTED__) {
-                      window.__CATEGORY_LOADING_ALERTED__ = true;
-                      setTimeout(() => {
-                        alert("📂 카테고리 로딩 메시지 표시!\n'카테고리 로딩 중...' 텍스트가 화면에 나타났습니다!");
-                      }, 250);
-                    }
-
                     return <div className="text-sm text-gray-500 italic">카테고리 로딩 중...</div>;
                   })()}
             </div>

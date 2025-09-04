@@ -57,26 +57,8 @@ const HomePageComponent: SSRPageComponent<HomePageProps> = ({ ssrData }) => {
   // 🚨 HomePage에서 SSR 데이터 상태 확인
   if (effectiveSSRData && (effectiveSSRData.products || effectiveSSRData.categories)) {
     console.log("✅ HomePage SSR 데이터 존재 - 로딩 스켈레톤 없음!");
-
-    // 브라우저에서만 alert 표시 (한 번만)
-    if (typeof window !== "undefined" && !window.__HOME_PAGE_ALERTED__) {
-      window.__HOME_PAGE_ALERTED__ = true;
-      setTimeout(() => {
-        alert(
-          `✅ HomePage SSR 데이터 존재!\n상품: ${effectiveSSRData.products?.length || 0}개\n카테고리: ${Object.keys(effectiveSSRData.categories || {}).length}개\n로딩 스켈레톤 없음!`,
-        );
-      }, 50);
-    }
   } else {
     console.log("⚠️ HomePage SSR 데이터 없음 - 클라이언트에서 로딩");
-
-    // 브라우저에서만 alert 표시 (한 번만)
-    if (typeof window !== "undefined" && !window.__HOME_PAGE_ALERTED__) {
-      window.__HOME_PAGE_ALERTED__ = true;
-      setTimeout(() => {
-        alert("⚠️ HomePage SSR 데이터 없음!\n클라이언트에서 로딩 중...");
-      }, 50);
-    }
   }
 
   useEffect(() => {

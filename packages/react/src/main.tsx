@@ -37,25 +37,16 @@ async function hydrateFromServerData() {
       categoriesCount: Object.keys(data.categories || {}).length,
     });
 
-    // 🚨 중요한 하이드레이션 과정 알림
-    alert(
-      `📦 SSR 초기 데이터 발견!\n상품: ${data.products?.length || 0}개\n카테고리: ${Object.keys(data.categories || {}).length}개\n하이드레이션 진행 중...`,
-    );
-
     // 스토어별 하이드레이션 처리
     await hydrateStores(data);
 
     console.log("✅ 클라이언트 하이드레이션 완료 - SSR 데이터로 상태 복원!");
-
-    // 하이드레이션 완료 알림
-    alert("✅ 하이드레이션 완료!\nSSR 데이터로 상태 복원 완료");
 
     // 초기 데이터 정리 (이제 globalSSRData에 저장됨)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     delete (window as any).__INITIAL_DATA__;
   } else {
     console.log("⚠️ SSR 데이터 없음 - 클라이언트 전용 모드");
-    alert("⚠️ SSR 데이터 없음!\n클라이언트 전용 모드로 실행");
   }
 }
 
@@ -94,10 +85,9 @@ async function hydrateProductStore(data: any) {
     status: beforeState.status,
   });
 
-  // 🚨 스토어 하이드레이션 진행 상황 알림
+  // 🚨 스토어 하이드레이션 진행 상황 확인
   if (beforeState.loading) {
     console.log("⚠️ 스토어가 로딩 상태임 - SSR 데이터로 덮어쓰기");
-    alert(`⚠️ 스토어 로딩 상태 감지!\n현재 스토어 로딩: ${beforeState.loading}\nSSR 데이터로 덮어쓰기 진행`);
   }
 
   productStore.dispatch({
@@ -120,11 +110,6 @@ async function hydrateProductStore(data: any) {
     hasCurrentProduct: !!afterState.currentProduct,
     relatedProductsCount: afterState.relatedProducts?.length || 0,
   });
-
-  // 🚨 하이드레이션 결과 상세 알림
-  alert(
-    `🔧 productStore 하이드레이션 완료!\n이전 로딩: ${beforeState.loading} → 현재 로딩: ${afterState.loading}\n상품: ${afterState.products?.length || 0}개\n카테고리: ${Object.keys(afterState.categories || {}).length}개`,
-  );
 }
 
 /**

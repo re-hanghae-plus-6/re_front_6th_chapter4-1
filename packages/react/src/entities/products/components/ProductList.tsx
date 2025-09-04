@@ -48,22 +48,13 @@ export function ProductList({ initialProducts, initialTotalCount }: ProductListP
   const loading = hasSSRData ? false : storeState.loading; // SSR 데이터가 있으면 로딩 상태 false
   const error = hasSSRData ? null : storeState.error; // SSR 데이터가 있으면 에러 상태 null
 
-  // 🚨 로딩 상태 알림
+  // 🚨 로딩 상태 확인
   if (loading) {
     console.log("🔄 ProductList 로딩 중!", {
       hasSSRData,
       storeLoading: storeState.loading,
       productsLength: products.length,
     });
-
-    // 브라우저에서만 alert 표시
-    if (typeof window !== "undefined") {
-      setTimeout(() => {
-        alert(
-          `🔄 ProductList 로딩 중!\nSSR 데이터: ${hasSSRData ? "있음" : "없음"}\n스토어 로딩: ${storeState.loading ? "중" : "완료"}`,
-        );
-      }, 100);
-    }
   } else {
     console.log("✅ ProductList 로딩 완료!", {
       hasSSRData,
@@ -125,17 +116,9 @@ export function ProductList({ initialProducts, initialTotalCount }: ProductListP
 
         {loading &&
           Array.from({ length: 6 }).map((_, index) => {
-            // 🚨 스켈레톤 UI 렌더링 알림 (첫 번째만)
+            // 🚨 스켈레톤 UI 렌더링 확인 (첫 번째만)
             if (index === 0) {
               console.log("💀 스켈레톤 UI 렌더링 중! - 로딩 상태 확인됨");
-
-              // 브라우저에서만 alert 표시 (한 번만)
-              if (typeof window !== "undefined" && !window.__SKELETON_ALERTED__) {
-                window.__SKELETON_ALERTED__ = true;
-                setTimeout(() => {
-                  alert("💀 스켈레톤 UI 렌더링 중!\n로딩 상태가 감지되었습니다!");
-                }, 300);
-              }
             }
             return <ProductCardSkeleton key={index} />;
           })}
