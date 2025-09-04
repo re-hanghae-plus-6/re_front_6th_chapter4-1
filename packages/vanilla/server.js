@@ -28,9 +28,7 @@ async function createServer() {
     app.use(base, sirv("./dist/vanilla", { extensions: [] }));
   }
 
-  // issue: express 5.x 에서는 * 대신 {*splat} 사용
-  // 관련 링크: https://expressjs.com/ko/guide/migrating-5.html#path-syntax
-  app.use("/{*splat}", async (req, res) => {
+  app.use(async (req, res) => {
     try {
       const url = req.originalUrl.replace(base, "");
 

@@ -1,12 +1,12 @@
-import { mockGetProducts, mockGetCategories, mockGetProduct } from "./api/mockApi.js";
+import { getProducts, getCategories, getProduct } from "./api/routes.js";
 import { ServerRouter } from "./router/serverRouter.js";
 
 const serverRouter = new ServerRouter();
 
 serverRouter.addRoute("/", async (params, query) => {
   const [productsData, categories] = await Promise.all([
-    mockGetProducts({ ...query, limit: query.limit || 20 }),
-    mockGetCategories(),
+    getProducts({ ...query, limit: query.limit || 20 }),
+    getCategories(),
   ]);
 
   return {
@@ -21,7 +21,7 @@ serverRouter.addRoute("/", async (params, query) => {
 });
 
 serverRouter.addRoute("/product/:id/", async (params) => {
-  const product = await mockGetProduct(params.id);
+  const product = await getProduct(params.id);
 
   if (!product) {
     return {

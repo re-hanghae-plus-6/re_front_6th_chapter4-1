@@ -81,7 +81,7 @@ function filterProducts(products, query) {
  * @param {Object} params - 조회 파라미터
  * @returns {Object} 상품 목록과 페이지네이션 정보
  */
-export async function mockGetProducts(params = {}) {
+export async function getProducts(params = {}) {
   const { limit = 20, search = "", category1 = "", category2 = "", sort = "price_asc" } = params;
   const page = params.current ?? params.page ?? 1;
 
@@ -125,7 +125,7 @@ export async function mockGetProducts(params = {}) {
  * @param {string} productId - 상품 ID
  * @returns {Object|null} 상품 상세 정보
  */
-export async function mockGetProduct(productId) {
+export async function getProduct(productId) {
   const products = loadItems();
   const product = products.find((item) => item.productId === productId);
 
@@ -148,6 +148,6 @@ export async function mockGetProduct(productId) {
  * 서버에서 사용할 카테고리 목록 조회 함수
  * @returns {Object} 카테고리 목록
  */
-export async function mockGetCategories() {
+export async function getCategories() {
   return getUniqueCategories();
 }
