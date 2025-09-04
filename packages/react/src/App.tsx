@@ -25,6 +25,7 @@ router.addRoute("/", () => {
       },
     });
   }
+
   return HomePage();
 });
 router.addRoute("/product/:id/", () => {
