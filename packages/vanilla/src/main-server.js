@@ -1,81 +1,74 @@
-import { SearchBar } from "./components";
-import items from "./mocks/items.json" with { type: "json" };
-import { PageWrapper } from "./pages";
+import { createStore } from "./lib/createStore.js";
+import { ServerRouter } from "./lib/ServerRouter.js";
+import { HomePage } from "./pages/HomePage.js";
+import { NotFoundPage } from "./pages/NotFoundPage.js";
+import { ProductDetailPage } from "./pages/ProductDetailPage.js";
+import { loadProductDetailForPage, loadProductsAndCategories } from "./services/productService.js";
+import { initialProductState, productReducer } from "./stores/productStore.js";
 
-function filterProducts(products, query) {
-  let filtered = [...products];
+export class SSRService {
+  #router = new ServerRouter();
 
-  // 검색어 필터링
-  if (query.search) {
-    const searchTerm = query.search.toLowerCase();
-    filtered = filtered.filter(
-      (item) => item.title.toLowerCase().includes(searchTerm) || item.brand.toLowerCase().includes(searchTerm),
-    );
+  constructor() {
+    this.#router.addRoute("/", (_, query) => this.#renderHomePage(query));
+    this.#router.addRoute("/product/:id/", (params) => this.#renderProductDetailPage(params.id));
+    this.#router.addRoute(".*", () => this.#renderNotFoundPage());
   }
 
-  // 카테고리 필터링
-  if (query.category1) {
-    filtered = filtered.filter((item) => item.category1 === query.category1);
-  }
-  if (query.category2) {
-    filtered = filtered.filter((item) => item.category2 === query.category2);
+  async render(url, query) {
+    this.#router.push(url);
+    const route = this.#router.route;
+
+    return route.handler(route.params, query);
   }
 
-  // 정렬
-  if (query.sort) {
-    switch (query.sort) {
-      case "price_asc":
-        filtered.sort((a, b) => parseInt(a.lprice) - parseInt(b.lprice));
-        break;
-      case "price_desc":
-        filtered.sort((a, b) => parseInt(b.lprice) - parseInt(a.lprice));
-        break;
-      case "name_asc":
-        filtered.sort((a, b) => a.title.localeCompare(b.title, "ko"));
-        break;
-      case "name_desc":
-        filtered.sort((a, b) => b.title.localeCompare(a.title, "ko"));
-        break;
-      default:
-        // 기본은 가격 낮은 순
-        filtered.sort((a, b) => parseInt(a.lprice) - parseInt(b.lprice));
+  async #renderHomePage(query) {
+    try {
+      const requestStore = createStore(productReducer, initialProductState);
+      await loadProductsAndCategories(query, requestStore);
+      const state = requestStore.getState();
+
+      const initialData = {
+        products: state.products,
+        categories: state.categories,
+        totalCount: state.totalCount,
+      };
+
+      return {
+        head: /* HTML */ `<title>쇼핑몰 - 홈</title>`,
+        html: HomePage({ query, data: initialData }),
+        data: initialData,
+      };
+    } catch {
+      return this.#renderNotFoundPage();
     }
   }
 
-  return filtered;
+  async #renderProductDetailPage(productId) {
+    try {
+      const requestStore = createStore(productReducer, initialProductState);
+      await loadProductDetailForPage(productId, requestStore);
+      const initialData = requestStore.getState();
+
+      if (!initialData.currentProduct) {
+        return this.#renderNotFoundPage();
+      }
+
+      return {
+        head: /* HTML */ `<title>${initialData.currentProduct.title} - 쇼핑몰</title>`,
+        html: ProductDetailPage({ data: initialData }),
+        data: initialData,
+      };
+    } catch {
+      return this.#renderNotFoundPage();
+    }
+  }
+
+  async #renderNotFoundPage() {
+    return {
+      head: /* HTML */ `<title>페이지를 찾을 수 없습니다 - 쇼핑몰</title>`,
+      html: NotFoundPage(),
+      data: null,
+    };
+  }
 }
-
-/**
- * @param {string} url
- * @param {Record<string, string | string[] | undefined>} query
- */
-export const render = async (url, query) => {
-  const data = filterProducts(items, query);
-
-  return {
-    head: /* HTML */ `<title>쇼핑몰</title>`,
-    html: PageWrapper({
-      headerLeft: /* HTML */ `
-        <h1 class="text-xl font-bold text-gray-900">
-          <a href="/" data-link>쇼핑몰</a>
-        </h1>
-      `.trim(),
-      children: /* HTML */ `
-        <!-- 검색 및 필터 -->
-        ${SearchBar({
-          searchQuery: "",
-          limit: 20,
-          sort: "price_asc",
-          category: {},
-          categories: [],
-        })}
-            
-        <!-- 상품 목록 -->
-        <div class="mb-6">
-          안녕하세요.
-        </div>
-      `.trim(),
-    }),
-    data,
-  };
-};

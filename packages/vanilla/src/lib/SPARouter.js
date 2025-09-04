@@ -1,29 +1,27 @@
-export class ServerRouter {
-  static parseQuery = (search = "") => {
+import { createObserver } from "./createObserver";
+
+export class SPARouter {
+  static parseQuery = (search = window.location.search) => {
     const params = new URLSearchParams(search);
     const query = {};
-
     for (const [key, value] of params) {
       query[key] = value;
     }
-
     return query;
   };
 
   static stringifyQuery = (query) => {
     const params = new URLSearchParams();
-
     for (const [key, value] of Object.entries(query)) {
       if (value !== null && value !== undefined && value !== "") {
         params.set(key, String(value));
       }
     }
-
     return params.toString();
   };
 
   static getUrl = (newQuery, baseUrl = "") => {
-    const currentQuery = ServerRouter.parseQuery();
+    const currentQuery = SPARouter.parseQuery();
     const updatedQuery = { ...currentQuery, ...newQuery };
 
     Object.keys(updatedQuery).forEach((key) => {
@@ -32,25 +30,37 @@ export class ServerRouter {
       }
     });
 
-    const queryString = ServerRouter.stringifyQuery(updatedQuery);
-
-    return `${baseUrl}${queryString ? `?${queryString}` : ""}`;
+    const queryString = SPARouter.stringifyQuery(updatedQuery);
+    return `${baseUrl}${window.location.pathname.replace(baseUrl, "")}${queryString ? `?${queryString}` : ""}`;
   };
 
   #routes;
   #route;
+  #observer = createObserver();
+  #baseUrl;
 
-  constructor() {
+  constructor(baseUrl = "") {
     this.#routes = new Map();
     this.#route = null;
+    this.#baseUrl = baseUrl.replace(/\/$/, "");
+
+    window.addEventListener("popstate", () => {
+      this.#route = this.#findRoute();
+      this.#observer.notify();
+    });
+  }
+
+  get baseUrl() {
+    return this.#baseUrl;
   }
 
   get query() {
-    return {};
+    return SPARouter.parseQuery(window.location.search);
   }
 
   set query(newQuery) {
-    // 서버사이드에서는 쿼리 설정을 무시
+    const newUrl = SPARouter.getUrl(newQuery, this.#baseUrl);
+    this.push(newUrl);
   }
 
   get params() {
@@ -65,22 +75,20 @@ export class ServerRouter {
     return this.#route?.handler;
   }
 
+  subscribe(fn) {
+    this.#observer.subscribe(fn);
+  }
+
   addRoute(path, handler) {
     const paramNames = [];
-    let regexPath = path
+    const regexPath = path
       .replace(/:\w+/g, (match) => {
         paramNames.push(match.slice(1));
         return "([^/]+)";
       })
       .replace(/\//g, "\\/");
 
-    if (path === "*" || path === ".*") {
-      regexPath = ".*";
-    } else if (!path.endsWith("/") && !path.includes("*")) {
-      regexPath += "\\/?";
-    }
-
-    const regex = new RegExp(`^${regexPath}$`);
+    const regex = new RegExp(`^${this.#baseUrl}${regexPath}$`);
 
     this.#routes.set(path, {
       regex,
@@ -90,15 +98,29 @@ export class ServerRouter {
   }
 
   push(url) {
-    this.#route = this.#findRoute(url);
+    try {
+      let fullUrl = url.startsWith(this.#baseUrl) ? url : this.#baseUrl + (url.startsWith("/") ? url : "/" + url);
+
+      const prevFullUrl = `${window.location.pathname}${window.location.search}`;
+
+      if (prevFullUrl !== fullUrl) {
+        window.history.pushState(null, "", fullUrl);
+      }
+
+      this.#route = this.#findRoute(fullUrl);
+      this.#observer.notify();
+    } catch (error) {
+      console.error("라우터 네비게이션 오류:", error);
+    }
   }
 
   start() {
     this.#route = this.#findRoute();
+    this.#observer.notify();
   }
 
-  #findRoute(url = "/") {
-    const { pathname } = new URL(url, "http://localhost/");
+  #findRoute(url = window.location.pathname) {
+    const { pathname } = new URL(url, window.location.origin);
 
     for (const [routePath, route] of this.#routes) {
       const match = pathname.match(route.regex);
