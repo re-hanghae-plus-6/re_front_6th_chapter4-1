@@ -1,76 +1,39 @@
-import { App } from "./App";
-import { router } from "./router/router";
+import { Router } from "@hanghae-plus/lib";
 import { renderToString } from "react-dom/server";
-import { PRODUCT_ACTIONS, productStore } from "./entities";
-import { getDetailProduct, getProducts, getUniqueCategories } from "./mocks/serverMock";
+import { App } from "./App";
+import { createProductStore } from "./entities";
+import { ProductProvider } from "./entities/products/ProductContext";
+import { routes } from "./router";
+import { RouterProvider } from "./router/RouterContext";
+import type { ServerOptions } from "./router/withServer";
+
+const fallback = () => {};
 
 export const render = async (url: string, query: Record<string, string>) => {
   console.log({ url, query });
 
-  router.push(url);
+  const router = new Router(routes);
+  router.start(url);
   router.query = query;
 
-  if (url === "/") {
-    const {
-      products,
-      pagination: { total },
-    } = getProducts(router.query);
+  const { ssr = fallback, metadata = fallback } = router.target as unknown as ServerOptions;
+  const params = { query, params: router.params };
 
-    const categories = getUniqueCategories();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const data: any = (await ssr(params)) ?? {};
+  const { title = "" } = (await metadata(params)) ?? {};
 
-    productStore.dispatch({
-      type: PRODUCT_ACTIONS.SETUP,
-      payload: {
-        products,
-        categories,
-        totalCount: total,
-        loading: false,
-        status: "done",
-      },
-    });
-  } else {
-    // detail page
-    const product = getDetailProduct(router.params.id);
-    productStore.dispatch({
-      type: PRODUCT_ACTIONS.SET_CURRENT_PRODUCT,
-      payload: product,
-    });
-
-    if (product) {
-      const response = getProducts({ category2: router.params.category2 });
-
-      // 현재 상품 제외
-      const relatedProducts = response.products.filter((product) => product.productId !== router.params.id);
-
-      productStore.dispatch({
-        type: PRODUCT_ACTIONS.SET_RELATED_PRODUCTS,
-        payload: relatedProducts,
-      });
-    }
-  }
-
-  const { products, categories, totalCount, currentProduct } = productStore.getState();
-
-  const initialData = {
-    products,
-    categories,
-    totalCount,
-  };
-
-  function generateHomePageHead(url: string) {
-    let title = "";
-    if (url === "") {
-      title = "쇼핑몰 - 홈";
-    } else {
-      title = currentProduct?.title + " - 쇼핑몰";
-    }
-
-    return `<title>${title}</title>`;
-  }
+  const html = renderToString(
+    <RouterProvider router={router}>
+      <ProductProvider productStore={createProductStore(data)}>
+        <App />
+      </ProductProvider>
+    </RouterProvider>,
+  );
 
   return {
-    head: generateHomePageHead(url),
-    html: renderToString(<App />),
-    initialData,
+    head: `<title>${title}</title>`,
+    html,
+    __INITIAL_DATA__: data,
   };
 };

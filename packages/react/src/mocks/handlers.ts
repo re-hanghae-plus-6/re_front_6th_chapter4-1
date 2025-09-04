@@ -1,11 +1,13 @@
 import { http, HttpResponse } from "msw";
+import type { Product } from "../entities";
+import type { StringRecord } from "../types.ts";
 import items from "./items.json" with { type: "json" };
 
 const delay = async () => await new Promise((resolve) => setTimeout(resolve, 200));
 
 // 카테고리 추출 함수
 function getUniqueCategories() {
-  const categories = {};
+  const categories: Record<string, Record<string, string | StringRecord>> = {};
 
   items.forEach((item) => {
     const cat1 = item.category1;
@@ -19,7 +21,7 @@ function getUniqueCategories() {
 }
 
 // 상품 검색 및 필터링 함수
-function filterProducts(products, query) {
+function filterProducts(products: Product[], query: Record<string, string>) {
   let filtered = [...products];
 
   // 검색어 필터링
@@ -64,7 +66,7 @@ function filterProducts(products, query) {
 
 export const handlers = [
   // 상품 목록 API
-  http.get("/api/products", async ({ request }) => {
+  http.get("*/api/products", async ({ request }) => {
     const url = new URL(request.url);
     const page = parseInt(url.searchParams.get("page") ?? url.searchParams.get("current") ?? "1");
     const limit = parseInt(url.searchParams.get("limit") ?? "20");
@@ -111,7 +113,7 @@ export const handlers = [
   }),
 
   // 상품 상세 API
-  http.get("/api/products/:id", ({ params }) => {
+  http.get("*/api/products/:id", ({ params }) => {
     const { id } = params;
     const product = items.find((item) => item.productId === id);
 
@@ -133,7 +135,7 @@ export const handlers = [
   }),
 
   // 카테고리 목록 API
-  http.get("/api/categories", async () => {
+  http.get("*/api/categories", async () => {
     const categories = getUniqueCategories();
     await delay();
     return HttpResponse.json(categories);

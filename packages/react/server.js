@@ -1,25 +1,30 @@
-import fs from "node:fs/promises";
 import express from "express";
+import fs from "node:fs/promises";
+import path from "node:path";
+import { createServer } from "vite";
 
 const prod = process.env.NODE_ENV === "production";
 const port = process.env.PORT || 5174;
 const base = process.env.BASE || (prod ? "/front_6th_chapter4-1/react/" : "/");
 
-// Cached production assets
 const templateHtml = prod ? await fs.readFile("./dist/react/index.html", "utf-8") : "";
+
+const vite = await createServer({
+  server: { middlewareMode: true },
+  appType: "custom",
+  base,
+});
+
+const { mswServer } = await vite.ssrLoadModule("./src/mocks/node.ts");
+mswServer.listen({
+  onUnhandledRequest: "bypass",
+});
 
 const app = express();
 
 // Add Vite or respective production middlewares
 /** @type {import('vite').ViteDevServer | undefined} */
-let vite;
 if (!prod) {
-  const { createServer } = await import("vite");
-  vite = await createServer({
-    server: { middlewareMode: true },
-    appType: "custom",
-    base,
-  });
   app.use(vite.middlewares);
 } else {
   const compression = (await import("compression")).default;
@@ -28,40 +33,43 @@ if (!prod) {
   app.use(base, sirv("./dist/react", { extensions: [] }));
 }
 
-// use , get 차이점
-// use 는 모든 요청에 대해 실행되고, get 은 특정 요청에 대해 실행됩니다.
-app.use("*all", async (req, res) => {
+// 불필요한 요청 무시
+app.get("/favicon.ico", (_, res) => {
+  res.status(204).end();
+});
+app.get("/.well-known/appspecific/com.chrome.devtools.json", (_, res) => {
+  res.status(204).end();
+});
+
+app.get("*all", async (req, res) => {
   try {
     const url = req.originalUrl.replace(base, "");
+    const pathname = path.normalize(`/${url.split("?")[0]}`);
+
     /** @type {string} */
     let template;
     /** @type {import('./src/main-server.js').render} */
     let render;
-    // Always read fresh template in development
     if (!prod) {
+      // Always read fresh template in development
       template = await fs.readFile("./index.html", "utf-8");
       template = await vite.transformIndexHtml(url, template);
-      render = (await vite.ssrLoadModule("/src/main-server.tsx")).render;
+      render = (await vite.ssrLoadModule("/src/main-server.js")).render;
     } else {
       template = templateHtml;
       render = (await import("./dist/react-ssr/main-server.js")).render;
     }
 
-    // server에 있는 값을 전달해주기 위해서 인자로 넘겨줘야함.
-    const rendered = await render(url, req.query);
+    const rendered = await render(pathname, req.query);
 
     const html = template
       .replace(`<!--app-head-->`, rendered.head ?? "")
       .replace(`<!--app-html-->`, rendered.html ?? "")
       .replace(
-        `</head>`,
-        `
-        <script>
-          window.__INITIAL_DATA__ = ${JSON.stringify(rendered.initialData || {})};
-        </script>
-        </head>
-      `,
+        `<!-- app-data -->`,
+        `<script>window.__INITIAL_DATA__ = ${JSON.stringify(rendered.__INITIAL_DATA__)};</script>`,
       );
+
     res.status(200).set({ "Content-Type": "text/html" }).send(html);
   } catch (e) {
     vite?.ssrFixStacktrace(e);
