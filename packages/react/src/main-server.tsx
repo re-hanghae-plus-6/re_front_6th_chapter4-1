@@ -22,6 +22,7 @@ type SSRComponent = {
 export const render = async (pathname: string, query: Record<string, string>) => {
   const router = new Router(routes, BASE_URL);
   router.start(pathname);
+  router.query = query;
   const params = { pathname, query, params: router.params };
 
   const target = router.target as unknown as SSRComponent;
