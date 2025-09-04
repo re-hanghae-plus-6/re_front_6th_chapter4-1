@@ -13,7 +13,7 @@
     "build:client-for-ssg": "rm -rf ../../dist/react && vite build --outDir ../../dist/react",
     "build:server": "vite build --outDir ./dist/react-ssr --ssr src/main-server.tsx",
     "build:without-ssg": "pnpm run build:client && npm run build:server",
-    "build:ssg": "pnpm run build:client-for-ssg && node static-site-generate.js",
+    "build:ssg": "pnpm run build:client-for-ssg && NODE_ENV=production node static-site-generate.js",
     "build": "npm run build:client && npm run build:server && npm run build:ssg",
     "preview:csr": "vite preview --outDir ./dist/react --port 4175",
     "preview:csr-with-build": "pnpm run build:client && pnpm run preview:csr",
