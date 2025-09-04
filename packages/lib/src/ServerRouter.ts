@@ -10,6 +10,8 @@ interface Route<Handler extends AnyFunction> {
 
 type QueryPayload = Record<string, string | number | undefined>;
 
+export type RouterInstance<T extends AnyFunction> = InstanceType<typeof ServerRouter<T>>;
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export class ServerRouter<Handler extends (...args: any[]) => any> {
   readonly #routes: Map<string, Route<Handler>>;
