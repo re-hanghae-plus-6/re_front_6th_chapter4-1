@@ -4,6 +4,7 @@ import { productStore } from "./stores/productStore.js";
 import { PRODUCT_ACTIONS } from "./stores/actionTypes.js";
 import { uiStore } from "./stores/uiStore.js";
 import { route } from "./router/serverRouter.js";
+import { router } from "./router/router.js";
 import items from "./mocks/items.json";
 
 function getUniqueCategories() {
@@ -104,6 +105,8 @@ async function mockGetCategories() {
 }
 
 route.add("/", async ({ query }) => {
+  if (typeof window === "undefined" && router) router.query = { ...query };
+
   const productsData = await mockGetProducts(query || {});
   const categories = await mockGetCategories();
 

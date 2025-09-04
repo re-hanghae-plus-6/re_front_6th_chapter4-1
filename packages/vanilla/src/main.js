@@ -34,7 +34,7 @@ function main() {
   router.start();
 }
 
-if (import.meta.env.MODE !== "test") {
+if (import.meta.env.DEV) {
   enableMocking().then(main);
 } else {
   main();
