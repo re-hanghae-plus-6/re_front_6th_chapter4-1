@@ -15,97 +15,53 @@ const template = readFileSync(join(__dirname, "index.html"), "utf-8");
 
 const app = express();
 
-// Express 미들웨어 설정
-app.use(compression());
-app.use(express.static("public"));
-
+let vite;
 // 환경 분기
 if (!prod) {
   // 개발 환경: Vite dev server
   const { createServer: createViteServer } = await import("vite");
-  const vite = await createViteServer({
+  vite = await createViteServer({
     server: { middlewareMode: true },
     appType: "custom",
   });
 
   // Vite의 미들웨어 사용
   app.use(vite.middlewares);
-
-  // Vite 인스턴스를 res.locals에 저장
-  app.use((req, res, next) => {
-    res.locals.vite = vite;
-    next();
-  });
 } else {
+  app.use(compression());
   // 프로덕션 환경: sirv로 정적 파일 서빙
   app.use(base, sirv("dist/vanilla", { extensions: [] }));
 }
-
-// 서버사이드 렌더링을 위한 라우터 설정
-const setupServerRoutes = async (url) => {
-  const { ServerRouter } = await import("./src/lib/ServerRouter.js");
-
-  const serverRouter = new ServerRouter(url, base);
-  // const { HomePage, ProductDetailPage, NotFoundPage } = await import("./src/pages/index.js");
-
-  // 테스트용 간단한 렌더링 함수들
-  const serverHomePage = () => `<div>홈페이지 - 상품 목록</div>`;
-  const serverProductDetailPage = () => `<div>상품 상세 페이지</div>`;
-  const serverNotFoundPage = () => `<div>페이지를 찾을 수 없습니다.</div>`;
-
-  // 테스트용 라우트 등록 (Node 환경에서 js 확장자 필요)
-  serverRouter.addRoute("/", serverHomePage);
-  serverRouter.addRoute("/product/:id/", serverProductDetailPage);
-  serverRouter.addRoute(".*", serverNotFoundPage);
-  // serverRouter.addRoute("/", HomePage);
-  // serverRouter.addRoute("/product/:id/", ProductDetailPage);
-  // serverRouter.addRoute(".*", NotFoundPage);
-
-  return serverRouter;
-};
-
-// 서버사이드 렌더링 함수
-const renderPage = async (url) => {
-  try {
-    const serverRouter = await setupServerRoutes(url);
-    const route = serverRouter.start();
-
-    if (!route) {
-      return `<div>페이지를 찾을 수 없습니다.</div>`;
-    }
-
-    // 서버에서 컴포넌트 렌더링
-    const PageComponent = route.handler;
-    return PageComponent();
-  } catch (error) {
-    console.error("SSR 렌더링 오류:", error);
-    return `<div>서버 렌더링 중 오류가 발생했습니다.</div>`;
-  }
-};
 
 // 렌더링 파이프라인
 app.use("*all", async (req, res) => {
   try {
     const url = req.originalUrl;
 
-    let html = template;
+    let htmlTemplate = template;
+    let render;
 
     // 개발 환경에서 Vite transform 적용
     if (!prod) {
-      const vite = res.locals.vite;
-      if (vite) {
-        html = await vite.transformIndexHtml(url, html);
-      }
+      htmlTemplate = await vite.transformIndexHtml(url, template);
+      render = (await vite.ssrLoadModule("/src/main-server.js")).render;
+    } else {
+      render = (await import("./dist/vanilla-ssr/main-server.js")).render;
     }
 
-    // 서버사이드 렌더링
-    const appHtml = await renderPage(url);
-    const appHead = `<title>Vanilla Javascript SSR</title>`;
+    const rendered = await render(url);
+
+    const initialDataScript = rendered.initialData
+      ? `<script>window.__INITIAL_DATA__ = ${JSON.stringify(rendered.initialData)};</script>`
+      : "";
+
+    const html = htmlTemplate
+      .replace(`<!--app-head-->`, rendered.head ?? "")
+      .replace(`<!--app-html-->`, rendered.html ?? "")
+      .replace(`</head>`, `${initialDataScript}</head>`);
 
     // Template 치환
-    const finalHtml = html.replace("<!--app-head-->", appHead).replace("<!--app-html-->", appHtml);
-
-    res.status(200).set({ "Content-Type": "text/html" }).end(finalHtml);
+    res.status(200).set({ "Content-Type": "text/html" }).send(html);
   } catch (e) {
     console.error(e.stack);
     res.status(500).end(e.stack);
