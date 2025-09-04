@@ -31,37 +31,6 @@ if (!prod) {
   app.use(base, sirv("./dist/client", { extensions: [] }));
 }
 
-app.get("/api/products", async (req, res) => {
-  try {
-    const products = {
-      products: [],
-      pagination: { total: 0 },
-    };
-    res.json(products);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.get("/api/categories", async (req, res) => {
-  try {
-    const categories = {};
-    res.json(categories);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.get("/api/products/:id", async (req, res) => {
-  try {
-    const product = { id: req.params.id };
-    res.json(product);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
 app.get("*all", async (req, res) => {
   try {
     let template;
@@ -78,6 +47,7 @@ app.get("*all", async (req, res) => {
     const rendered = await render(req.originalUrl, req.query);
     const html = template
       .replace(`<!--app-head-->`, rendered.head ?? "")
+      .replace(`<!--app-data-->`, `<script>window.__INITIAL_DATA__ = ${rendered.data}</script>`)
       .replace(`<!--app-html-->`, rendered.html ?? "");
 
     res.status(200).set({ "Content-Type": "text/html" }).send(html);

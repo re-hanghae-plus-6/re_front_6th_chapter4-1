@@ -10,7 +10,7 @@ router.addRoute(".*", NotFoundPage);
 
 export const render = async (url, query) => {
   try {
-    console.log("Rendering URL:", url, "with query:", query);
+    //console.log("Rendering URL:", url, "with query:", query);
     router.start(url, query);
 
     const route = router.route;
@@ -31,7 +31,7 @@ export const render = async (url, query) => {
       try {
         // router.query를 사용서 검색/필터링 파라미터 포함
         const [productsResponse, categories] = await Promise.all([getProducts(router.query), getCategories()]);
-
+        //console.log("API 응답:", { productsResponse, categories });
         // 스토어에 데이터 설정
         productStore.dispatch({
           type: PRODUCT_ACTIONS.SETUP,
@@ -136,6 +136,9 @@ export const render = async (url, query) => {
         };
       }
     }
+
+    // 스토어 상태 확인 (디버깅용)
+    //console.log("스토어 상태:", productStore.getState());
 
     // 3. 페이지 컴포넌트 렌더링
     const PageComponent = router.target;
