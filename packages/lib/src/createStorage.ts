@@ -1,7 +1,18 @@
 import { createObserver } from "./createObserver.ts";
 
-export const createStorage = <T>(key: string, storage = window.localStorage) => {
-  let data: T | null = JSON.parse(storage.getItem(key) ?? "null");
+const memoryStorage = (() => {
+  const map = new Map<string, string>();
+  return {
+    getItem: (k: string) => (map.has(k) ? map.get(k) : null),
+    setItem: (k: string, v: string) => map.set(k, v),
+    removeItem: (k: string) => map.delete(k),
+  };
+})();
+
+export const createStorage = <T>(key: string, storage?: Storage) => {
+  const storageImpl =
+    storage ?? (typeof window !== "undefined" && window?.localStorage ? window.localStorage : memoryStorage);
+  let data: T | null = JSON.parse(storageImpl.getItem(key) ?? "null");
   const { subscribe, notify } = createObserver();
 
   const get = () => data;
@@ -9,7 +20,7 @@ export const createStorage = <T>(key: string, storage = window.localStorage) => 
   const set = (value: T) => {
     try {
       data = value;
-      storage.setItem(key, JSON.stringify(data));
+      storageImpl.setItem(key, JSON.stringify(data));
       notify();
     } catch (error) {
       console.error(`Error setting storage item for key "${key}":`, error);
@@ -19,7 +30,7 @@ export const createStorage = <T>(key: string, storage = window.localStorage) => 
   const reset = () => {
     try {
       data = null;
-      storage.removeItem(key);
+      storageImpl.removeItem(key);
       notify();
     } catch (error) {
       console.error(`Error removing storage item for key "${key}":`, error);
