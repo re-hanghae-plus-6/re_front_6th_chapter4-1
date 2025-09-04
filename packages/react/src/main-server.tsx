@@ -2,6 +2,7 @@ import { renderToString } from "react-dom/server";
 import { ServerApp } from "./ServerApp";
 import { PRODUCT_ACTIONS, productStore } from "./entities/products/productStore";
 import { HomePage, NotFoundPage, ProductDetailPage } from "./pages";
+import { RouterProvider } from "./router/RouterCountext";
 import { ServerRouter } from "./router/ServerRouter";
 
 export const render = async (url: string) => {
@@ -32,7 +33,13 @@ export const render = async (url: string) => {
   // 서버에서는 ServerApp을 사용하여 컴포넌트를 렌더링
   const PageComponent = serverRouter.target;
 
-  const html = PageComponent ? renderToString(<ServerApp PageComponent={PageComponent} />) : "";
+  const html = PageComponent
+    ? renderToString(
+        <RouterProvider router={serverRouter}>
+          <ServerApp PageComponent={PageComponent} />
+        </RouterProvider>,
+      )
+    : "";
 
   return { html, head, initialData: data };
 };
