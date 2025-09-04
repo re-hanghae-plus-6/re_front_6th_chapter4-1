@@ -8,7 +8,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --port 5175",
-    "dev:ssr": "PORT=5176 tsx server.ts",
+    "dev:ssr": "PORT=5176 nodemon --watch src --ext ts,tsx,js,json --exec \"tsx server.ts\"",
     "build:client": "rm -rf ./dist/react && vite build --outDir ./dist/react && cp ./dist/react/index.html ./dist/react/404.html",
     "build:client-for-ssg": "rm -rf ../../dist/react && vite build --outDir ../../dist/react",
     "build:server": "vite build --outDir ./dist/react-ssr --ssr src/main-server.tsx",
@@ -51,6 +51,7 @@
     "express": "^5.1.0",
     "msw": "^2.10.2",
     "prettier": "^3.4.2",
+    "nodemon": "^3.1.7",
     "sirv": "^3.0.0",
     "tsx": "^4.20.5",
     "typescript": "^5.8.3",
