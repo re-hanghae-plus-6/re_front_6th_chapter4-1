@@ -1,4 +1,4 @@
-import items from "./items.json";
+import items from "./items.json" with { type: "json" };
 
 /**
  * 모든 상품에서 고유한 카테고리 구조를 추출합니다.
