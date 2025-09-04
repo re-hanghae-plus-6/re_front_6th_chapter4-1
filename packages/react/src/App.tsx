@@ -1,30 +1,14 @@
-import { router, useCurrentPage } from "./router";
-import { HomePage, NotFoundPage, ProductDetailPage } from "./pages";
-import { useLoadCartStore } from "./entities";
-import { ModalProvider, ToastProvider } from "./components";
-
-// 홈 페이지 (상품 목록)
-router.addRoute("/", HomePage);
-router.addRoute("/product/:id/", ProductDetailPage);
-router.addRoute(".*", NotFoundPage);
-
-const CartInitializer = () => {
-  useLoadCartStore();
-  return null;
-};
+import type { ComponentType } from "react";
+import { useCurrentPage } from "./hooks";
 
 /**
  * 전체 애플리케이션 렌더링
  */
-export const App = () => {
-  const PageComponent = useCurrentPage();
+type Props = {
+  isPrefetched: boolean;
+};
+export const App = ({ isPrefetched }: Props) => {
+  const PageComponent = useCurrentPage() as unknown as ComponentType<{ isPrefetched: boolean }>;
 
-  return (
-    <>
-      <ToastProvider>
-        <ModalProvider>{PageComponent ? <PageComponent /> : null}</ModalProvider>
-      </ToastProvider>
-      <CartInitializer />
-    </>
-  );
+  return PageComponent ? <PageComponent isPrefetched={isPrefetched} /> : null;
 };

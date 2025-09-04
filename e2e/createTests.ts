@@ -700,6 +700,7 @@ export const createSSRTest = (baseUrl: string) => {
 
         // SSR로 필터링된 결과가 렌더링되었는지 확인
         const bodyContent = await page.locator("body").textContent();
+
         expect(bodyContent).toContain("3개");
         expect(bodyContent).toContain("젤리");
 

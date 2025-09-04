@@ -1,6 +1,25 @@
 import { createStore } from "@hanghae-plus/lib";
 import type { Categories, Product } from "./types";
 
+type Status = "idle" | "pending" | "done" | "error";
+
+export type ProductStoreState = {
+  products: Product[];
+  totalCount: number;
+
+  // 상품 상세
+  currentProduct: Product | null;
+  relatedProducts: Product[];
+
+  // 로딩 및 에러 상태
+  loading: boolean;
+  error: string | null;
+  status: Status;
+
+  // 카테고리 목록
+  categories: Categories;
+};
+
 export const PRODUCT_ACTIONS = {
   // 상품 목록
   SET_PRODUCTS: "products/setProducts",
@@ -26,23 +45,23 @@ export const PRODUCT_ACTIONS = {
 /**
  * 상품 스토어 초기 상태
  */
-export const initialProductState = {
+export const initialProductState: ProductStoreState = {
   // 상품 목록
-  products: [] as Product[],
+  products: [],
   totalCount: 0,
 
   // 상품 상세
-  currentProduct: null as Product | null,
-  relatedProducts: [] as Product[],
+  currentProduct: null,
+  relatedProducts: [],
 
   // 로딩 및 에러 상태
   loading: true,
-  error: null as string | null,
+  error: null,
   status: "idle",
 
   // 카테고리 목록
-  categories: {} as Categories,
-};
+  categories: {},
+} satisfies ProductStoreState;
 
 /**
  * 상품 스토어 리듀서
@@ -123,7 +142,6 @@ const productReducer = (state: typeof initialProductState, action: any) => {
   }
 };
 
-/**
- * 상품 스토어 생성
- */
-export const productStore = createStore(productReducer, initialProductState);
+export const createProductStore = (initState: Partial<ProductStoreState>) => {
+  return createStore(productReducer, { ...initialProductState, ...initState });
+};

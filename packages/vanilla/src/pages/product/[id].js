@@ -1,38 +1,12 @@
-import { productStore } from "../stores";
-import { loadProductDetailForPage } from "../services";
-import { router, withLifecycle } from "../router";
-import { PageWrapper } from "./PageWrapper.js";
+import { productStore } from "../../stores";
+import { loadProductDetailForPage } from "../../services";
+import { router, withLifecycle } from "../../router";
+import { PageWrapper } from "../PageWrapper.js";
+import { hasProductDetailData } from "../../utils";
+import { getProduct, getProducts } from "../../api/productApi";
 
-const loadingContent = `
-  <div class="min-h-screen bg-gray-50 flex items-center justify-center">
-    <div class="text-center">
-      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-      <p class="text-gray-600">상품 정보를 불러오는 중...</p>
-    </div>
-  </div>
-`;
-
-const ErrorContent = ({ error }) => `
-  <div class="min-h-screen bg-gray-50 flex items-center justify-center">
-    <div class="text-center">
-      <div class="text-red-500 mb-4">
-        <svg class="mx-auto h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/>
-        </svg>
-      </div>
-      <h1 class="text-xl font-bold text-gray-900 mb-2">상품을 찾을 수 없습니다</h1>
-      <p class="text-gray-600 mb-4">${error || "요청하신 상품이 존재하지 않습니다."}</p>
-      <button onclick="window.history.back()" 
-              class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 mr-2">
-        이전 페이지
-      </button>
-      <a href="/" data-link class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700">
-        홈으로
-      </a>
-    </div>
-  </div>
-`;
+import { loadingContent } from "./loading.js";
+import { ErrorContent } from "./error.js";
 
 function ProductDetail({ product, relatedProducts = [] }) {
   const {
@@ -231,36 +205,89 @@ function ProductDetail({ product, relatedProducts = [] }) {
   `;
 }
 
+// 실제 렌더링 로직 - 서버와 클라이언트에서 공통 사용
+const renderProductDetailPage = (productState) => {
+  const { currentProduct: product, relatedProducts = [], error, loading } = productState;
+
+  return PageWrapper({
+    headerLeft: `
+      <div class="flex items-center space-x-3">
+        <button onclick="window.history.back()" 
+                class="p-2 text-gray-700 hover:text-gray-900 transition-colors">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+          </svg>
+        </button>
+        <h1 class="text-lg font-bold text-gray-900">상품 상세</h1>
+      </div>
+    `.trim(),
+    children: loading
+      ? loadingContent
+      : error && !product
+        ? ErrorContent({ error })
+        : ProductDetail({ product, relatedProducts }),
+  });
+};
+
+// 서버 전용 렌더 함수
+export const renderProductDetailPageForServer = (initialData) => {
+  const productState = {
+    currentProduct: initialData.currentProduct,
+    relatedProducts: initialData.relatedProducts || [],
+    error: initialData.error,
+    loading: initialData.loading,
+  };
+
+  return renderProductDetailPage(productState);
+};
+
 /**
  * 상품 상세 페이지 컴포넌트
  */
 export const ProductDetailPage = withLifecycle(
   {
     onMount: () => {
-      loadProductDetailForPage(router.params.id);
+      // SSR 데이터가 이미 있고 현재 상품 ID와 일치한다면 로딩하지 않음
+      const currentProductId = router.params.id;
+
+      if (!hasProductDetailData(currentProductId)) {
+        loadProductDetailForPage(currentProductId);
+      }
     },
     watches: [() => [router.params.id], () => loadProductDetailForPage(router.params.id)],
   },
   () => {
-    const { currentProduct: product, relatedProducts = [], error, loading } = productStore.getState();
-
-    return PageWrapper({
-      headerLeft: `
-        <div class="flex items-center space-x-3">
-          <button onclick="window.history.back()" 
-                  class="p-2 text-gray-700 hover:text-gray-900 transition-colors">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-            </svg>
-          </button>
-          <h1 class="text-lg font-bold text-gray-900">상품 상세</h1>
-        </div>
-      `.trim(),
-      children: loading
-        ? loadingContent
-        : error && !product
-          ? ErrorContent({ error })
-          : ProductDetail({ product, relatedProducts }),
-    });
+    const productState = productStore.getState();
+    return renderProductDetailPage(productState);
   },
 );
+
+export const getServerSideProps = async (context) => {
+  const { id } = context.params || {};
+  const product = await getProduct(id);
+  if (!product) {
+    return { initialData: { status: "notfound" } };
+  } else {
+    const relatedCandidateResponse = await getProducts({ category2: product.category2 });
+    const relatedProducts = relatedCandidateResponse.products
+      .filter((p) => p.productId !== product.productId)
+      .slice(0, 20);
+
+    return {
+      initialData: {
+        currentProduct: {
+          ...product,
+          description: `${product.title}에 대한 상세 설명입니다. ${product.brand || ""} 브랜드의 우수한 품질을 자랑하는 상품입니다.`,
+          rating: 5,
+          reviewCount: 100,
+          stock: 50,
+          images: [product.image],
+        },
+        relatedProducts,
+        loading: false,
+        error: null,
+        status: "done",
+      },
+    };
+  }
+};
