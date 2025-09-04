@@ -21,7 +21,6 @@ const enableMocking = () =>
 function main() {
   registerAllEvents();
   registerGlobalEvents();
-  loadCartFromStorage();
 
   // Hydrate store with SSR data if present
   if (typeof window !== "undefined" && window.__INITIAL_DATA__) {
@@ -35,8 +34,12 @@ function main() {
       delete window.__INITIAL_DATA__;
     }
   }
+
   initRender();
+
   router.start();
+
+  loadCartFromStorage();
 }
 
 if (import.meta.env.MODE !== "test") {
