@@ -14,6 +14,10 @@ export class Router {
     this.#route = null;
     this.#baseUrl = baseUrl.replace(/\/$/, "");
 
+    if (typeof window === "undefined") {
+      return;
+    }
+
     window.addEventListener("popstate", () => {
       this.#route = this.#findRoute();
       this.#observer.notify();
@@ -25,7 +29,7 @@ export class Router {
   }
 
   get query() {
-    return Router.parseQuery(window.location.search);
+    return Router.parseQuery(typeof window !== "undefined" ? window.location.search : {});
   }
 
   set query(newQuery) {
@@ -73,8 +77,8 @@ export class Router {
     });
   }
 
-  #findRoute(url = window.location.pathname) {
-    const { pathname } = new URL(url, window.location.origin);
+  #findRoute(url = typeof window !== "undefined" ? window.location.pathname : "/") {
+    const { pathname } = new URL(url, typeof window !== "undefined" ? window.location.origin : "/");
     for (const [routePath, route] of this.#routes) {
       const match = pathname.match(route.regex);
       if (match) {
@@ -103,7 +107,9 @@ export class Router {
       // baseUrl이 없으면 자동으로 붙여줌
       let fullUrl = url.startsWith(this.#baseUrl) ? url : this.#baseUrl + (url.startsWith("/") ? url : "/" + url);
 
-      const prevFullUrl = `${window.location.pathname}${window.location.search}`;
+      const prevFullUrl = `${typeof window !== "undefined" ? window.location.pathname : "/"}${
+        typeof window !== "undefined" ? window.location.search : ""
+      }`;
 
       // 히스토리 업데이트
       if (prevFullUrl !== fullUrl) {
@@ -130,7 +136,7 @@ export class Router {
    * @param {string} search - location.search 또는 쿼리 문자열
    * @returns {Object} 파싱된 쿼리 객체
    */
-  static parseQuery = (search = window.location.search) => {
+  static parseQuery = (search = typeof window !== "undefined" ? window.location.search : "") => {
     const params = new URLSearchParams(search);
     const query = {};
     for (const [key, value] of params) {
@@ -166,6 +172,8 @@ export class Router {
     });
 
     const queryString = Router.stringifyQuery(updatedQuery);
-    return `${baseUrl}${window.location.pathname.replace(baseUrl, "")}${queryString ? `?${queryString}` : ""}`;
+    return `${baseUrl}${typeof window !== "undefined" ? window.location.pathname.replace(baseUrl, "") : "/"}${
+      queryString ? `?${queryString}` : ""
+    }`;
   };
 }
