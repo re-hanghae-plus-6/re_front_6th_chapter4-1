@@ -47,7 +47,7 @@ const ProductDetailPageComponent: SSRPageComponent<ProductDetailPageProps> = ({ 
           </div>
         )}
         {showError && <ErrorContent error={error} />}
-        {currentProduct && <ProductDetail {...currentProduct} />}
+        {currentProduct && <ProductDetail {...currentProduct} relatedProducts={ssrData?.relatedProducts} />}
       </div>
     </PageWrapper>
   );

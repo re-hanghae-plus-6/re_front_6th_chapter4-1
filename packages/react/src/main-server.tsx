@@ -96,17 +96,38 @@ export const render = async (pathname: string, query: Record<string, string> = {
     // 5. 실제 React 컴포넌트 서버 렌더링
     console.log("React 컴포넌트 서버 렌더링 시작");
 
-    // 기존 HomePage 컴포넌트를 SSR 데이터와 함께 렌더링
-    const { HomePage } = await import("./pages/HomePage");
-    const html = renderToString(
-      <HomePage
-        ssrData={{
-          products: data.products || [],
-          categories: data.categories || {},
-          totalCount: data.totalCount || 0,
-        }}
-      />,
-    );
+    let html: string;
+
+    // 라우트에 따라 적절한 컴포넌트 렌더링
+    if (route.path === "/") {
+      // HomePage 렌더링
+      const { HomePage } = await import("./pages/HomePage");
+      html = renderToString(
+        <HomePage
+          ssrData={{
+            products: data.products || [],
+            categories: data.categories || {},
+            totalCount: data.totalCount || 0,
+          }}
+          ssrQuery={query}
+        />,
+      );
+    } else if (route.path === "/product/:id/") {
+      // ProductDetailPage 렌더링
+      const { ProductDetailPage } = await import("./pages/ProductDetailPage");
+      html = renderToString(
+        <ProductDetailPage
+          ssrData={{
+            currentProduct: data.currentProduct || null,
+            relatedProducts: data.relatedProducts || [],
+          }}
+        />,
+      );
+    } else {
+      // NotFoundPage 렌더링
+      const { NotFoundPage } = await import("./pages/NotFoundPage");
+      html = renderToString(<NotFoundPage />);
+    }
 
     return {
       head: `
@@ -117,7 +138,11 @@ export const render = async (pathname: string, query: Record<string, string> = {
         <meta name="viewport" content="width=device-width, initial-scale=1">
       `,
       html,
-      __INITIAL_DATA__: data,
+      __INITIAL_DATA__: {
+        ...data,
+        // SSR 쿼리 정보를 클라이언트에 전달
+        __SSR_QUERY__: query,
+      },
     };
   } catch (error) {
     console.error("React 서버 렌더링 오류:", error);

@@ -36,9 +36,10 @@ interface HomePageProps {
     categories: any;
     totalCount: number;
   };
+  ssrQuery?: Record<string, string>;
 }
 
-const HomePageComponent: SSRPageComponent<HomePageProps> = ({ ssrData }) => {
+const HomePageComponent: SSRPageComponent<HomePageProps> = ({ ssrData, ssrQuery }) => {
   // 클라이언트에서도 __INITIAL_DATA__ 사용
   const initialData =
     typeof window !== "undefined" && (window as { __INITIAL_DATA__?: Record<string, unknown> }).__INITIAL_DATA__
@@ -80,7 +81,7 @@ const HomePageComponent: SSRPageComponent<HomePageProps> = ({ ssrData }) => {
   return (
     <PageWrapper headerLeft={headerLeft}>
       {/* 검색 및 필터 */}
-      <SearchBar initialCategories={effectiveSSRData?.categories} />
+      <SearchBar initialCategories={effectiveSSRData?.categories} ssrQuery={ssrQuery} />
 
       {/* 상품 목록 */}
       <div className="mb-6">

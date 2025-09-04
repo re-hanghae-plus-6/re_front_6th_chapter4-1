@@ -76,14 +76,19 @@ export class ServerRouter {
     const pathname = url.split("?")[0]; // 쿼리 파라미터 제거
 
     // baseUrl 제거 (서버에서 baseUrl이 제거된 경로로 전달되는 경우 처리)
-    const normalizedPath = pathname.replace(this.#baseUrl, "") || "/";
+    let normalizedPath = pathname.replace(this.#baseUrl, "") || "/";
+
+    // 경로가 /로 시작하지 않으면 추가 (바닐라와 호환성)
+    if (!normalizedPath.startsWith("/")) {
+      normalizedPath = "/" + normalizedPath;
+    }
 
     console.log("서버 라우트 찾기:", normalizedPath);
     console.log("등록된 서버 라우트들:", Array.from(this.#routes.keys()));
 
-    // 구체적인 라우트부터 먼저 확인 (.* 라우트는 마지막에)
+    // 구체적인 라우트부터 먼저 확인 (와일드카드 라우트는 마지막에)
     // 바닐라와 동일한 순서로 매칭
-    const routeOrder = ["/", "/product/:id/", ".*"];
+    const routeOrder = ["/", "/product/:id/", "*"];
 
     for (const routePath of routeOrder) {
       const route = this.#routes.get(routePath);
