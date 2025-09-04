@@ -1,11 +1,14 @@
 import fs from "node:fs/promises";
 import express from "express";
+import { getBaseUrl } from "./src/mocks/utils.js";
+import { server as mswServer } from "./src/mocks/node.js";
 
 const prod = process.env.NODE_ENV === "production";
 const port = process.env.PORT || 5173;
+mswServer.listen({ onUnhandledRequest: "warn" });
 
 // gh-pages 배포 기준
-const base = process.env.BASE || (prod ? "/front_6th_chapter4-1/vanilla/" : "/");
+const base = getBaseUrl(prod);
 
 const templateHtml = prod ? await fs.readFile("./dist/vanilla/index.html", "utf-8") : "";
 
