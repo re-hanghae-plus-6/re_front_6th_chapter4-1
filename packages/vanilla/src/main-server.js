@@ -26,7 +26,13 @@ export class SSRService {
     try {
       const requestStore = createStore(productReducer, initialProductState);
       await loadProductsAndCategories(query, requestStore);
-      const initialData = requestStore.getState();
+      const state = requestStore.getState();
+
+      const initialData = {
+        products: state.products,
+        categories: state.categories,
+        totalCount: state.totalCount,
+      };
 
       return {
         head: /* HTML */ `<title>쇼핑몰 - 홈</title>`,
