@@ -1,4 +1,3 @@
-import { createObserver } from "./createObserver";
 import type { AnyFunction, StringRecord } from "./types";
 
 interface Route<Handler extends AnyFunction> {
@@ -11,42 +10,35 @@ interface Route<Handler extends AnyFunction> {
 type QueryPayload = Record<string, string | number | undefined>;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export class Router<Handler extends (...args: any[]) => any> {
+export class ServerRouter<Handler extends (...args: any[]) => any> {
   readonly #routes: Map<string, Route<Handler>>;
-  readonly #observer = createObserver();
   readonly #baseUrl;
 
   #route: null | (Route<Handler> & { params: StringRecord; path: string });
+  #currentUrl = "/";
 
   constructor(baseUrl = "") {
     this.#routes = new Map();
     this.#route = null;
     this.#baseUrl = baseUrl.replace(/\/$/, "");
+  }
 
-    window.addEventListener("popstate", () => {
-      this.#route = this.#findRoute();
-      this.#observer.notify();
-    });
+  get url() {
+    return this.#currentUrl;
+  }
 
-    document.addEventListener("click", (e) => {
-      const target = e.target as HTMLElement;
-      if (!target?.closest("[data-link]")) {
-        return;
-      }
-      e.preventDefault();
-      const url = target.getAttribute("href") ?? target.closest("[data-link]")?.getAttribute("href");
-      if (url) {
-        this.push(url);
-      }
-    });
+  set url(newUrl: string) {
+    if (this.#currentUrl.toString() !== newUrl) {
+      this.#currentUrl = newUrl;
+    }
   }
 
   get query(): StringRecord {
-    return Router.parseQuery(window.location.search);
+    return ServerRouter.parseQuery(this.#currentUrl);
   }
 
   set query(newQuery: QueryPayload) {
-    const newUrl = Router.getUrl(newQuery, this.#baseUrl);
+    const newUrl = ServerRouter.getUrl(newQuery, this.#currentUrl, this.#baseUrl);
     this.push(newUrl);
   }
 
@@ -61,8 +53,6 @@ export class Router<Handler extends (...args: any[]) => any> {
   get target() {
     return this.#route?.handler;
   }
-
-  readonly subscribe = this.#observer.subscribe;
 
   addRoute(path: string, handler: Handler) {
     // 경로 패턴을 정규식으로 변환
@@ -83,8 +73,8 @@ export class Router<Handler extends (...args: any[]) => any> {
     });
   }
 
-  #findRoute(url = window.location.pathname) {
-    const { pathname } = new URL(url, window.location.origin);
+  #findRoute(url = this.#baseUrl) {
+    const { pathname } = new URL(url, "localhost");
     for (const [routePath, route] of this.#routes) {
       const match = pathname.match(route.regex);
       if (match) {
@@ -109,15 +99,7 @@ export class Router<Handler extends (...args: any[]) => any> {
       // baseUrl이 없으면 자동으로 붙여줌
       const fullUrl = url.startsWith(this.#baseUrl) ? url : this.#baseUrl + (url.startsWith("/") ? url : "/" + url);
 
-      const prevFullUrl = `${window.location.pathname}${window.location.search}`;
-
-      // 히스토리 업데이트
-      if (prevFullUrl !== fullUrl) {
-        window.history.pushState(null, "", fullUrl);
-      }
-
       this.#route = this.#findRoute(fullUrl);
-      this.#observer.notify();
     } catch (error) {
       console.error("라우터 네비게이션 오류:", error);
     }
@@ -125,7 +107,6 @@ export class Router<Handler extends (...args: any[]) => any> {
 
   start() {
     this.#route = this.#findRoute();
-    this.#observer.notify();
   }
 
   static parseQuery = (search = window.location.search) => {
@@ -147,8 +128,8 @@ export class Router<Handler extends (...args: any[]) => any> {
     return params.toString();
   };
 
-  static getUrl = (newQuery: QueryPayload, baseUrl = "") => {
-    const currentQuery = Router.parseQuery();
+  static getUrl = (newQuery: QueryPayload, pathname = "/", baseUrl = "") => {
+    const currentQuery = ServerRouter.parseQuery();
     const updatedQuery = { ...currentQuery, ...newQuery };
 
     // 빈 값들 제거
@@ -158,7 +139,7 @@ export class Router<Handler extends (...args: any[]) => any> {
       }
     });
 
-    const queryString = Router.stringifyQuery(updatedQuery);
-    return `${baseUrl}${window.location.pathname.replace(baseUrl, "")}${queryString ? `?${queryString}` : ""}`;
+    const queryString = ServerRouter.stringifyQuery(updatedQuery);
+    return `${baseUrl}${pathname.replace(baseUrl, "")}${queryString ? `?${queryString}` : ""}`;
   };
 }

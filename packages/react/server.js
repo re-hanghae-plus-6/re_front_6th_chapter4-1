@@ -42,26 +42,29 @@ app.use("*all", async (req, res) => {
     const url = req.originalUrl.replace(base, "");
     const pathname = path.normalize(`/${url.split("?")[0]}`);
 
+    /** @type {string} */
     let template;
+    /** @type {import('./src/main-server.js').render} */
     let render;
     if (!prod) {
-      // 개발 환경: Vite로 main-server.tsx 로드
+      // Always read fresh template in development
       template = await fs.readFile("./index.html", "utf-8");
       template = await vite.transformIndexHtml(url, template);
-      render = (await vite.ssrLoadModule("/src/main-server.tsx")).render;
+      render = (await vite.ssrLoadModule("/src/main-server.js")).render;
     } else {
-      // 프로덕션 환경: 빌드된 main-server.js 로드
       template = templateHtml;
       render = (await import("./dist/react-ssr/main-server.js")).render;
     }
 
     const rendered = await render(pathname, req.query);
 
-    // HTML 템플릿 치환 (React 방식)
     const html = template
       .replace(`<!--app-head-->`, rendered.head ?? "")
       .replace(`<!--app-html-->`, rendered.html ?? "")
-      .replace(`</head>`, `<script>window.__INITIAL_DATA__ = ${JSON.stringify(rendered.initialData)};</script></head>`);
+      .replace(
+        `<!--app-data-->`,
+        `<script>window.__INITIAL_DATA__ = ${JSON.stringify(rendered.initialData)};</script>`,
+      );
 
     res.status(200).set({ "Content-Type": "text/html" }).send(html);
   } catch (e) {
@@ -71,6 +74,7 @@ app.use("*all", async (req, res) => {
   }
 });
 
+// Start http server
 app.listen(port, () => {
   console.log(`React Server started at http://localhost:${port}`);
 });
