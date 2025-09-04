@@ -20,7 +20,7 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:report": "npx playwright show-report",
     "prepare": "husky",
-    "gh-pages": "pnpm run build && gh-pages -d dist"
+    "gh-pages": "pnpm run build && gh-pages -d dist/react"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
