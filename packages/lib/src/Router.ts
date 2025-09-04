@@ -94,6 +94,17 @@ export class Router<Handler extends FC> {
   readonly subscribe = this.#observer.subscribe;
 
   addRoute<T>(path: string, handler: FC<T>) {
+    // * 경로 처리 (와일드카드)
+    if (path === "*") {
+      const regex = new RegExp(".*");
+      this.#routes.set(path, {
+        regex,
+        paramNames: [],
+        handler: handler as Handler,
+      });
+      return;
+    }
+
     // 경로 패턴을 정규식으로 변환
     const paramNames: string[] = [];
     const regexPath = path

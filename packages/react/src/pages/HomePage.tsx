@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { loadNextProducts, loadProductsAndCategories, ProductList, SearchBar } from "../entities";
+import { ProductList, SearchBar, useProductStoreContext } from "../entities";
 import { PageWrapper } from "./PageWrapper";
 
 const headerLeft = (
@@ -10,23 +10,27 @@ const headerLeft = (
   </h1>
 );
 
-// 무한 스크롤 이벤트 등록
-let scrollHandlerRegistered = false;
-
-const registerScrollHandler = () => {
-  if (scrollHandlerRegistered) return;
-
-  window.addEventListener("scroll", loadNextProducts);
-  scrollHandlerRegistered = true;
-};
-
-const unregisterScrollHandler = () => {
-  if (!scrollHandlerRegistered) return;
-  window.removeEventListener("scroll", loadNextProducts);
-  scrollHandlerRegistered = false;
-};
-
 export const HomePage = () => {
+  const {
+    action: { loadProductsAndCategories, loadNextProducts },
+  } = useProductStoreContext();
+
+  // 무한 스크롤 이벤트 등록
+  let scrollHandlerRegistered = false;
+
+  const registerScrollHandler = () => {
+    if (scrollHandlerRegistered) return;
+
+    window.addEventListener("scroll", loadNextProducts);
+    scrollHandlerRegistered = true;
+  };
+
+  const unregisterScrollHandler = () => {
+    if (!scrollHandlerRegistered) return;
+    window.removeEventListener("scroll", loadNextProducts);
+    scrollHandlerRegistered = false;
+  };
+
   useEffect(() => {
     registerScrollHandler();
     loadProductsAndCategories();

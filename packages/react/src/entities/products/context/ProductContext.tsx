@@ -4,7 +4,7 @@ import { isNearBottom } from "../../../utils";
 import { ProductStoreContext } from "../hooks";
 import { initialProductState, PRODUCT_ACTIONS } from "../productStore";
 import { useStore } from "@hanghae-plus/lib";
-import { router } from "../../../router";
+import { useRouterContext } from "../../../router/hooks/useRouterContext";
 
 interface ProductProviderProps {
   productStore: ReturnType<typeof createStore<typeof initialProductState, unknown>>;
@@ -16,6 +16,7 @@ const createErrorMessage = (error: unknown, defaultMessage = "알 수 없는 오
 
 export const ProductProvider = ({ children, productStore }: ProductProviderProps) => {
   const productStoreState = useStore(productStore);
+  const router = useRouterContext();
   const loadProducts = async (resetList = true) => {
     try {
       productStore.dispatch({
