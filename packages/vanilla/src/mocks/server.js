@@ -1,5 +1,25 @@
 import { http, HttpResponse } from "msw";
-import items from "./items.json";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// items.json을 동적으로 로드하는 함수
+function loadItems() {
+  try {
+    const itemsPath = join(__dirname, "items.json");
+    const itemsData = readFileSync(itemsPath, "utf-8");
+    return JSON.parse(itemsData);
+  } catch (error) {
+    console.error("❌ items.json 로드 실패:", error);
+    return [];
+  }
+}
+
+// 캐시된 items 데이터
+let items = loadItems();
 
 const delay = async () => await new Promise((resolve) => setTimeout(resolve, 200));
 
@@ -20,7 +40,13 @@ export function getUniqueCategories() {
 
 // 상품을 ID로 가져오는 함수
 export function getProductById(productId) {
-  const product = items.find((item) => item.productId === productId);
+  console.log("🔍 상품 검색 중:", { productId, type: typeof productId });
+
+  // 상품 ID를 문자열로 변환하여 안전하게 비교
+  const searchId = String(productId);
+  const product = items.find((item) => String(item.productId) === searchId);
+
+  console.log("🎯 상품 검색 결과:", product ? "찾음" : "없음");
 
   if (!product) {
     return null;

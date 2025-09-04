@@ -157,7 +157,8 @@ export const loadProductDetailForPage = async (productId) => {
       type: PRODUCT_ACTIONS.SET_ERROR,
       payload: error.message,
     });
-    throw error;
+    // 에러를 throw하지 않고 상태만 업데이트
+    // throw error;
   }
 };
 
