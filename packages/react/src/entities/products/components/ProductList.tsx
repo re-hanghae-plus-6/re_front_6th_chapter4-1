@@ -1,8 +1,8 @@
-import { ProductCard, ProductCardSkeleton } from "./ProductCard";
-import { router } from "../../../router";
 import { PublicImage } from "../../../components";
-import { useProductStore } from "../hooks";
+import { router } from "../../../router";
+import { useProductStoreContext } from "../hooks";
 import { loadProducts } from "../productUseCase";
+import { ProductCard, ProductCardSkeleton } from "./ProductCard";
 
 const retry = async () => {
   try {
@@ -21,7 +21,8 @@ const goToDetailPage = async (productId: string) => {
  * 상품 목록 컴포넌트
  */
 export function ProductList() {
-  const { products, loading, error, totalCount } = useProductStore();
+  const productStore = useProductStoreContext();
+  const { products, loading, error, totalCount } = productStore.getState();
   const hasMore = products.length < totalCount;
 
   // 에러 상태

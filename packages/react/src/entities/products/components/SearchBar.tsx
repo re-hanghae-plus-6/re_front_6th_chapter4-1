@@ -1,8 +1,8 @@
 import { type ChangeEvent, Fragment, type KeyboardEvent, type MouseEvent } from "react";
 import { PublicImage } from "../../../components";
-import { useProductStore } from "../hooks";
-import { useProductFilter } from "./hooks";
+import { useProductStoreContext } from "../hooks";
 import { searchProducts, setCategory, setLimit, setSort } from "../productUseCase";
+import { useProductFilter } from "./hooks";
 
 const OPTION_LIMITS = [10, 20, 50, 100];
 const OPTION_SORTS = [
@@ -88,7 +88,10 @@ const handleSubCategoryClick = async (e: MouseEvent<HTMLButtonElement>) => {
 };
 
 export function SearchBar() {
-  const { categories } = useProductStore();
+  const productStore = useProductStoreContext();
+
+  const { categories } = productStore.getState();
+
   const { searchQuery, limit = "20", sort, category } = useProductFilter();
 
   const categoryList = Object.keys(categories).length > 0 ? Object.keys(categories) : [];

@@ -83,23 +83,23 @@ export const loadMoreProducts = async () => {
     return;
   }
 
-  router.query = { current: Number(router.query.current ?? 1) + 1 };
+  router.query = { current: (Number(router.query.current ?? 1) + 1).toString() };
   await loadProducts(false);
 };
 export const searchProducts = (search: string) => {
-  router.query = { search, current: 1 };
+  router.query = { search, current: "1" };
 };
 
 export const setCategory = (categoryData: StringRecord) => {
-  router.query = { ...categoryData, current: 1 };
+  router.query = { ...categoryData, current: "1" };
 };
 
 export const setSort = (sort: string) => {
-  router.query = { sort, current: 1 };
+  router.query = { sort, current: "1" };
 };
 
 export const setLimit = (limit: number) => {
-  router.query = { limit, current: 1 };
+  router.query = { limit: limit.toString(), current: "1" };
 };
 
 export const loadProductDetailForPage = async (productId: string) => {
