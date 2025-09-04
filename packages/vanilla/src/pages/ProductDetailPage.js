@@ -237,7 +237,11 @@ function ProductDetail({ product, relatedProducts = [] }) {
 export const ProductDetailPage = withLifecycle(
   {
     onMount: () => {
-      loadProductDetailForPage(router.params.id);
+      // SSR에서 이미 데이터가 로드되었으면 추가 로딩하지 않음
+      const state = productStore.getState();
+      if (!state.currentProduct || state.currentProduct.productId !== router.params.id) {
+        loadProductDetailForPage(router.params.id);
+      }
     },
     watches: [() => [router.params.id], () => loadProductDetailForPage(router.params.id)],
   },
@@ -247,7 +251,7 @@ export const ProductDetailPage = withLifecycle(
     return PageWrapper({
       headerLeft: `
         <div class="flex items-center space-x-3">
-          <button onclick="window.history.back()" 
+          <button onclick="window.history.back()"
                   class="p-2 text-gray-700 hover:text-gray-900 transition-colors">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
@@ -264,3 +268,42 @@ export const ProductDetailPage = withLifecycle(
     });
   },
 );
+
+/**
+ * SSR용 상품 상세 페이지 컴포넌트
+ */
+export const ProductDetailPageSSR = (initialData = {}) => {
+  const { currentProduct: product, relatedProducts = [], error } = initialData;
+
+  if (error || !product) {
+    return PageWrapper({
+      headerLeft: `
+        <div class="flex items-center space-x-3">
+          <button onclick="window.history.back()"
+                  class="p-2 text-gray-700 hover:text-gray-900 transition-colors">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+          </button>
+          <h1 class="text-lg font-bold text-gray-900">상품 상세</h1>
+        </div>
+      `.trim(),
+      children: error ? ErrorContent({ error }) : ErrorContent({ error: "상품을 찾을 수 없습니다." }),
+    });
+  }
+
+  return PageWrapper({
+    headerLeft: `
+      <div class="flex items-center space-x-3">
+        <button onclick="window.history.back()"
+                class="p-2 text-gray-700 hover:text-gray-900 transition-colors">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+          </svg>
+        </button>
+        <h1 class="text-lg font-bold text-gray-900">상품 상세</h1>
+      </div>
+    `.trim(),
+    children: ProductDetail({ product, relatedProducts }),
+  });
+};

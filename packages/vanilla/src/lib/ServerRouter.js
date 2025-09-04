@@ -8,16 +8,12 @@ export class ServerRouter {
   #route;
   #observer = createObserver();
   #baseUrl;
+  #serverQuery = {};
 
   constructor(baseUrl = "") {
     this.#routes = new Map();
     this.#route = null;
     this.#baseUrl = baseUrl.replace(/\/$/, "");
-
-    // window.addEventListener("popstate", () => {
-    //   this.#route = this.#findRoute();
-    //   this.#observer.notify();
-    // });
   }
 
   get baseUrl() {
@@ -25,13 +21,21 @@ export class ServerRouter {
   }
 
   get query() {
-    // return ServerRouter.parseQuery(window.location.search);
-    return this.#route?.params ?? {};
+    // 서버 사이드에서는 #serverQuery를 사용, 클라이언트 사이드에서는 URL 파라미터 사용
+    if (typeof window === "undefined") {
+      return this.#serverQuery;
+    }
+    return ServerRouter.parseQuery(window.location.search);
   }
 
   set query(newQuery) {
-    const newUrl = ServerRouter.getUrl(newQuery, this.#baseUrl);
-    this.push(newUrl);
+    // 서버 사이드에서는 #serverQuery를 설정, 클라이언트 사이드에서는 URL 업데이트
+    if (typeof window === "undefined") {
+      this.#serverQuery = { ...newQuery };
+    } else {
+      const newUrl = ServerRouter.getUrl(newQuery, this.#baseUrl);
+      this.push(newUrl);
+    }
   }
 
   get params() {
@@ -65,7 +69,7 @@ export class ServerRouter {
       })
       .replace(/\//g, "\\/");
 
-    const regex = new RegExp(`^${this.#baseUrl}${regexPath}$`);
+    const regex = new RegExp(`^${this.#baseUrl}${regexPath}/?$`);
 
     this.#routes.set(path, {
       regex,
@@ -74,7 +78,6 @@ export class ServerRouter {
     });
   }
 
-  // #findRoute(url = window.location.pathname) {
   #findRoute(url = "/", origin = "http://localhost") {
     const { pathname } = new URL(url, origin);
     for (const [routePath, route] of this.#routes) {
@@ -102,20 +105,11 @@ export class ServerRouter {
    */
   push(url = "/") {
     try {
-      this.#route = this.#findRoute(url);
-
       // baseUrl이 없으면 자동으로 붙여줌
-      // let fullUrl = url.startsWith(this.#baseUrl) ? url : this.#baseUrl + (url.startsWith("/") ? url : "/" + url);
+      let fullUrl = url.startsWith(this.#baseUrl) ? url : this.#baseUrl + (url.startsWith("/") ? url : "/" + url);
 
-      // const prevFullUrl = `${window.location.pathname}${window.location.search}`;
-
-      // // 히스토리 업데이트
-      // if (prevFullUrl !== fullUrl) {
-      //   window.history.pushState(null, "", fullUrl);
-      // }
-
-      // this.#route = this.#findRoute(fullUrl);
-      // this.#observer.notify();
+      this.#route = this.#findRoute(fullUrl);
+      this.#observer.notify();
     } catch (error) {
       console.error("라우터 네비게이션 오류:", error);
     }
@@ -134,7 +128,6 @@ export class ServerRouter {
    * @param {string} search - location.search 또는 쿼리 문자열
    * @returns {Object} 파싱된 쿼리 객체
    */
-  // static parseQuery = (search = window.location.search) => {
   static parseQuery = (search) => {
     const params = new URLSearchParams(search);
     const query = {};
@@ -172,6 +165,5 @@ export class ServerRouter {
 
     const queryString = ServerRouter.stringifyQuery(updatedQuery);
     return `${baseUrl}${pathname.replace(baseUrl, "")}${queryString ? `?${queryString}` : ""}`;
-    // return `${baseUrl}${window.location.pathname.replace(baseUrl, "")}${queryString ? `?${queryString}` : ""}`;
   };
 }

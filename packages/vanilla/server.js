@@ -31,7 +31,13 @@ if (!prod) {
 // Serve HTML
 app.use("*all", async (req, res) => {
   try {
-    const url = req.originalUrl.replace(base, "");
+    let url = req.originalUrl;
+    if (base !== "/" && url.startsWith(base)) {
+      url = url.replace(base, "");
+    }
+    if (!url.startsWith("/")) {
+      url = "/" + url;
+    }
 
     /** @type {string} */
     let template;
