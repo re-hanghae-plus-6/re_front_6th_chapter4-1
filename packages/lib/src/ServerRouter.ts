@@ -28,8 +28,8 @@ export class ServerRouter<Handler extends (...args: any[]) => any> {
   get baseUrl() {
     return this.#currentQuery;
   }
-  get query() {
-    return this.#currentQuery; // ← 이제 읽힘!
+  get query(): StringRecord {
+    return this.#currentQuery;
   }
 
   set query(newQuery: QueryPayload) {

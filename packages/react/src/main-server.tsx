@@ -1,26 +1,23 @@
-import { HomePage, NotFoundPage, ProductDetailPage } from "./pages";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { renderToString } from "react-dom/server";
+import { App } from "./App";
 import { router } from "./router";
+import { HomePage, NotFoundPage, ProductDetailPage } from "./pages";
+import { PRODUCT_ACTIONS, productStore } from "./entities/products/productStore";
 import { getProducts, getCategories, getProduct } from "./api/productApi.js";
-import { productStore } from "./entities/products";
-import { PRODUCT_ACTIONS } from "./entities/products/productStore";
 
 router.addRoute("/", HomePage);
 router.addRoute("/product/:id/", ProductDetailPage);
 router.addRoute(".*", NotFoundPage);
 
-export const render = async (url, query) => {
+export const render = async (url: string, query: Record<string, any>) => {
   try {
-    //console.log("렌더링 URL:", url);
-    //console.log("쿼리 파라미터:", query);
-
     router.start(url, query);
 
-    //console.log("라우터 쿼리:", router.query);
-    //console.log("Rendering URL:", url, "with query:", query);
     router.start(url, query);
 
     const route = router.route;
-    //console.log("Matched route:", route);
+
     if (!route) {
       return {
         html: NotFoundPage(),
@@ -34,11 +31,10 @@ export const render = async (url, query) => {
 
     // 2. 라우트별 데이터 로드
     if (route.path === "/") {
-      //console.log("검색어:", router.query.search);
       try {
         // router.query를 사용서 검색/필터링 파라미터 포함
         const [productsResponse, categories] = await Promise.all([getProducts(router.query), getCategories()]);
-        //console.log("API 응답:", { productsResponse, categories });
+
         // 스토어에 데이터 설정
         productStore.dispatch({
           type: PRODUCT_ACTIONS.SETUP,
@@ -62,7 +58,7 @@ export const render = async (url, query) => {
           categories: categories || {},
           totalCount: productsResponse.pagination?.total || 0,
         };
-      } catch (dataError) {
+      } catch (dataError: any) {
         productStore.dispatch({
           type: PRODUCT_ACTIONS.SETUP,
           payload: {
@@ -85,18 +81,17 @@ export const render = async (url, query) => {
       }
     } else if (route.path === "/product/:id/") {
       const productId = route.params.id;
-      //console.log("상품 ID:", productId);
 
       try {
         const product = await getProduct(productId);
 
         // 관련 상품 로드
-        let relatedProducts = [];
+        let relatedProducts: any[] = [];
         if (product && product.category2) {
           const relatedResponse = await getProducts({
             category2: product.category2,
-            limit: 20,
-            page: 1,
+            limit: "20",
+            page: "1",
           });
           relatedProducts = relatedResponse.products.filter((p) => p.productId !== productId);
         }
@@ -123,7 +118,7 @@ export const render = async (url, query) => {
           product: product,
           relatedProducts: relatedProducts,
         };
-      } catch (dataError) {
+      } catch (dataError: any) {
         productStore.dispatch({
           type: PRODUCT_ACTIONS.SETUP,
           payload: {
@@ -145,20 +140,15 @@ export const render = async (url, query) => {
       }
     }
 
-    // 스토어 상태 확인 (디버깅용)
-    //console.log("스토어 상태:", productStore.getState());
-
     // 3. 페이지 컴포넌트 렌더링
-    const PageComponent = router.target;
 
-    const html = PageComponent();
-
+    const html = renderToString(<App />);
     return {
       html,
       head,
       data: JSON.stringify(initialData),
     };
-  } catch (error) {
+  } catch (error: any) {
     return {
       html: `<div>서버 오류: ${error.message}</div>`,
       head: "<title>서버 오류</title>",
