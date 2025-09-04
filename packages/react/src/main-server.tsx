@@ -1,8 +1,8 @@
 import { HomePage, NotFoundPage, ProductDetailPage } from "./pages";
 import { router } from "./router";
 import { getProducts, getCategories, getProduct } from "./api/productApi.js";
-import { productStore } from "./stores";
-import { PRODUCT_ACTIONS } from "./stores/actionTypes";
+import { productStore } from "./entities/products";
+import { PRODUCT_ACTIONS } from "./entities/products/productStore";
 
 router.addRoute("/", HomePage);
 router.addRoute("/product/:id/", ProductDetailPage);
