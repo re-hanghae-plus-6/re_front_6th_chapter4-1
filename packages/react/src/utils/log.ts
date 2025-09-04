@@ -1,5 +1,3 @@
-import { isClient, isServer } from "../constants";
-
 /* eslint-disable @typescript-eslint/no-explicit-any */
 declare global {
   interface Window {
@@ -7,6 +5,9 @@ declare global {
     __spyCallsClear: () => void;
   }
 }
+
+const isClient = typeof window !== "undefined";
+const isServer = !isClient;
 
 if (isClient) {
   window.__spyCalls = [];
