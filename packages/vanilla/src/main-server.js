@@ -48,6 +48,12 @@ export const render = async (url, query) => {
 
     serverRouter.start(url, mergedQuery);
 
+    // router 객체의 query도 설정
+    if (typeof window === "undefined") {
+      const { router } = await import("./router/router.js");
+      router.query = mergedQuery;
+    }
+
     const route = serverRouter.route;
     if (!route) {
       return {

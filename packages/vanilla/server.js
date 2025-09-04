@@ -62,7 +62,7 @@ app.use("*all", async (req, res) => {
       .replace(`<!--app-head-->`, rendered.head ?? "")
       .replace(`<!--app-html-->`, rendered.html ?? "")
       .replace(
-        `<!-- app-data -->`,
+        `<!--app-data-->`,
         `<script>window.__INITIAL_DATA__ = ${JSON.stringify(rendered.initialData)};</script>`,
       );
 
