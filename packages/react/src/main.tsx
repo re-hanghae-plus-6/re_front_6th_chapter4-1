@@ -27,14 +27,14 @@ function main() {
   const ssrData = getInitialData();
 
   // SSR 데이터가 있으면 라우터 시작 전에 스토어 초기화
+
+  router.start();
   if (ssrData) {
     productStore.dispatch({
       type: PRODUCT_ACTIONS.SETUP,
       payload: ssrData,
     });
   }
-
-  router.start();
   const rootElement = document.getElementById("root")!;
 
   // SSR 데이터가 있으면 hydrateRoot, 없으면 createRoot

@@ -12,11 +12,6 @@ export const loadProductsAndCategories = async () => {
 
   // 이미 데이터가 있으면 로딩하지 않음 (SSR에서 이미 초기화됨)
   const currentState = productStore.getState();
-  console.log("loadProductsAndCategories 호출 - 현재 상태:", {
-    products: currentState.products.length,
-    totalCount: currentState.totalCount,
-    status: currentState.status,
-  });
 
   if (currentState.products.length > 0 && currentState.status === "done") {
     console.log("이미 초기화된 데이터 사용:", currentState.products.length, "개 상품");
@@ -146,7 +141,6 @@ export const loadProductDetailForPage = async (productId: string) => {
 
     const product = await getProduct(productId);
 
-    console.log("product", product);
     // 현재 상품 설정
     productStore.dispatch({
       type: PRODUCT_ACTIONS.SET_CURRENT_PRODUCT,

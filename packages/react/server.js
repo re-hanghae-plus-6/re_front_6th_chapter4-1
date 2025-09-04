@@ -62,6 +62,7 @@ app.use("*all", async (req, res) => {
       render = (await import("./dist/react-ssr/main-server.js")).render;
     }
     const [pathname, search] = url.split("?");
+
     const query = new URLSearchParams(search || "");
     const queryObj = Object.fromEntries(query.entries());
 
@@ -69,6 +70,7 @@ app.use("*all", async (req, res) => {
 
     const rendered = await render(finalUrl, queryObj);
 
+    console.log("rendered", rendered);
     const html = template
       .replace(`<!--app-head-->`, rendered.head ?? "")
       .replace(`<!--app-html-->`, rendered.html ?? "")

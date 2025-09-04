@@ -55,6 +55,7 @@ export class Router<Handler extends (...args: any[]) => any> {
 
   set query(newQuery: QueryPayload) {
     if (typeof window === "undefined") {
+      console.log("newQuery:", newQuery);
       // 서버에서는 #ssrQuery에 저장
       this.#ssrQuery = Object.entries(newQuery).reduce((acc, [key, value]) => {
         if (value !== null && value !== undefined && value !== "") {
@@ -62,9 +63,10 @@ export class Router<Handler extends (...args: any[]) => any> {
         }
         return acc;
       }, {} as StringRecord);
+      console.log("acc:", this.#ssrQuery);
     } else {
       // 브라우저에서는 URL 업데이트
-      const newUrl = Router.getUrl(newQuery, this.#baseUrl);
+      const newUrl = Router.getUrl(newQuery);
       this.push(newUrl);
     }
   }
@@ -166,7 +168,7 @@ export class Router<Handler extends (...args: any[]) => any> {
     return params.toString();
   };
 
-  static getUrl = (newQuery: QueryPayload, baseUrl = "") => {
+  static getUrl = (newQuery: QueryPayload) => {
     const currentQuery = Router.parseQuery();
     const updatedQuery = { ...currentQuery, ...newQuery };
 

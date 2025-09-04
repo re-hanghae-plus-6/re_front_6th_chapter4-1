@@ -13,18 +13,13 @@ export const render = async (url: string, query: Record<string, string>) => {
   router.addRoute("/product/:id/", ProductDetailPage);
   router.addRoute(".*", NotFoundPage);
 
-  // 서버에서 쿼리 파라미터 설정
+  // 서버에서 라우트와 쿼리 파라미터 설정
+  // URL로 라우트를 먼저 결정
   router.push(url);
+  // 쿼리 파라미터 주입(SSR에서는 내부 상태에만 저장)
   router.query = query;
-
   let initialData = null;
   let pageTitle = "쇼핑몰";
-
-  console.log("url", url);
-  console.log("=== 라우트 분기 직전 상태 ===");
-  console.log("router.route:", router.route);
-  console.log("router.route?.path:", router.route?.path);
-  console.log("router.params:", router.params);
 
   if (router.route?.path === "/") {
     initialData = await fetchProductsDataSSR(query);
@@ -35,7 +30,6 @@ export const render = async (url: string, query: Record<string, string>) => {
     pageTitle = "쇼핑몰 - 홈";
   } else if (router.route?.path === "/product/:id/" && router.params.id) {
     initialData = await fetchProductDataSSR(router.params.id);
-    console.log("initialData", initialData);
     productStore.dispatch({
       type: PRODUCT_ACTIONS.SETUP,
       payload: initialData,
