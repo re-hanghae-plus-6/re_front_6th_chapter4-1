@@ -1,5 +1,7 @@
 import { getProducts, getCategories, getProduct } from "./api/routes.js";
 import { ServerRouter } from "./router/serverRouter.js";
+import { ServerHomePage } from "./pages/server/ServerHomePage.js";
+import { ServerProductDetailPage } from "./pages/server/ServerProductDetailPage.js";
 
 const serverRouter = new ServerRouter();
 
@@ -55,7 +57,15 @@ export const render = async (url) => {
       const result = await notFoundRoute.handler({}, {});
 
       return {
-        html: '<div id="app"><h1>404 - Page Not Found</h1></div>',
+        html: `<div id="app">
+          <div class="min-h-screen bg-gray-50 flex items-center justify-center">
+            <div class="text-center">
+              <h1 class="text-2xl font-bold text-gray-900 mb-2">404 - Page Not Found</h1>
+              <p class="text-gray-600 mb-4">${result.data.message}</p>
+              <a href="/" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">홈으로</a>
+            </div>
+          </div>
+        </div>`,
         head: "<title>404 - Page Not Found</title>",
         initialData: result.data,
       };
@@ -64,46 +74,73 @@ export const render = async (url) => {
     // 2. 데이터 프리페칭
     const result = await route.handler(route.params, route.query);
 
-    // 3. HTML 및 메타데이터 생성 (현재는 간단한 형태)
+    // 3. 실제 컴포넌트 렌더링
     let html, title;
+
+    let initialData;
 
     switch (result.type) {
       case "homepage":
-        html = `<div id="app">
-          <h1>Shopping Mall</h1>
-          <p>Products loaded: ${result.data.products.length}</p>
-          <p>Total products: ${result.data.pagination.total}</p>
-        </div>`;
+        html = `<div id="app">${ServerHomePage({
+          products: result.data.products,
+          categories: result.data.categories,
+          query: result.data.filters,
+          totalCount: result.data.pagination.total,
+        })}</div>`;
         title = "Shopping Mall - Home";
+        // 테스트에서 기대하는 형태로 initialData 구성
+        initialData = {
+          products: result.data.products,
+          categories: result.data.categories,
+          totalCount: result.data.pagination.total,
+        };
         break;
 
       case "product-detail":
-        html = `<div id="app">
-          <h1>${result.data.currentProduct.title}</h1>
-          <p>Price: ${result.data.currentProduct.lprice}원</p>
-          <p>Brand: ${result.data.currentProduct.brand}</p>
-        </div>`;
+        html = `<div id="app">${ServerProductDetailPage({
+          product: result.data.currentProduct,
+          relatedProducts: result.data.relatedProducts || [],
+        })}</div>`;
         title = `${result.data.currentProduct.title} - Shopping Mall`;
+        // 상품 상세 페이지용 initialData
+        initialData = {
+          currentProduct: result.data.currentProduct,
+        };
         break;
 
       default:
         html = `<div id="app">
-          <h1>404 - Page Not Found</h1>
-          <p>${result.data.message}</p>
+          <div class="min-h-screen bg-gray-50 flex items-center justify-center">
+            <div class="text-center">
+              <h1 class="text-2xl font-bold text-gray-900 mb-2">404 - Page Not Found</h1>
+              <p class="text-gray-600 mb-4">${result.data.message}</p>
+              <a href="/" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">홈으로</a>
+            </div>
+          </div>
         </div>`;
         title = "404 - Page Not Found";
+        initialData = { error: result.data.message };
     }
 
     return {
       html,
       head: `<title>${title}</title>`,
-      initialData: result.data,
+      initialData,
     };
   } catch (error) {
     console.error("Server rendering error:", error);
 
     return {
-      html: '<div id="app"><h1>Server Error</h1><p>Something went wrong.</p></div>',
+      html: `<div id="app">
+        <div class="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div class="text-center">
+            <h1 class="text-2xl font-bold text-gray-900 mb-2">Server Error</h1>
+            <p class="text-gray-600 mb-4">Something went wrong.</p>
+            <p class="text-sm text-red-600">${error.message}</p>
+            <a href="/" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 mt-4 inline-block">홈으로</a>
+          </div>
+        </div>
+      </div>`,
       head: "<title>Server Error</title>",
       initialData: { error: "Server rendering failed" },
     };
