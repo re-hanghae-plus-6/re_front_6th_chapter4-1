@@ -6,19 +6,19 @@ import { BaseRouter } from "./BaseRouter.js";
 export class ServerRouter extends BaseRouter {
   #currentUrl = "/";
   #origin = "http://localhost";
+  #query = {};
 
   constructor(baseUrl = "") {
     super(baseUrl);
   }
 
   get query() {
-    const url = new URL(this.#currentUrl, this.#origin);
-    return BaseRouter.parseQuery(url.search);
+    return this.#query;
   }
 
   set query(newQuery) {
-    const newUrl = BaseRouter.getUrl(newQuery, this.baseUrl, this.#currentUrl);
-    this.setUrl(newUrl, this.#origin);
+    // 서버사이드에서는 Express에서 이미 파싱된 쿼리 객체를 직접 저장
+    this.#query = newQuery || {};
   }
 
   getCurrentUrl() {
