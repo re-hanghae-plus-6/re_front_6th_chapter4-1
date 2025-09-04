@@ -29,7 +29,7 @@ export class SSRService {
       const initialData = requestStore.getState();
 
       return {
-        head: /* HTML */ `<title>쇼핑몰</title>`,
+        head: /* HTML */ `<title>쇼핑몰 - 홈</title>`,
         html: HomePage({ query, data: initialData }),
         data: initialData,
       };
