@@ -16,21 +16,21 @@ interface MetaData {
   image?: string;
 }
 
-// 서버에서 직접 API 호출 (MSW가 처리)
+// 바닐라와 동일한 방식으로 API 호출 (기존 productApi 사용)
 const fetchProducts = async (params: Record<string, string> = {}) => {
-  const searchParams = new URLSearchParams(params);
-  const response = await fetch(`http://localhost:5176/api/products?${searchParams}`);
-  return response.json();
+  // 동적 import로 productApi 사용 (MSW가 처리)
+  const { getProducts } = await import("../api/productApi");
+  return getProducts(params);
 };
 
 const fetchProduct = async (id: string) => {
-  const response = await fetch(`http://localhost:5176/api/products/${id}`);
-  return response.json();
+  const { getProduct } = await import("../api/productApi");
+  return getProduct(id);
 };
 
 const fetchCategories = async () => {
-  const response = await fetch(`http://localhost:5176/api/categories`);
-  return response.json();
+  const { getCategories } = await import("../api/productApi");
+  return getCategories();
 };
 
 /**
@@ -44,13 +44,17 @@ export const homePageSSR = async ({ query }: SSRContext) => {
     const queryWithSort = { ...query, sort: query.sort || "price_asc" };
     const [productsResponse, categories] = await Promise.all([fetchProducts(queryWithSort), fetchCategories()]);
 
-    console.log("홈페이지 SSR 데이터 로드 완료:", productsResponse.products.length, "개 상품");
+    console.log("홈페이지 SSR 데이터 로드 완료:", {
+      productsResponse,
+      categories,
+      productsCount: productsResponse?.products?.length || 0,
+    });
 
     // SSR에서는 로딩 상태 없이 완전한 데이터만 반환
     return {
-      products: productsResponse.products,
-      categories,
-      totalCount: productsResponse.pagination.total,
+      products: productsResponse?.products || [],
+      categories: categories || {},
+      totalCount: productsResponse?.pagination?.total || 0,
     };
   } catch (error) {
     console.error("홈페이지 SSR 데이터 로드 실패:", error);

@@ -87,11 +87,53 @@ const handleSubCategoryClick = async (e: MouseEvent<HTMLButtonElement>) => {
   }
 };
 
-export function SearchBar() {
-  const { categories } = useProductStore();
+interface SearchBarProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  initialCategories?: any;
+}
+
+export function SearchBar({ initialCategories }: SearchBarProps = {}) {
+  const storeState = useProductStore();
   const { searchQuery, limit = "20", sort, category } = useProductFilter();
 
+  // SSR 데이터 존재 여부 확인
+  const hasSSRCategories = initialCategories && Object.keys(initialCategories).length > 0;
+
+  console.log("🔍 SearchBar 렌더링:", {
+    hasInitialCategories: !!initialCategories,
+    initialCategoriesKeys: Object.keys(initialCategories || {}).length,
+    storeCategoriesKeys: Object.keys(storeState.categories || {}).length,
+    hasSSRCategories,
+    storeLoading: storeState.loading,
+  });
+
+  // SSR 데이터가 있으면 우선 사용, 없으면 스토어 상태 사용
+  const categories = hasSSRCategories ? initialCategories : storeState.categories;
   const categoryList = Object.keys(categories).length > 0 ? Object.keys(categories) : [];
+
+  // 🚨 카테고리 로딩 상태 확인
+  const isCategoryLoading = !hasSSRCategories && categoryList.length === 0;
+  if (isCategoryLoading) {
+    console.log("🔄 SearchBar 카테고리 로딩 중!", {
+      hasSSRCategories,
+      storeLoading: storeState.loading,
+      categoriesLength: categoryList.length,
+    });
+
+    // 브라우저에서만 alert 표시
+    if (typeof window !== "undefined") {
+      setTimeout(() => {
+        alert(
+          `🔄 SearchBar 카테고리 로딩 중!\nSSR 카테고리: ${hasSSRCategories ? "있음" : "없음"}\n스토어 로딩: ${storeState.loading ? "중" : "완료"}`,
+        );
+      }, 200);
+    }
+  } else {
+    console.log("✅ SearchBar 카테고리 로딩 완료!", {
+      hasSSRCategories,
+      categoriesCount: categoryList.length,
+    });
+  }
   const limitOptions = OPTION_LIMITS.map((value) => (
     <option key={value} value={value}>
       {value}개
@@ -185,11 +227,23 @@ export function SearchBar() {
           {/* 1depth 카테고리 */}
           {!category.category1 && (
             <div className="flex flex-wrap gap-2">
-              {categoryList.length > 0 ? (
-                categoryButtons
-              ) : (
-                <div className="text-sm text-gray-500 italic">카테고리 로딩 중...</div>
-              )}
+              {categoryList.length > 0
+                ? categoryButtons
+                : // SSR 데이터가 있으면 로딩 메시지 표시하지 않음
+                  !hasSSRCategories &&
+                  (() => {
+                    console.log("📂 카테고리 로딩 메시지 표시 중!");
+
+                    // 브라우저에서만 alert 표시 (한 번만)
+                    if (typeof window !== "undefined" && !window.__CATEGORY_LOADING_ALERTED__) {
+                      window.__CATEGORY_LOADING_ALERTED__ = true;
+                      setTimeout(() => {
+                        alert("📂 카테고리 로딩 메시지 표시!\n'카테고리 로딩 중...' 텍스트가 화면에 나타났습니다!");
+                      }, 250);
+                    }
+
+                    return <div className="text-sm text-gray-500 italic">카테고리 로딩 중...</div>;
+                  })()}
             </div>
           )}
 

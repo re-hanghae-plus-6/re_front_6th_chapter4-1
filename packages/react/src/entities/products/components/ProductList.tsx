@@ -17,11 +17,61 @@ const goToDetailPage = async (productId: string) => {
   router.push(`/product/${productId}/`);
 };
 
+interface ProductListProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  initialProducts?: any[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  initialCategories?: any;
+  initialTotalCount?: number;
+}
+
 /**
  * 상품 목록 컴포넌트
  */
-export function ProductList() {
-  const { products, loading, error, totalCount } = useProductStore();
+export function ProductList({ initialProducts, initialTotalCount }: ProductListProps = {}) {
+  const storeState = useProductStore();
+
+  // SSR 데이터 존재 여부 확인
+  const hasSSRData = initialProducts && initialProducts.length > 0;
+
+  console.log("🔍 ProductList 렌더링:", {
+    hasSSRData,
+    initialProductsLength: initialProducts?.length || 0,
+    storeProductsLength: storeState.products?.length || 0,
+    storeLoading: storeState.loading,
+    storeError: storeState.error,
+  });
+
+  // SSR 데이터가 있으면 우선 사용, 없으면 스토어 상태 사용
+  const products = hasSSRData ? initialProducts : storeState.products;
+  const totalCount = initialTotalCount !== undefined ? initialTotalCount : storeState.totalCount;
+  const loading = hasSSRData ? false : storeState.loading; // SSR 데이터가 있으면 로딩 상태 false
+  const error = hasSSRData ? null : storeState.error; // SSR 데이터가 있으면 에러 상태 null
+
+  // 🚨 로딩 상태 알림
+  if (loading) {
+    console.log("🔄 ProductList 로딩 중!", {
+      hasSSRData,
+      storeLoading: storeState.loading,
+      productsLength: products.length,
+    });
+
+    // 브라우저에서만 alert 표시
+    if (typeof window !== "undefined") {
+      setTimeout(() => {
+        alert(
+          `🔄 ProductList 로딩 중!\nSSR 데이터: ${hasSSRData ? "있음" : "없음"}\n스토어 로딩: ${storeState.loading ? "중" : "완료"}`,
+        );
+      }, 100);
+    }
+  } else {
+    console.log("✅ ProductList 로딩 완료!", {
+      hasSSRData,
+      productsCount: products.length,
+      totalCount,
+    });
+  }
+
   const hasMore = products.length < totalCount;
 
   // 에러 상태
@@ -73,7 +123,22 @@ export function ProductList() {
           <ProductCard key={product.productId} {...product} onClick={goToDetailPage} />
         ))}
 
-        {loading && Array.from({ length: 6 }).map((_, index) => <ProductCardSkeleton key={index} />)}
+        {loading &&
+          Array.from({ length: 6 }).map((_, index) => {
+            // 🚨 스켈레톤 UI 렌더링 알림 (첫 번째만)
+            if (index === 0) {
+              console.log("💀 스켈레톤 UI 렌더링 중! - 로딩 상태 확인됨");
+
+              // 브라우저에서만 alert 표시 (한 번만)
+              if (typeof window !== "undefined" && !window.__SKELETON_ALERTED__) {
+                window.__SKELETON_ALERTED__ = true;
+                setTimeout(() => {
+                  alert("💀 스켈레톤 UI 렌더링 중!\n로딩 상태가 감지되었습니다!");
+                }, 300);
+              }
+            }
+            return <ProductCardSkeleton key={index} />;
+          })}
       </div>
 
       {/* 무한 스크롤 로딩 */}

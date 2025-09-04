@@ -1,3 +1,5 @@
+import React from "react";
+import { renderToString } from "react-dom/server";
 import { ServerRouter } from "./router/ServerRouter";
 import { registerServerRoutes } from "./router/routes";
 import type { SSRResult, SSRContext, MetaData } from "./types/ssr";
@@ -87,21 +89,24 @@ export const render = async (pathname: string, query: Record<string, string> = {
     console.log("라우트 매칭 결과:", route);
     const data = await prefetchData(route, route.params || {}, query);
 
+    console.log("데이터 프리페칭 결과:", data);
     // 4. 메타데이터 생성
     const metadata = await generateMetadata(route, route.params || {}, data);
 
-    // 5. 간단한 HTML 구조만 반환 (바닐라 방식 적용)
-    // 실제 React 컴포넌트 렌더링은 클라이언트 하이드레이션에서 처리
-    const html = `
-      <div id="root" data-ssr="true">
-        <div class="min-h-screen bg-gray-50 flex items-center justify-center">
-          <div class="text-center">
-            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p class="text-gray-600">로딩 중...</p>
-          </div>
-        </div>
-      </div>
-    `;
+    // 5. 실제 React 컴포넌트 서버 렌더링
+    console.log("React 컴포넌트 서버 렌더링 시작");
+
+    // 기존 HomePage 컴포넌트를 SSR 데이터와 함께 렌더링
+    const { HomePage } = await import("./pages/HomePage");
+    const html = renderToString(
+      <HomePage
+        ssrData={{
+          products: data.products || [],
+          categories: data.categories || {},
+          totalCount: data.totalCount || 0,
+        }}
+      />,
+    );
 
     return {
       head: `
