@@ -1,7 +1,7 @@
 // ===== 간단한 라우터 =====
 import { HomePage, NotFoundPage, ProductDetailPage } from "./pages";
 import { router } from "./router";
-import { getProductsOnServer, getUniqueCategories, getProductById } from "./mocks/server.js";
+import { getProductsOnServer, getUniqueCategories, getProductById, getRelatedProducts } from "./mocks/server.js";
 
 // ===== 라우트 등록 =====
 router.addRoute("/", () => {
@@ -34,9 +34,12 @@ router.addRoute("/product/:id/", (params) => {
     };
   }
 
+  // 관련 상품 로드
+  const relatedProducts = getRelatedProducts(product.category2, product.productId);
+
   return {
-    initialData: { product },
-    html: ProductDetailPage(),
+    initialData: { product, relatedProducts },
+    html: ProductDetailPage({ product, relatedProducts }),
     head: `<title>${product.title} - 쇼핑몰</title>`,
   };
 });

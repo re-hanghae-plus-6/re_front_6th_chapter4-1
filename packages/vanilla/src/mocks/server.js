@@ -37,6 +37,22 @@ export function getProductById(productId) {
   };
 }
 
+// 관련 상품을 가져오는 함수 (같은 category2의 다른 상품들)
+export function getRelatedProducts(category2, excludeProductId, limit = 5) {
+  if (!category2) return [];
+
+  return items
+    .filter((item) => item.category2 === category2 && item.productId !== excludeProductId)
+    .slice(0, limit)
+    .map((item) => ({
+      ...item,
+      description: `${item.title}에 대한 상세 설명입니다. ${item.brand} 브랜드의 우수한 품질을 자랑하는 상품으로, 고객 만족도가 높은 제품입니다.`,
+      rating: Math.floor(Math.random() * 2) + 4,
+      reviewCount: Math.floor(Math.random() * 1000) + 50,
+      stock: Math.floor(Math.random() * 100) + 10,
+    }));
+}
+
 // 상품 검색 및 필터링 함수
 function filterProducts(products, query) {
   let filtered = [...products];
