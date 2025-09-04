@@ -6,12 +6,18 @@ declare global {
   }
 }
 
-window.__spyCalls = [];
-window.__spyCallsClear = () => {
+// 서버 환경에서는 window가 없으므로 안전하게 처리
+if (typeof window !== "undefined") {
   window.__spyCalls = [];
-};
+  window.__spyCallsClear = () => {
+    window.__spyCalls = [];
+  };
+}
 
 export const log: typeof console.log = (...args) => {
-  window.__spyCalls.push(args);
+  // 서버 환경에서는 window.__spyCalls에 접근하지 않음
+  if (typeof window !== "undefined") {
+    window.__spyCalls.push(args);
+  }
   return console.log(...args);
 };
