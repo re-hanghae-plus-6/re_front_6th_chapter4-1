@@ -85,7 +85,7 @@ export const render = async (url, query) => {
       }
     } else if (route.path === "/product/:id/") {
       const productId = route.params.id;
-      console.log("상품 ID:", productId);
+      //console.log("상품 ID:", productId);
 
       try {
         const product = await getProduct(productId);
