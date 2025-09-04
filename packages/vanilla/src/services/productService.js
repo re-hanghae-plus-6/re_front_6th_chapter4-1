@@ -1,8 +1,27 @@
 import { getCategories, getProduct, getProducts } from "../api/productApi";
-import { initialProductState, productStore, PRODUCT_ACTIONS } from "../stores";
+import { productStore, PRODUCT_ACTIONS, initialProductState } from "../stores";
 import { router } from "../router";
 
+export const setupProductsAndCategories = async (data) => {
+  if (!data) {
+    return;
+  }
+
+  if (productStore.getState().status === "done") {
+    return;
+  }
+
+  productStore.dispatch({
+    type: PRODUCT_ACTIONS.SETUP,
+    payload: data,
+  });
+};
+
 export const loadProductsAndCategories = async () => {
+  if (productStore.getState().status === "done") {
+    return;
+  }
+
   router.query = { current: undefined }; // 항상 첫 페이지로 초기화
   productStore.dispatch({
     type: PRODUCT_ACTIONS.SETUP,
@@ -132,7 +151,6 @@ export const loadProductDetailForPage = async (productId) => {
     productStore.dispatch({
       type: PRODUCT_ACTIONS.SETUP,
       payload: {
-        ...initialProductState,
         currentProduct: null,
         loading: true,
         status: "pending",

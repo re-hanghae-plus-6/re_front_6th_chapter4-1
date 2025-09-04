@@ -1,3 +1,3 @@
-import { createStorage } from "../lib";
+import { createSafeStorage } from "../lib";
 
-export const cartStorage = createStorage("shopping_cart");
+export const cartStorage = createSafeStorage("shopping_cart");
