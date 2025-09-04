@@ -1,13 +1,28 @@
-/**
- * 로컬스토리지 추상화 함수
- * @param {string} key - 스토리지 키
- * @param {Storage} storage - 기본값은 localStorage
- * @returns {Object} { get, set, reset }
- */
-export const createStorage = (key, storage = window.localStorage) => {
+export const createSafeStorage = (key, type = "local") => {
+  const memory = {};
+  let useMemory = false;
+
+  if (typeof window === "undefined") {
+    useMemory = true;
+  } else {
+    const storage = type === "local" ? localStorage : sessionStorage;
+    try {
+      storage.setItem("__test", "");
+      storage.removeItem("__test");
+    } catch {
+      useMemory = true;
+    }
+  }
+
   const get = () => {
     try {
-      const item = storage.getItem(key);
+      let item;
+      if (useMemory) {
+        item = memory[key];
+      } else {
+        const storage = type === "local" ? localStorage : sessionStorage;
+        item = storage.getItem(key);
+      }
       return item ? JSON.parse(item) : null;
     } catch (error) {
       console.error(`Error parsing storage item for key "${key}":`, error);
@@ -17,7 +32,13 @@ export const createStorage = (key, storage = window.localStorage) => {
 
   const set = (value) => {
     try {
-      storage.setItem(key, JSON.stringify(value));
+      const stringValue = JSON.stringify(value);
+      if (useMemory) {
+        memory[key] = stringValue;
+      } else {
+        const storage = type === "local" ? localStorage : sessionStorage;
+        storage.setItem(key, stringValue);
+      }
     } catch (error) {
       console.error(`Error setting storage item for key "${key}":`, error);
     }
@@ -25,7 +46,12 @@ export const createStorage = (key, storage = window.localStorage) => {
 
   const reset = () => {
     try {
-      storage.removeItem(key);
+      if (useMemory) {
+        delete memory[key];
+      } else {
+        const storage = type === "local" ? localStorage : sessionStorage;
+        storage.removeItem(key);
+      }
     } catch (error) {
       console.error(`Error removing storage item for key "${key}":`, error);
     }
