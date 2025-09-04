@@ -1,6 +1,11 @@
 import { Router } from "@hanghae-plus/lib";
 import { BASE_URL } from "./constants";
 import { routes } from "./router";
+import { renderToString } from "react-dom/server";
+import { App } from "./App";
+import { createProductStore } from "./entities";
+import { ProductProvider } from "./entities/products/context/ProductContext";
+import { RouterProvider } from "./router/RouterContext";
 
 type SSRParams = {
   pathname: string;
@@ -32,7 +37,13 @@ export const render = async (pathname: string, query: Record<string, string>) =>
 
     return {
       head: `<title>${result.metadata?.title ?? ""}</title>`,
-      html: result.html,
+      html: renderToString(
+        <RouterProvider router={router}>
+          <ProductProvider productStore={createProductStore(result.data || {})}>
+            <App />
+          </ProductProvider>
+        </RouterProvider>,
+      ),
       __INITIAL_DATA__: result.data ?? {},
     };
   }
