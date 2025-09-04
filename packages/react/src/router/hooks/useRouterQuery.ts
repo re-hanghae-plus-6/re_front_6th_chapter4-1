@@ -1,6 +1,10 @@
-import { useRouter } from "@hanghae-plus/lib";
-import { router } from "../router";
+import { useSyncExternalStore, useCallback } from "react";
+import { router } from "../";
+
+const subscribe = (callback: () => void) => router.subscribe(callback);
 
 export const useRouterQuery = () => {
-  return useRouter(router, ({ query }) => query);
+  const getSnapshot = useCallback(() => router.query, []);
+
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 };

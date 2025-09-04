@@ -1,6 +1,11 @@
-import { router } from "../router";
-import { useRouter } from "@hanghae-plus/lib";
+import { router } from "../";
+import { useSyncExternalStore, useCallback } from "react";
+import type { RouteHandler } from "../types";
 
-export const useCurrentPage = () => {
-  return useRouter(router, ({ target }) => target);
+const subscribe = (callback: () => void) => router.subscribe(callback);
+
+export const useCurrentPage = (): RouteHandler | undefined => {
+  const getSnapshot = useCallback(() => router.target, []);
+
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 };
