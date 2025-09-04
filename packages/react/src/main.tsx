@@ -2,7 +2,7 @@ import { createRoot } from "react-dom/client";
 import { App } from "./App";
 import { BASE_URL } from "./constants.ts";
 import { Providers } from "./core/providers.tsx";
-import { createProductStore } from "./entities/index.ts";
+import { createProductStore, initialProductState } from "./entities/index.ts";
 import * as Home from "./pages/home/page";
 import { NotFoundPage } from "./pages/not-found.tsx";
 import * as ProductDetail from "./pages/product/detail.page";
@@ -26,9 +26,30 @@ function main() {
   router.start();
 
   const rootElement = document.getElementById("root")!;
+  const prefetchedData = window?.__INITIAL_DATA__;
+
   createRoot(rootElement).render(
-    <Providers router={router} productStore={createProductStore(window.__INITIAL_DATA__.snapshots.productStore)}>
-      <App />
+    <Providers
+      router={router}
+      productStore={createProductStore(
+        prefetchedData
+          ? {
+              products: prefetchedData.initialData.products,
+              totalCount: prefetchedData.initialData.totalCount,
+
+              currentProduct: prefetchedData.initialData.currentProduct,
+              relatedProducts: prefetchedData.initialData.relatedProducts,
+
+              loading: prefetchedData.initialData.loading,
+              error: prefetchedData.initialData.error,
+              status: prefetchedData.initialData.status,
+
+              categories: prefetchedData.initialData.categories,
+            }
+          : initialProductState,
+      )}
+    >
+      <App isPrefetched={!!prefetchedData} />
     </Providers>,
   );
 }

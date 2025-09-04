@@ -1,11 +1,11 @@
 import { renderToString } from "react-dom/server";
 import { Providers } from "./core/providers";
-import { createProductStore, initialProductState } from "./entities";
-import type { GlobalSnapshot } from "./global";
+import { createProductStore } from "./entities";
+import type { GlobalInitialData } from "./global";
 import * as Home from "./pages/home/page";
+import { NotFoundPage } from "./pages/not-found";
 import * as ProductDetail from "./pages/product/detail.page";
 import { safeSerialize } from "./utils/safeSerialize";
-import { NotFoundPage } from "./pages/not-found";
 
 export const render = async (url: string): Promise<{ head: string; html: string; initialDataScript: string }> => {
   const router = await import("./core/router/instance").then((module) => module.router);
@@ -22,22 +22,49 @@ export const render = async (url: string): Promise<{ head: string; html: string;
     .addRoute(".*", NotFoundPage);
 
   const context = router.createContext(url);
-  const initialSnapshots = { snapshots: { productStore: initialProductState } } satisfies GlobalSnapshot;
+  const initialPrefetchedData = {
+    initialData: {
+      products: [],
+      categories: {},
+      totalCount: 0,
+      loading: false,
+      error: null,
+      currentProduct: null,
+      relatedProducts: [],
+      status: "idle",
+      query: router.query,
+    },
+  } satisfies GlobalInitialData;
 
   if (!context || !context.handler) {
     return {
       html: renderToString(<NotFoundPage />),
       head: /* html */ `<title>쇼핑몰 - 404</title>`,
-      initialDataScript: wrappingInitialDataScript(initialSnapshots),
+      initialDataScript: wrappingInitialDataScript(initialPrefetchedData),
     };
   }
 
-  const prefetchedData = ((await router.prefetch(url)) ?? initialSnapshots) as GlobalSnapshot;
+  const prefetchedData = ((await router.prefetch(url)) ?? initialPrefetchedData) as GlobalInitialData;
   const generatedMetadata = await router.generateMetaData(url);
 
   return {
     html: renderToString(
-      <Providers router={router} productStore={createProductStore(prefetchedData.snapshots.productStore)}>
+      <Providers
+        router={router}
+        productStore={createProductStore({
+          products: prefetchedData.initialData.products,
+          totalCount: prefetchedData.initialData.totalCount,
+
+          currentProduct: prefetchedData.initialData.currentProduct,
+          relatedProducts: prefetchedData.initialData.relatedProducts,
+
+          loading: prefetchedData.initialData.loading,
+          error: prefetchedData.initialData.error,
+          status: prefetchedData.initialData.status,
+
+          categories: prefetchedData.initialData.categories,
+        })}
+      >
         <context.handler {...prefetchedData} />
       </Providers>,
     ),

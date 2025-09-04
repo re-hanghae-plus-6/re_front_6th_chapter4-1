@@ -1,24 +1,14 @@
-import { ModalProvider, ToastProvider } from "./components";
-import { useLoadCartStore } from "./entities";
+import type { ComponentType } from "react";
 import { useCurrentPage } from "./hooks";
-
-const CartInitializer = () => {
-  useLoadCartStore();
-  return null;
-};
 
 /**
  * 전체 애플리케이션 렌더링
  */
-export const App = () => {
-  const PageComponent = useCurrentPage();
+type Props = {
+  isPrefetched: boolean;
+};
+export const App = ({ isPrefetched }: Props) => {
+  const PageComponent = useCurrentPage() as unknown as ComponentType<{ isPrefetched: boolean }>;
 
-  return (
-    <>
-      <ToastProvider>
-        <ModalProvider>{PageComponent ? <PageComponent /> : null}</ModalProvider>
-      </ToastProvider>
-      <CartInitializer />
-    </>
-  );
+  return PageComponent ? <PageComponent isPrefetched={isPrefetched} /> : null;
 };

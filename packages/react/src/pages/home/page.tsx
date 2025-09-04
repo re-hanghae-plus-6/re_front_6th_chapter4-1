@@ -1,9 +1,9 @@
 import { useEffect } from "react";
-import { getProducts, getCategories } from "../../api/productApi";
-import { loadNextProducts, SearchBar, ProductList, type ProductStoreState, initialProductState } from "../../entities";
-import type { GlobalSnapshot } from "../../global";
+import { getCategories, getProducts } from "../../api/productApi";
+import { type GenerateMetaData, type GetServerSideProps, useRouterContext } from "../../core/router";
+import { ProductList, SearchBar, useProductStoreContext } from "../../entities";
+import type { GlobalInitialData } from "../../global";
 import { PageWrapper } from "../PageWrapper";
-import { type GenerateMetaData, useRouterContext, type GetServerSideProps } from "../../core/router";
 
 /* eslint-disable react-refresh/only-export-components */
 export const generateMetaData: GenerateMetaData = async () => {
@@ -15,25 +15,37 @@ export const generateMetaData: GenerateMetaData = async () => {
 // 무한 스크롤 이벤트 등록
 let scrollHandlerRegistered = false;
 
-const registerScrollHandler = () => {
-  if (scrollHandlerRegistered) return;
-
-  window.addEventListener("scroll", loadNextProducts);
-  scrollHandlerRegistered = true;
+type Props = {
+  isPrefetched?: boolean;
 };
 
-const unregisterScrollHandler = () => {
-  if (!scrollHandlerRegistered) return;
-  window.removeEventListener("scroll", loadNextProducts);
-  scrollHandlerRegistered = false;
-};
-
-export const PageComponent = () => {
+export const PageComponent = ({ isPrefetched = false }: Props) => {
   const router = useRouterContext();
+  const { action } = useProductStoreContext();
+
+  const registerScrollHandler = () => {
+    if (scrollHandlerRegistered) return;
+
+    window.addEventListener("scroll", action.loadNextProducts);
+    scrollHandlerRegistered = true;
+  };
+
+  const unregisterScrollHandler = () => {
+    if (!scrollHandlerRegistered) return;
+    window.removeEventListener("scroll", action.loadNextProducts);
+    scrollHandlerRegistered = false;
+  };
+
   useEffect(() => {
     registerScrollHandler();
 
     return unregisterScrollHandler;
+  }, [router]);
+
+  useEffect(() => {
+    if (isPrefetched) return;
+
+    action.loadProductsAndCategories();
   }, [router]);
 
   return (
@@ -57,34 +69,40 @@ export const PageComponent = () => {
   );
 };
 
-export const getServerSideProps: GetServerSideProps<GlobalSnapshot> = async ({ query }) => {
+export const getServerSideProps: GetServerSideProps<GlobalInitialData> = async ({ query }) => {
   try {
     const [productsData, categoriesData] = await Promise.all([getProducts(query), getCategories()]);
 
-    const productStoreState = {
-      products: productsData.products,
-      categories: categoriesData,
-      totalCount: productsData.pagination.total,
-      loading: false,
-      error: null,
-      currentProduct: null,
-      relatedProducts: [],
-      status: "done",
-    } satisfies ProductStoreState;
-
     return {
       props: {
-        snapshots: {
-          productStore: { ...initialProductState, ...productStoreState },
+        initialData: {
+          products: productsData.products,
+          categories: categoriesData,
+          totalCount: productsData.pagination.total,
+          loading: false,
+          error: null,
+          currentProduct: null,
+          relatedProducts: [],
+          status: "done",
+          query,
         },
-      },
+      } satisfies GlobalInitialData,
     };
-  } catch (error) {
-    console.error("HomePage prefetch error:", error);
+  } catch (err) {
+    console.error("HomePage prefetch error:", err);
+    const error = err as unknown as Error;
     return {
       props: {
-        snapshots: {
-          productStore: initialProductState,
+        initialData: {
+          products: [],
+          categories: {},
+          totalCount: 0,
+          loading: false,
+          error: error.message,
+          currentProduct: null,
+          relatedProducts: [],
+          status: "error",
+          query,
         },
       },
     };

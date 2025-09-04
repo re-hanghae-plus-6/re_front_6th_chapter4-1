@@ -1,11 +1,11 @@
 /* eslint-disable react-refresh/only-export-components */
 
 import { getProduct, getProducts } from "../../api/productApi";
-import { PublicImage, ErrorContent } from "../../components";
+import { ErrorContent, PublicImage } from "../../components";
 import type { GenerateMetaData, GetServerSideProps } from "../../core/router";
 
-import { useProductStoreContext, useLoadProductDetail, ProductDetail, initialProductState } from "../../entities";
-import type { GlobalSnapshot } from "../../global";
+import { ProductDetail, useLoadProductDetail, useProductStoreContext } from "../../entities";
+import type { GlobalInitialData } from "../../global";
 import { PageWrapper } from "../PageWrapper";
 
 export const generateMetaData: GenerateMetaData = async (ctx) => {
@@ -15,12 +15,9 @@ export const generateMetaData: GenerateMetaData = async (ctx) => {
 };
 
 export const PageComponent = () => {
-  const productStore = useProductStoreContext();
-  const { currentProduct: product, error, loading } = productStore.getState();
+  const { state } = useProductStoreContext();
 
   useLoadProductDetail();
-
-  console.log(productStore.getState());
 
   return (
     <PageWrapper
@@ -37,7 +34,7 @@ export const PageComponent = () => {
       }
     >
       <div className="min-h-screen bg-gray-50 p-4">
-        {loading && (
+        {state.loading && (
           <div className="min-h-screen bg-gray-50 flex items-center justify-center">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
@@ -45,14 +42,14 @@ export const PageComponent = () => {
             </div>
           </div>
         )}
-        {error && <ErrorContent error={error} />}
-        {product && <ProductDetail {...product} />}
+        {state.error && <ErrorContent error={state.error} />}
+        {state.currentProduct && <ProductDetail {...state.currentProduct} />}
       </div>
     </PageWrapper>
   );
 };
 
-export const getServerSideProps: GetServerSideProps<GlobalSnapshot> = async ({ params }) => {
+export const getServerSideProps: GetServerSideProps<GlobalInitialData> = async ({ query, params }) => {
   try {
     const productId = params.id;
     if (!productId) {
@@ -68,14 +65,16 @@ export const getServerSideProps: GetServerSideProps<GlobalSnapshot> = async ({ p
 
     return {
       props: {
-        snapshots: {
-          productStore: {
-            ...initialProductState,
-            currentProduct: product,
-            relatedProducts,
-            loading: false,
-            status: "done",
-          },
+        initialData: {
+          products: [],
+          categories: {},
+          totalCount: 0,
+          loading: false,
+          error: null,
+          currentProduct: product,
+          relatedProducts: relatedProducts,
+          status: "done",
+          query,
         },
       },
     };
@@ -83,8 +82,16 @@ export const getServerSideProps: GetServerSideProps<GlobalSnapshot> = async ({ p
     console.error("ProductDetailPage prefetch error:", error);
     return {
       props: {
-        snapshots: {
-          productStore: initialProductState,
+        initialData: {
+          products: [],
+          categories: {},
+          totalCount: 0,
+          loading: false,
+          error: null,
+          currentProduct: null,
+          relatedProducts: [],
+          status: "idle",
+          query,
         },
       },
     };
