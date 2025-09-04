@@ -14,16 +14,30 @@ const enableMocking = () =>
   );
 
 /**
- * 서버에서 전달받은 초기 데이터로 클라이언트 상태 복원 (하이드레이션)
- * 바닐라 JavaScript의 hydrateFromServerData 패턴을 React로 적용
+ * 요청별 상태 격리를 위한 클로저 기반 상태 관리
+ * 각 요청마다 독립적인 상태를 보장하여 메모리 누수와 상태 오염 방지
  */
-// SSR 데이터를 전역에 저장 (컴포넌트에서 접근 가능)
-let globalSSRData: {
-  products?: unknown[];
-  categories?: Record<string, unknown>;
-  totalCount?: number;
-  __SSR_QUERY__?: Record<string, string>;
-} | null = null;
+function createRequestScopedState() {
+  let requestSSRData: {
+    products?: unknown[];
+    categories?: Record<string, unknown>;
+    totalCount?: number;
+    __SSR_QUERY__?: Record<string, string>;
+  } | null = null;
+
+  return {
+    setSSRData: (data: typeof requestSSRData) => {
+      requestSSRData = data;
+    },
+    getSSRData: () => requestSSRData,
+    clearSSRData: () => {
+      requestSSRData = null;
+    },
+  };
+}
+
+// 현재 요청의 상태 관리 인스턴스
+const requestState = createRequestScopedState();
 
 async function hydrateFromServerData() {
   console.log("🔄 하이드레이션 시작...");
@@ -33,8 +47,8 @@ async function hydrateFromServerData() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const data = (window as any).__INITIAL_DATA__;
 
-    // 🚨 중요: 삭제하기 전에 전역 변수에 저장
-    globalSSRData = data;
+    // 요청별 상태에 저장
+    requestState.setSSRData(data);
 
     console.log("📦 SSR 초기 데이터 발견:", {
       dataKeys: Object.keys(data),
@@ -47,7 +61,7 @@ async function hydrateFromServerData() {
 
     console.log("✅ 클라이언트 하이드레이션 완료 - SSR 데이터로 상태 복원!");
 
-    // 초기 데이터 정리 (이제 globalSSRData에 저장됨)
+    // 초기 데이터 정리
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     delete (window as any).__INITIAL_DATA__;
   } else {
@@ -55,9 +69,9 @@ async function hydrateFromServerData() {
   }
 }
 
-// SSR 데이터 접근을 위한 헬퍼 함수
+// SSR 데이터 접근을 위한 헬퍼 함수 (요청별 상태 반환)
 export function getGlobalSSRData() {
-  return globalSSRData;
+  return requestState.getSSRData();
 }
 
 /**
@@ -151,6 +165,15 @@ async function main() {
   }
 
   console.log("main() 완료");
+}
+
+/**
+ * 메모리 정리를 위한 cleanup 함수
+ * 페이지 언마운트 시 호출하여 메모리 누수 방지
+ */
+export function cleanupRequestState() {
+  requestState.clearSSRData();
+  console.log("🧹 요청별 상태 정리 완료");
 }
 
 // 애플리케이션 시작

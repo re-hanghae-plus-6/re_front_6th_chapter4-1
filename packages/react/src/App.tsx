@@ -35,16 +35,16 @@ export const App = () => {
         <ModalProvider>
           {PageComponent ? (
             <PageComponent
-              ssrData={
-                ssrData
+              {...({
+                ssrData: ssrData
                   ? {
                       products: ssrData.products || [],
                       categories: ssrData.categories || {},
                       totalCount: ssrData.totalCount || 0,
                     }
-                  : undefined
-              }
-              ssrQuery={ssrData?.__SSR_QUERY__}
+                  : undefined,
+                ssrQuery: ssrData?.__SSR_QUERY__,
+              } as Record<string, unknown>)}
             />
           ) : null}
         </ModalProvider>
