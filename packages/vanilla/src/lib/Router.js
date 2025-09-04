@@ -1,7 +1,7 @@
 /**
  * 간단한 SPA 라우터
  */
-import { createObserver } from "./createObserver.js";
+import { createObserver } from "./createObserver";
 
 export class Router {
   #routes;
@@ -73,7 +73,7 @@ export class Router {
     });
   }
 
-  #findRoute(url = window.location.pathname) {
+  #findRoute(url = window.location.pathname + window.location.search) {
     const { pathname } = new URL(url, window.location.origin);
     for (const [routePath, route] of this.#routes) {
       const match = pathname.match(route.regex);

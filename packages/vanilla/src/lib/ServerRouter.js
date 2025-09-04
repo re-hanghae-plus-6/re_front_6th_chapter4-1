@@ -13,12 +13,28 @@ export class ServerRouter {
     return this.#baseUrl;
   }
 
+  get query() {
+    return ServerRouter.parseQuery(window.location.search);
+  }
+
+  set query(newQuery) {
+    const newUrl = ServerRouter.getUrl(newQuery, this.#baseUrl);
+    this.push(newUrl);
+  }
+
   get params() {
     return this.#route?.params ?? {};
   }
 
   get route() {
     return this.#route;
+  }
+
+  setParams(params) {
+    if (!this.#route) {
+      this.#route = {};
+    }
+    this.#route.params = params;
   }
 
   /**
@@ -47,8 +63,23 @@ export class ServerRouter {
 
   findRoute(url) {
     const { pathname } = new URL(url, "http://localhost");
+
     for (const [routePath, route] of this.#routes) {
-      const match = pathname.match(route.regex);
+      // 원본 pathname으로 먼저 시도
+      let match = pathname.match(route.regex);
+
+      // 매치되지 않으면 trailing slash 정규화 후 재시도
+      if (!match) {
+        const normalizedPathname = pathname === "/" ? pathname : pathname.replace(/\/$/, "");
+        match = normalizedPathname.match(route.regex);
+      }
+
+      // 매치되지 않으면 trailing slash 추가 후 재시도
+      if (!match && !pathname.endsWith("/")) {
+        const withTrailingSlash = pathname + "/";
+        match = withTrailingSlash.match(route.regex);
+      }
+
       if (match) {
         // 매치된 파라미터들을 객체로 변환
         const params = {};
@@ -63,6 +94,23 @@ export class ServerRouter {
         };
       }
     }
+
+    console.log("❌ No route matched for:", url);
     return null;
   }
+
+  static getUrl = (newQuery, baseUrl = "") => {
+    const currentQuery = ServerRouter.parseQuery();
+    const updatedQuery = { ...currentQuery, ...newQuery };
+
+    // 빈 값들 제거
+    Object.keys(updatedQuery).forEach((key) => {
+      if (updatedQuery[key] === null || updatedQuery[key] === undefined || updatedQuery[key] === "") {
+        delete updatedQuery[key];
+      }
+    });
+
+    const queryString = ServerRouter.stringifyQuery(updatedQuery);
+    return `${baseUrl}${window.location.pathname.replace(baseUrl, "")}${queryString ? `?${queryString}` : ""}`;
+  };
 }
