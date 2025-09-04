@@ -96,27 +96,43 @@ export const loadMoreProducts = async () => {
   }
 
   const router = await getRouter();
-  router.query = { current: Number(router.query.current ?? 1) + 1 };
+  const currentPage = Number((router.query as unknown as Record<string, string>).current ?? 1);
+  router.query = { current: currentPage + 1 };
   await loadProducts(false);
 };
 export const searchProducts = async (search: string) => {
   const router = await getRouter();
   router.query = { search, current: 1 };
+  productStore.dispatch({ type: PRODUCT_ACTIONS.SETUP, payload: { search, page: 1 } });
+  await loadProducts(true);
 };
 
 export const setCategory = async (categoryData: StringRecord) => {
   const router = await getRouter();
   router.query = { ...categoryData, current: 1 };
+  productStore.dispatch({
+    type: PRODUCT_ACTIONS.SETUP,
+    payload: {
+      category1: categoryData.category1 ?? "",
+      category2: categoryData.category2 ?? "",
+      page: 1,
+    },
+  });
+  await loadProducts(true);
 };
 
 export const setSort = async (sort: string) => {
   const router = await getRouter();
   router.query = { sort, current: 1 };
+  productStore.dispatch({ type: PRODUCT_ACTIONS.SETUP, payload: { sort, page: 1 } });
+  await loadProducts(true);
 };
 
 export const setLimit = async (limit: number) => {
   const router = await getRouter();
   router.query = { limit, current: 1 };
+  productStore.dispatch({ type: PRODUCT_ACTIONS.SETUP, payload: { limit, page: 1 } });
+  await loadProducts(true);
 };
 
 export const loadProductDetailForPage = async (productId: string) => {
