@@ -2,4 +2,16 @@
 import { Router } from "../lib";
 import { BASE_URL } from "../constants.js";
 
-export const router = new Router(BASE_URL);
+const isBrowser = typeof window !== "undefined";
+
+export const router = isBrowser
+  ? new Router(BASE_URL)
+  : {
+      query: {},
+      params: {},
+      start() {},
+      navigate() {},
+      push() {},
+      back() {},
+      replace() {},
+    };

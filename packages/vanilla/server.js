@@ -52,11 +52,18 @@ app.get("*all", async (request, response) => {
     const template = await get.template(viteServer, url);
     const render = await get.render(viteServer);
 
-    const { head, html } = await render(url);
+    const { head, html, initialData, status = 200 } = await render(url, request.query ?? {});
 
-    const finalHtml = template.replace(`<!--app-head-->`, head ?? "").replace(`<!--app-html-->`, html ?? "");
+    const initialDataScript = initialData
+      ? `<script>window.__INITIAL_DATA__=${JSON.stringify(initialData).replace(/</g, "\\u003c")}</script>`
+      : "";
 
-    response.status(200).set({ "Content-Type": "text/html" }).send(finalHtml);
+    const finalHtml = template
+      .replace(`<!--app-head-->`, head ?? "")
+      .replace(`<!--app-html-->`, html ?? "")
+      .replace("</head>", `${initialDataScript}</head>`);
+
+    response.status(status).set({ "Content-Type": "text/html" }).send(finalHtml);
   } catch (error) {
     response.status(500).end(error.stack);
   }
