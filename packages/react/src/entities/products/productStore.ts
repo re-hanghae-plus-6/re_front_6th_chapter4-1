@@ -26,6 +26,10 @@ export const PRODUCT_ACTIONS = {
 /**
  * 상품 스토어 초기 상태
  */
+// SSG 초기 데이터가 있는지 확인
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const hasInitialData = typeof window !== "undefined" && (window as any)?.__INITIAL_DATA__;
+
 export const initialProductState = {
   // 상품 목록
   products: [] as Product[],
@@ -35,10 +39,10 @@ export const initialProductState = {
   currentProduct: null as Product | null,
   relatedProducts: [] as Product[],
 
-  // 로딩 및 에러 상태
-  loading: true,
+  // 로딩 및 에러 상태 - 초기 데이터가 있으면 loading: false
+  loading: !hasInitialData,
   error: null as string | null,
-  status: "idle",
+  status: hasInitialData ? "done" : "idle",
 
   // 카테고리 목록
   categories: {} as Categories,

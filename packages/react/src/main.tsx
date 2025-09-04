@@ -57,6 +57,17 @@ function main() {
         });
       }
     }
+
+    // 초기 데이터가 있으므로 로딩 상태를 false로 설정
+    productStore.dispatch({
+      type: PRODUCT_ACTIONS.SET_LOADING,
+      payload: false,
+    });
+
+    productStore.dispatch({
+      type: PRODUCT_ACTIONS.SET_STATUS,
+      payload: "done",
+    });
   }
 
   // React 앱을 DOM에 마운트 (하이드레이션)

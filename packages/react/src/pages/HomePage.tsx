@@ -29,7 +29,13 @@ const unregisterScrollHandler = () => {
 export const HomePage = () => {
   useEffect(() => {
     registerScrollHandler();
-    loadProductsAndCategories();
+
+    // SSG로 초기 데이터가 있으면 API 호출 스킵
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const hasInitialData = (window as any)?.__INITIAL_DATA__?.products;
+    if (!hasInitialData) {
+      loadProductsAndCategories();
+    }
 
     return unregisterScrollHandler;
   }, []);
