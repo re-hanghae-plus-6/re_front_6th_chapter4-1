@@ -34,7 +34,7 @@ function main() {
   router.start();
 }
 
-if (import.meta.env.MODE !== "test") {
+if (import.meta.env.DEV || (typeof window !== "undefined" && window.location.hostname === "localhost")) {
   enableMocking().then(main);
 } else {
   main();
