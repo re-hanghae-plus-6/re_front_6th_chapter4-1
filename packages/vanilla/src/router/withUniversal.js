@@ -15,7 +15,7 @@ export const withUniversal = (PageComponent) => {
 
     const props = {
       query: routerInstance.query,
-      data: window.__INITIAL_DATA__,
+      data: window.__INITIAL_DATA__ || null,
     };
 
     delete window.__INITIAL_DATA__;

@@ -16,7 +16,7 @@ const homePageLifecycle = {
 };
 
 function HomePageComponent({ query = {}, data }) {
-  const productState = data ? data : productStore.getState();
+  const productState = data || productStore.getState();
   const { search: searchQuery, limit, sort, category1, category2 } = query;
   const { products, loading, error, totalCount, categories } = productState;
 
