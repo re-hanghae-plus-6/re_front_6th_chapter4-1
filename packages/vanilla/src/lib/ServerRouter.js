@@ -68,6 +68,7 @@ class ServerRouter {
       if (match) {
         // 매치된 파라미터들을 객체로 변환
         const params = {};
+
         route.paramNames.forEach((name, index) => {
           params[name] = match[index + 1];
         });
@@ -97,6 +98,7 @@ class ServerRouter {
     try {
       const params = new URLSearchParams(search);
       const query = {};
+
       for (const [key, value] of params) {
         query[key] = decodeURIComponent(value);
       }

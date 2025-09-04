@@ -1,5 +1,5 @@
-import { PageWrapper } from "./PageWrapper";
 import { Logo, PublicImage } from "../components";
+import { PageWrapper } from "./PageWrapper";
 
 export const NotFoundPage = () => (
   <PageWrapper headerLeft={<Logo />}>
@@ -16,3 +16,9 @@ export const NotFoundPage = () => (
     </div>
   </PageWrapper>
 );
+
+NotFoundPage.prefetch = async () => {
+  return {};
+};
+
+NotFoundPage.meta = () => `<title>쇼핑몰 - 페이지를 찾을 수 없습니다</title>`;
