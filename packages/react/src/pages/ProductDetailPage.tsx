@@ -1,8 +1,13 @@
 import { ProductDetail, useLoadProductDetail, useProductStore } from "../entities";
 import { PageWrapper } from "./PageWrapper";
 import { ErrorContent, PublicImage } from "../components";
+import type { ProductDetailSSRResult } from "../api/ssrProductApi";
 
-export const ProductDetailPage = () => {
+export interface ProductDetailPageProps {
+  initialData?: ProductDetailSSRResult | null;
+}
+
+export const ProductDetailPage = ({ initialData }: ProductDetailPageProps) => {
   const { currentProduct: product, error, loading } = useProductStore();
 
   useLoadProductDetail();

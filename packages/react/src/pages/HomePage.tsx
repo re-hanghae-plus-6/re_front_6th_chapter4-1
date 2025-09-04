@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { loadNextProducts, loadProductsAndCategories, ProductList, SearchBar } from "../entities";
 import { PageWrapper } from "./PageWrapper";
+import type { ProductsSSRResult } from "../api/ssrProductApi";
 
 const headerLeft = (
   <h1 className="text-xl font-bold text-gray-900">
@@ -26,7 +27,11 @@ const unregisterScrollHandler = () => {
   scrollHandlerRegistered = false;
 };
 
-export const HomePage = () => {
+export interface HomePageProps {
+  initialData?: ProductsSSRResult | null;
+}
+
+export const HomePage = ({ initialData }: HomePageProps) => {
   useEffect(() => {
     registerScrollHandler();
     loadProductsAndCategories();
