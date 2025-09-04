@@ -18,7 +18,12 @@ const enableMocking = () =>
  * 바닐라 JavaScript의 hydrateFromServerData 패턴을 React로 적용
  */
 // SSR 데이터를 전역에 저장 (컴포넌트에서 접근 가능)
-let globalSSRData: { products?: unknown[]; categories?: Record<string, unknown>; totalCount?: number } | null = null;
+let globalSSRData: {
+  products?: unknown[];
+  categories?: Record<string, unknown>;
+  totalCount?: number;
+  __SSR_QUERY__?: Record<string, string>;
+} | null = null;
 
 async function hydrateFromServerData() {
   console.log("🔄 하이드레이션 시작...");

@@ -1,5 +1,7 @@
 import fs from "node:fs/promises";
 import express from "express";
+import { mswServer } from "./src/mocks/node.js";
+import { createApiRouter } from "./src/api/routes.js";
 
 // Constants
 const isProduction = process.env.NODE_ENV === "production";
@@ -10,7 +12,6 @@ const base = process.env.BASE || (isProduction ? "/front_6th_chapter4-1/react/" 
 const templateHtml = isProduction ? await fs.readFile("./dist/react/index.html", "utf-8") : "";
 
 // MSW 서버 시작 (항상)
-const { mswServer } = await import("./src/mocks/node.js");
 mswServer.listen({
   onUnhandledRequest: "bypass",
 });
@@ -41,7 +42,6 @@ if (!isProduction) {
 }
 
 // API 라우트 - Express Router 사용
-const { createApiRouter } = await import("./src/api/routes.js");
 app.use("/api", createApiRouter());
 
 // Serve HTML

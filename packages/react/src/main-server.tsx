@@ -1,4 +1,3 @@
-import React from "react";
 import { renderToString } from "react-dom/server";
 import { ServerRouter } from "./router/ServerRouter";
 import { registerServerRoutes } from "./router/routes";
@@ -96,6 +95,10 @@ export const render = async (pathname: string, query: Record<string, string> = {
     // 5. 실제 React 컴포넌트 서버 렌더링
     console.log("React 컴포넌트 서버 렌더링 시작");
 
+    // Base URL 설정 (프로덕션 환경에서만)
+    const isProduction = process.env.NODE_ENV === "production";
+    const baseUrl = isProduction ? "/front_6th_chapter4-1/react" : "";
+
     let html: string;
 
     // 라우트에 따라 적절한 컴포넌트 렌더링
@@ -127,6 +130,31 @@ export const render = async (pathname: string, query: Record<string, string> = {
       // NotFoundPage 렌더링
       const { NotFoundPage } = await import("./pages/NotFoundPage");
       html = renderToString(<NotFoundPage />);
+    }
+
+    // Base URL이 있을 때 SVG 및 정적 리소스 경로 수정
+    if (baseUrl) {
+      // SVG 파일 경로 수정 (src와 href 모두, 이미 base URL이 포함된 경우 제외)
+      html = html.replace(/(src|href)="\/([^"]*\.svg)"/g, (match, attr, path) => {
+        if (path.startsWith("front_6th_chapter4-1/react/")) {
+          return match; // 이미 수정된 경우 건너뜀
+        }
+        return `${attr}="${baseUrl}/${path}"`;
+      });
+      // 다른 정적 리소스 경로 수정 (단, 절대 URL 제외)
+      html = html.replace(/href="\/([^"]*)"/g, (match, path) => {
+        // 절대 URL이 아니고, SVG가 아니고, 이미 수정되지 않은 경우에만 base URL 추가
+        if (
+          !path.startsWith("http") &&
+          !path.startsWith("//") &&
+          !path.startsWith("mailto:") &&
+          !path.endsWith(".svg") &&
+          !path.startsWith("front_6th_chapter4-1/react/")
+        ) {
+          return `href="${baseUrl}/${path}"`;
+        }
+        return match;
+      });
     }
 
     return {

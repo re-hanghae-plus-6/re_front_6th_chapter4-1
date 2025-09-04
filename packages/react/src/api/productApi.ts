@@ -4,7 +4,7 @@ import type { StringRecord } from "../types.ts";
 
 // SSR 환경에서 절대 URL 생성 (바닐라와 동일)
 const withBaseUrl = (url: string) => {
-  return typeof window === "undefined" ? new URL(url, `http://localhost:5176`) : url;
+  return typeof window === "undefined" ? new URL(url, `http://localhost`) : url;
 };
 
 interface ProductsResponse {

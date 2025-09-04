@@ -44,6 +44,7 @@ export const App = () => {
                     }
                   : undefined
               }
+              ssrQuery={ssrData?.__SSR_QUERY__}
             />
           ) : null}
         </ModalProvider>
