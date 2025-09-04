@@ -21,6 +21,9 @@ export const PRODUCT_ACTIONS = {
 
   // status 관리
   SET_STATUS: "products/setStatus",
+
+  // ssr 설정
+  SET_INITIAL_DATA: "products/setInitialData",
 } as const;
 
 /**
@@ -117,6 +120,17 @@ const productReducer = (state: typeof initialProductState, action: any) => {
 
     case PRODUCT_ACTIONS.SETUP:
       return { ...state, ...action.payload };
+
+    case PRODUCT_ACTIONS.SET_INITIAL_DATA:
+      return {
+        ...state,
+        products: action.payload.products || [],
+        categories: action.payload.categories || {},
+        totalCount: action.payload.totalCount || 0,
+        loading: false,
+        error: null,
+        status: "done",
+      };
 
     default:
       return state;
