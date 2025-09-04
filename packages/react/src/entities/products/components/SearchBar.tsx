@@ -90,7 +90,6 @@ const handleSubCategoryClick = async (e: MouseEvent<HTMLButtonElement>) => {
 export function SearchBar() {
   const { categories } = useProductStore();
   const { searchQuery, limit = "20", sort, category } = useProductFilter();
-
   const categoryList = Object.keys(categories).length > 0 ? Object.keys(categories) : [];
   const limitOptions = OPTION_LIMITS.map((value) => (
     <option key={value} value={value}>

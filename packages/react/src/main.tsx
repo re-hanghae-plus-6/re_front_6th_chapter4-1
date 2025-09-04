@@ -2,7 +2,7 @@ import { App } from "./App";
 import { router } from "./router";
 import { hydrateProductStore } from "./entities/products/productStore";
 import { BASE_URL } from "./constants.ts";
-import { hydrateRoot } from "react-dom/client";
+import { hydrateRoot, createRoot } from "react-dom/client";
 
 const enableMocking = () =>
   import("./mocks/browser").then(({ worker }) =>
@@ -16,14 +16,19 @@ const enableMocking = () =>
 
 function main() {
   router.start();
-  hydrateProductStore();
+  const hasInitialData = hydrateProductStore();
 
   const rootElement = document.getElementById("root")!;
-  hydrateRoot(rootElement, <App />);
+
+  if (hasInitialData) {
+    hydrateRoot(rootElement, <App />);
+  } else {
+    createRoot(rootElement).render(<App />);
+  }
 }
 
 // 애플리케이션 시작
-if (import.meta.env.DEV) {
+if (typeof window !== "undefined" && !window.__INITIAL_DATA__) {
   enableMocking().then(main);
 } else {
   main();
