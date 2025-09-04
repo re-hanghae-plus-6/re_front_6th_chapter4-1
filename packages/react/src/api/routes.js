@@ -1,30 +1,26 @@
-import { http, HttpResponse } from "msw";
-import items from "./items.json" with { type: "json" };
-import type { StringRecord } from "../types.ts";
-import type { Product } from "../entities";
+import express from "express";
+import fs from "fs";
+import path from "path";
 
-const delay = async () => await new Promise((resolve) => setTimeout(resolve, 200));
+// Mock 데이터 로드
+const items = JSON.parse(fs.readFileSync(path.join(process.cwd(), "src/mocks/items.json"), "utf-8"));
 
 // 카테고리 추출 함수
 function getUniqueCategories() {
-  const categories: Record<string, Record<string, string | StringRecord>> = {};
-
+  const categories = {};
   items.forEach((item) => {
     const cat1 = item.category1;
     const cat2 = item.category2;
-
     if (!categories[cat1]) categories[cat1] = {};
     if (cat2 && !categories[cat1][cat2]) categories[cat1][cat2] = {};
   });
-
   return categories;
 }
 
 // 상품 검색 및 필터링 함수
-function filterProducts(products: Product[], query: Record<string, string>) {
+function filterProducts(products, query) {
   let filtered = [...products];
 
-  // 검색어 필터링
   if (query.search) {
     const searchTerm = query.search.toLowerCase();
     filtered = filtered.filter(
@@ -32,7 +28,6 @@ function filterProducts(products: Product[], query: Record<string, string>) {
     );
   }
 
-  // 카테고리 필터링
   if (query.category1) {
     filtered = filtered.filter((item) => item.category1 === query.category1);
   }
@@ -40,7 +35,6 @@ function filterProducts(products: Product[], query: Record<string, string>) {
     filtered = filtered.filter((item) => item.category2 === query.category2);
   }
 
-  // 정렬
   if (query.sort) {
     switch (query.sort) {
       case "price_asc":
@@ -56,7 +50,6 @@ function filterProducts(products: Product[], query: Record<string, string>) {
         filtered.sort((a, b) => b.title.localeCompare(a.title, "ko"));
         break;
       default:
-        // 기본은 가격 낮은 순
         filtered.sort((a, b) => parseInt(a.lprice) - parseInt(b.lprice));
     }
   }
@@ -64,31 +57,24 @@ function filterProducts(products: Product[], query: Record<string, string>) {
   return filtered;
 }
 
-export const handlers = [
-  // 상품 목록 API - 와일드카드로 모든 호스트/포트에서 작동
-  http.get("*/api/products", async ({ request }) => {
-    const url = new URL(request.url);
-    const page = parseInt(url.searchParams.get("page") ?? url.searchParams.get("current") ?? "1");
-    const limit = parseInt(url.searchParams.get("limit") ?? "20");
-    const search = url.searchParams.get("search") || "";
-    const category1 = url.searchParams.get("category1") || "";
-    const category2 = url.searchParams.get("category2") || "";
-    const sort = url.searchParams.get("sort") || "price_asc";
+export function createApiRouter() {
+  const router = express.Router();
 
-    // 필터링된 상품들
-    const filteredProducts = filterProducts(items, {
-      search,
-      category1,
-      category2,
-      sort,
-    });
+  // 상품 목록 API
+  router.get("/products", (req, res) => {
+    const page = parseInt(req.query.page || req.query.current || "1");
+    const limit = parseInt(req.query.limit || "20");
+    const search = req.query.search || "";
+    const category1 = req.query.category1 || "";
+    const category2 = req.query.category2 || "";
+    const sort = req.query.sort || "price_asc";
 
-    // 페이지네이션
+    const filteredProducts = filterProducts(items, { search, category1, category2, sort });
+
     const startIndex = (page - 1) * limit;
     const endIndex = startIndex + limit;
     const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
 
-    // 응답 데이터
     const response = {
       products: paginatedProducts,
       pagination: {
@@ -99,45 +85,43 @@ export const handlers = [
         hasNext: endIndex < filteredProducts.length,
         hasPrev: page > 1,
       },
-      filters: {
-        search,
-        category1,
-        category2,
-        sort,
-      },
+      filters: { search, category1, category2, sort },
     };
 
-    await delay();
+    res.json(response);
+  });
 
-    return HttpResponse.json(response);
-  }),
-
-  // 상품 상세 API - 와일드카드로 모든 호스트/포트에서 작동
-  http.get("*/api/products/:id", ({ params }) => {
-    const { id } = params;
+  // 상품 상세 API
+  router.get("/products/:id", (req, res) => {
+    const { id } = req.params;
     const product = items.find((item) => item.productId === id);
 
     if (!product) {
-      return HttpResponse.json({ error: "Product not found" }, { status: 404 });
+      return res.status(404).json({ error: "Product not found" });
     }
 
-    // 상세 정보에 추가 데이터 포함
     const detailProduct = {
       ...product,
       description: `${product.title}에 대한 상세 설명입니다. ${product.brand} 브랜드의 우수한 품질을 자랑하는 상품으로, 고객 만족도가 높은 제품입니다.`,
-      rating: Math.floor(Math.random() * 2) + 4, // 4~5점 랜덤
-      reviewCount: Math.floor(Math.random() * 1000) + 50, // 50~1050개 랜덤
-      stock: Math.floor(Math.random() * 100) + 10, // 10~110개 랜덤
+      rating: Math.floor(Math.random() * 2) + 4,
+      reviewCount: Math.floor(Math.random() * 1000) + 50,
+      stock: Math.floor(Math.random() * 100) + 10,
       images: [product.image, product.image.replace(".jpg", "_2.jpg"), product.image.replace(".jpg", "_3.jpg")],
     };
 
-    return HttpResponse.json(detailProduct);
-  }),
+    res.json(detailProduct);
+  });
 
-  // 카테고리 목록 API - 와일드카드로 모든 호스트/포트에서 작동
-  http.get("*/api/categories", async () => {
+  // 카테고리 목록 API
+  router.get("/categories", (req, res) => {
     const categories = getUniqueCategories();
-    await delay();
-    return HttpResponse.json(categories);
-  }),
-];
+    res.json(categories);
+  });
+
+  // Health check
+  router.get("/health", (req, res) => {
+    res.json({ status: "ok", timestamp: new Date().toISOString() });
+  });
+
+  return router;
+}

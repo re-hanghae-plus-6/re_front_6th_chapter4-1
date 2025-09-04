@@ -7,7 +7,12 @@ import RelatedProducts from "./RelatedProducts";
 import { useCartAddCommand } from "../../carts";
 import { log } from "../../../utils";
 
-export function ProductDetail(product: Readonly<Product>) {
+interface ProductDetailProps extends Product {
+  relatedProducts?: Product[];
+}
+
+export function ProductDetail(props: Readonly<ProductDetailProps>) {
+  const { relatedProducts, ...product } = props;
   log(`ProductDetail: ${product.productId}`);
   const addToCart = useCartAddCommand();
   const { productId, title, image, lprice, brand, category1, category2 } = product;
@@ -202,7 +207,7 @@ export function ProductDetail(product: Readonly<Product>) {
       </div>
 
       {/* 관련 상품 */}
-      <RelatedProducts />
+      <RelatedProducts relatedProducts={relatedProducts} />
     </div>
   );
 }

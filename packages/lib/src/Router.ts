@@ -69,12 +69,19 @@ export class Router<Handler extends (...args: any[]) => any> {
   addRoute(path: string, handler: Handler) {
     // 경로 패턴을 정규식으로 변환
     const paramNames: string[] = [];
-    const regexPath = path
-      .replace(/:\w+/g, (match) => {
-        paramNames.push(match.slice(1)); // ':id' -> 'id'
-        return "([^/]+)";
-      })
-      .replace(/\//g, "\\/");
+
+    let regexPath;
+    if (path === "*") {
+      // 와일드카드는 모든 경로에 매치
+      regexPath = ".*";
+    } else {
+      regexPath = path
+        .replace(/:\w+/g, (match) => {
+          paramNames.push(match.slice(1)); // ':id' -> 'id'
+          return "([^/]+)";
+        })
+        .replace(/\//g, "\\/");
+    }
 
     const regex = new RegExp(`^${this.#baseUrl}${regexPath}$`);
 

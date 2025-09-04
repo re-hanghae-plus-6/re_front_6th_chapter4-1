@@ -2,6 +2,11 @@
 import type { Categories, Product } from "../entities";
 import type { StringRecord } from "../types.ts";
 
+// SSR 환경에서 절대 URL 생성 (바닐라와 동일)
+const withBaseUrl = (url: string) => {
+  return typeof window === "undefined" ? new URL(url, `http://localhost`) : url;
+};
+
 interface ProductsResponse {
   products: Product[];
   pagination: {
@@ -33,19 +38,19 @@ export async function getProducts(params: StringRecord = {}): Promise<ProductsRe
     sort,
   });
 
-  const response = await fetch(`/api/products?${searchParams}`);
+  const response = await fetch(withBaseUrl(`/api/products?${searchParams}`));
 
   return await response.json();
 }
 
 // 상품 상세 조회
 export async function getProduct(productId: string): Promise<Product> {
-  const response = await fetch(`/api/products/${productId}`);
+  const response = await fetch(withBaseUrl(`/api/products/${productId}`));
   return await response.json();
 }
 
 // 카테고리 목록 조회
 export async function getCategories(): Promise<Categories> {
-  const response = await fetch("/api/categories");
+  const response = await fetch(withBaseUrl("/api/categories"));
   return await response.json();
 }

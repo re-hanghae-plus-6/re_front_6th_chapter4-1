@@ -1,7 +1,7 @@
 import { PageWrapper } from "./PageWrapper";
 import { Logo } from "../components";
 
-export const NotFoundPage = () =>
+const NotFoundPageComponent = () =>
   PageWrapper({
     headerLeft: Logo(),
     children: `
@@ -37,3 +37,16 @@ export const NotFoundPage = () =>
       </div>
     `.trim(),
   });
+
+// SSR 메서드 추가
+NotFoundPageComponent.ssr = async () => {
+  // 404 페이지는 특별한 데이터 로드가 필요하지 않음
+  return {};
+};
+
+NotFoundPageComponent.metadata = () => ({
+  title: "404 - 페이지를 찾을 수 없습니다",
+  description: "요청하신 페이지를 찾을 수 없습니다.",
+});
+
+export const NotFoundPage = NotFoundPageComponent;

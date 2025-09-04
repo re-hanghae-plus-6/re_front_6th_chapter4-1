@@ -756,8 +756,8 @@ export const createSSRTest = (baseUrl: string) => {
       });
     });
 
-    test.describe("3. SSR 상품 상세 페이지", () => {
-      test("상품 상세 페이지가 SSR로 올바르게 렌더링된다", async ({ browser }) => {
+    test.describe("3. SSE 상품 상세 페이지", () => {
+      test("상품 상세 페이지가 SSE로 올바르게 렌더링된다", async ({ browser }) => {
         // JavaScript가 완전히 비활성화된 컨텍스트 생성
         const context = await browser.newContext({
           javaScriptEnabled: false,
@@ -767,21 +767,21 @@ export const createSSRTest = (baseUrl: string) => {
         // 직접 상품 상세 URL로 접근
         await page.goto(`${baseUrl}product/85067212996/`);
 
-        // SSR로 렌더링된 상품 정보가 즉시 표시되는지 확인
+        // SSE로 렌더링된 상품 정보가 즉시 표시되는지 확인
         const bodyContent = await page.locator("body").textContent();
         expect(bodyContent).toContain("PVC 투명 젤리 쇼핑백");
         expect(bodyContent).toContain("220원");
         expect(bodyContent).toContain("상품 상세");
 
-        // 관련 상품 섹션도 SSR로 렌더링되었는지 확인
+        // 관련 상품 섹션도 SSE로 렌더링되었는지 확인
         expect(bodyContent).toContain("관련 상품");
 
         await context.close();
       });
     });
 
-    test.describe("4. SSR SEO 및 메타데이터", () => {
-      test("SSR 페이지에 적절한 메타태그가 포함된다", async ({ browser }) => {
+    test.describe("4. SSE SEO 및 메타데이터", () => {
+      test("SSE 페이지에 적절한 메타태그가 포함된다", async ({ browser }) => {
         // JavaScript가 완전히 비활성화된 컨텍스트 생성
         const context = await browser.newContext({
           javaScriptEnabled: false,

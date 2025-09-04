@@ -1,12 +1,13 @@
-import { router, useCurrentPage } from "./router";
-import { HomePage, NotFoundPage, ProductDetailPage } from "./pages";
+import { router, useCurrentPage, registerClientRoutes } from "./router";
 import { useLoadCartStore } from "./entities";
 import { ModalProvider, ToastProvider } from "./components";
+import { isClient } from "./utils/runtime";
+import { getGlobalSSRData } from "./main";
 
-// 홈 페이지 (상품 목록)
-router.addRoute("/", HomePage);
-router.addRoute("/product/:id/", ProductDetailPage);
-router.addRoute(".*", NotFoundPage);
+// 클라이언트에서만 라우트 등록
+if (isClient) {
+  registerClientRoutes(router);
+}
 
 const CartInitializer = () => {
   useLoadCartStore();
@@ -19,10 +20,34 @@ const CartInitializer = () => {
 export const App = () => {
   const PageComponent = useCurrentPage();
 
+  // 클라이언트에서 전역 SSR 데이터 확인
+  const ssrData = isClient ? getGlobalSSRData() : null;
+
+  console.log("🔍 App.tsx - 전역 SSR 데이터 상태:", {
+    hasSSRData: !!ssrData,
+    productsCount: ssrData?.products?.length || 0,
+    categoriesCount: Object.keys(ssrData?.categories || {}).length,
+  });
+
   return (
     <>
       <ToastProvider>
-        <ModalProvider>{PageComponent ? <PageComponent /> : null}</ModalProvider>
+        <ModalProvider>
+          {PageComponent ? (
+            <PageComponent
+              {...({
+                ssrData: ssrData
+                  ? {
+                      products: ssrData.products || [],
+                      categories: ssrData.categories || {},
+                      totalCount: ssrData.totalCount || 0,
+                    }
+                  : undefined,
+                ssrQuery: ssrData?.__SSR_QUERY__,
+              } as Record<string, unknown>)}
+            />
+          ) : null}
+        </ModalProvider>
       </ToastProvider>
       <CartInitializer />
     </>

@@ -234,15 +234,23 @@ function ProductDetail({ product, relatedProducts = [] }) {
 /**
  * 상품 상세 페이지 컴포넌트
  */
-export const ProductDetailPage = withLifecycle(
+const ProductDetailPageComponent = withLifecycle(
   {
     onMount: () => {
-      loadProductDetailForPage(router.params.id);
+      // 클라이언트에서 초기 데이터 로드 (SSR 데이터가 없거나 부족한 경우)
+      const currentState = productStore.getState();
+
+      console.log("currentState-----", currentState);
+      if (!currentState.currentProduct) {
+        loadProductDetailForPage(router.params.id);
+      }
     },
     watches: [() => [router.params.id], () => loadProductDetailForPage(router.params.id)],
   },
-  () => {
-    const { currentProduct: product, relatedProducts = [], error, loading } = productStore.getState();
+  ({ data } = {}) => {
+    // SSR 데이터가 있으면 사용, 없으면 스토어 상태 사용
+    const productState = data || productStore.getState();
+    const { currentProduct: product, relatedProducts = [], error, loading } = productState;
 
     return PageWrapper({
       headerLeft: `
@@ -264,3 +272,63 @@ export const ProductDetailPage = withLifecycle(
     });
   },
 );
+
+// SSR 메서드 - 로딩 상태 없이 완전한 데이터 반환
+ProductDetailPageComponent.ssr = async ({ params }) => {
+  const { getProduct, getProducts } = await import("../api/productApi.js");
+
+  try {
+    console.log("상품 상세 페이지 SSR 시작:", params.id);
+
+    const product = await getProduct(params.id);
+    console.log("상품 데이터 로드 완료:", product?.title);
+
+    if (!product) {
+      throw new Error("Product not found");
+    }
+
+    let relatedProducts = [];
+
+    // 관련 상품 로드
+    if (product.category2) {
+      console.log("관련 상품 로드 시작:", product.category2);
+      const relatedResponse = await getProducts({
+        category2: product.category2,
+        limit: 20,
+        page: 1,
+      });
+
+      relatedProducts = relatedResponse.products.filter((p) => p.productId !== params.id);
+      console.log("관련 상품 로드 완료:", relatedProducts.length, "개");
+    }
+
+    // SSR에서는 로딩 상태 없이 완전한 데이터만 반환
+    return {
+      currentProduct: product,
+      relatedProducts,
+    };
+  } catch (error) {
+    console.error("상품 상세 페이지 SSR 실패:", error);
+    // 에러 발생 시에도 기본 데이터 구조 유지
+    return {
+      currentProduct: null,
+      relatedProducts: [],
+    };
+  }
+};
+
+ProductDetailPageComponent.metadata = ({ data }) => {
+  const product = data?.currentProduct;
+  if (product) {
+    return {
+      title: `${product.title} - 쇼핑몰`,
+      description: product.description || `${product.title} 상품 정보`,
+    };
+  }
+  return {
+    title: "상품 상세 - 쇼핑몰",
+    description: "상품 정보를 확인하세요",
+  };
+};
+
+export const ProductDetailPage = ProductDetailPageComponent;

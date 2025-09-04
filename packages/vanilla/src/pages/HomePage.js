@@ -4,10 +4,14 @@ import { router, withLifecycle } from "../router";
 import { loadProducts, loadProductsAndCategories } from "../services";
 import { PageWrapper } from "./PageWrapper.js";
 
-export const HomePage = withLifecycle(
+const HomePageComponent = withLifecycle(
   {
     onMount: () => {
-      loadProductsAndCategories();
+      // 클라이언트에서 초기 데이터 로드 (SSR 데이터가 없거나 부족한 경우)
+      const currentState = productStore.getState();
+      if (currentState.products.length === 0) {
+        loadProductsAndCategories();
+      }
     },
     watches: [
       () => {
@@ -17,10 +21,14 @@ export const HomePage = withLifecycle(
       () => loadProducts(true),
     ],
   },
-  () => {
-    const productState = productStore.getState();
-    const { search: searchQuery, limit, sort, category1, category2 } = router.query;
-    const { products, loading, error, totalCount, categories } = productState;
+  ({ data, query } = {}) => {
+    // SSR 데이터가 있으면 사용, 없으면 스토어 상태 사용
+    const productState = data || productStore.getState();
+    // SSR에서는 params.query 사용, 클라이언트에서는 router.query 사용
+    const currentQuery = query || router.query;
+    const { search: searchQuery, limit, sort, category1, category2 } = currentQuery;
+    const { products, status, error, totalCount, categories } = productState;
+    const loading = status === "loading_more";
     const category = { category1, category2 };
     const hasMore = products.length < totalCount;
 
@@ -48,3 +56,36 @@ export const HomePage = withLifecycle(
     });
   },
 );
+
+// SSR 메서드 - 로딩 상태 없이 완전한 데이터 반환
+HomePageComponent.ssr = async ({ query }) => {
+  const { getProducts, getCategories } = await import("../api/productApi.js");
+
+  try {
+    // SSR에서도 클라이언트와 동일한 정렬 기준 사용
+    const queryWithSort = { ...query, sort: query.sort || "price_asc" };
+    const [productsResponse, categories] = await Promise.all([getProducts(queryWithSort), getCategories()]);
+
+    // SSR에서는 로딩 상태 없이 완전한 데이터만 반환
+    return {
+      products: productsResponse.products,
+      categories,
+      totalCount: productsResponse.pagination.total,
+    };
+  } catch (error) {
+    console.error("홈페이지 SSR 데이터 로드 실패:", error);
+    // 에러 발생 시에도 기본 데이터 구조 유지
+    return {
+      products: [],
+      categories: {},
+      totalCount: 0,
+    };
+  }
+};
+
+HomePageComponent.metadata = () => ({
+  title: "쇼핑몰 - 홈",
+  description: "다양한 상품을 만나보세요",
+});
+
+export const HomePage = HomePageComponent;

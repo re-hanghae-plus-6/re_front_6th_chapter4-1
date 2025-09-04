@@ -1,9 +1,18 @@
 import { router } from "../../../router";
 import { useProductStore } from "../hooks";
+import type { Product } from "../types";
 
-export default function RelatedProducts() {
-  const { relatedProducts } = useProductStore();
-  if (relatedProducts.length === 0) {
+interface RelatedProductsProps {
+  relatedProducts?: Product[];
+}
+
+export default function RelatedProducts({ relatedProducts: ssrRelatedProducts }: RelatedProductsProps = {}) {
+  const { relatedProducts: storeRelatedProducts } = useProductStore();
+
+  // SSR 데이터가 있으면 우선 사용, 없으면 스토어 데이터 사용
+  const relatedProducts = ssrRelatedProducts || storeRelatedProducts;
+
+  if (!relatedProducts || relatedProducts.length === 0) {
     return null;
   }
   return (

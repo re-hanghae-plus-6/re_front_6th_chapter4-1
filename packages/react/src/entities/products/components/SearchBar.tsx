@@ -1,4 +1,4 @@
-import { type ChangeEvent, Fragment, type KeyboardEvent, type MouseEvent } from "react";
+import { type ChangeEvent, Fragment, type KeyboardEvent, type MouseEvent, useState, useEffect } from "react";
 import { PublicImage } from "../../../components";
 import { useProductStore } from "../hooks";
 import { useProductFilter } from "./hooks";
@@ -11,18 +11,6 @@ const OPTION_SORTS = [
   { value: "name_asc", label: "이름순" },
   { value: "name_desc", label: "이름 역순" },
 ];
-
-// 검색 입력 (Enter 키)
-const handleSearchKeyDown = async (e: KeyboardEvent<HTMLInputElement>) => {
-  if (e.key === "Enter") {
-    const query = e.currentTarget.value.trim();
-    try {
-      searchProducts(query);
-    } catch (error) {
-      console.error("검색 실패:", error);
-    }
-  }
-};
 
 // 페이지당 상품 수 변경
 const handleLimitChange = async (e: ChangeEvent<HTMLSelectElement>) => {
@@ -87,11 +75,82 @@ const handleSubCategoryClick = async (e: MouseEvent<HTMLButtonElement>) => {
   }
 };
 
-export function SearchBar() {
-  const { categories } = useProductStore();
-  const { searchQuery, limit = "20", sort, category } = useProductFilter();
+interface SearchBarProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  initialCategories?: any;
+  ssrQuery?: Record<string, string>;
+}
 
+export function SearchBar({ initialCategories, ssrQuery }: SearchBarProps = {}) {
+  const storeState = useProductStore();
+  const filterFromHook = useProductFilter();
+
+  // SSR 쿼리가 있으면 우선 사용, 없으면 훅에서 가져온 값 사용
+  const searchQuery = ssrQuery?.search || filterFromHook.searchQuery || "";
+  const limit = ssrQuery?.limit || filterFromHook.limit || "20";
+  const sort = ssrQuery?.sort || filterFromHook.sort || "price_asc";
+  const category1 = ssrQuery?.category1 || filterFromHook.category.category1 || "";
+  const category2 = ssrQuery?.category2 || filterFromHook.category.category2 || "";
+  const category = { category1, category2 };
+
+  // 클라이언트에서 검색어 입력을 위한 로컬 상태
+  const [inputValue, setInputValue] = useState(searchQuery);
+
+  // SSR 쿼리가 변경되면 입력값도 업데이트
+  useEffect(() => {
+    setInputValue(searchQuery);
+  }, [searchQuery]);
+
+  // 검색 입력 (Enter 키)
+  const handleSearchKeyDown = async (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      const query = inputValue.trim();
+      try {
+        searchProducts(query);
+      } catch (error) {
+        console.error("검색 실패:", error);
+      }
+    }
+  };
+
+  // 검색어 입력 변경 처리
+  const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setInputValue(e.target.value);
+  };
+
+  // SSR 데이터 존재 여부 확인
+  const hasSSRCategories = initialCategories && Object.keys(initialCategories).length > 0;
+
+  console.log("🔍 SearchBar 렌더링:", {
+    searchQuery,
+    limit,
+    sort,
+    category,
+    hasInitialCategories: !!initialCategories,
+    initialCategoriesKeys: Object.keys(initialCategories || {}).length,
+    storeCategoriesKeys: Object.keys(storeState.categories || {}).length,
+    hasSSRCategories,
+    storeLoading: storeState.loading,
+  });
+
+  // SSR 데이터가 있으면 우선 사용, 없으면 스토어 상태 사용
+  const categories = hasSSRCategories ? initialCategories : storeState.categories;
   const categoryList = Object.keys(categories).length > 0 ? Object.keys(categories) : [];
+
+  // 🚨 카테고리 로딩 상태 확인
+  const isCategoryLoading = !hasSSRCategories && categoryList.length === 0;
+  if (isCategoryLoading) {
+    console.log("🔄 SearchBar 카테고리 로딩 중!", {
+      hasSSRCategories,
+      storeLoading: storeState.loading,
+      categoriesLength: categoryList.length,
+    });
+  } else {
+    console.log("✅ SearchBar 카테고리 로딩 완료!", {
+      hasSSRCategories,
+      categoriesCount: categoryList.length,
+    });
+  }
   const limitOptions = OPTION_LIMITS.map((value) => (
     <option key={value} value={value}>
       {value}개
@@ -124,10 +183,11 @@ export function SearchBar() {
             type="text"
             id="search-input"
             placeholder="상품명을 검색해보세요..."
-            defaultValue={searchQuery}
+            value={inputValue}
             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg
                         focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             onKeyDown={handleSearchKeyDown}
+            onChange={handleSearchChange}
           />
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <PublicImage src="/search-icon.svg" alt="검색" className="h-5 w-5 text-gray-400" />
@@ -185,11 +245,14 @@ export function SearchBar() {
           {/* 1depth 카테고리 */}
           {!category.category1 && (
             <div className="flex flex-wrap gap-2">
-              {categoryList.length > 0 ? (
-                categoryButtons
-              ) : (
-                <div className="text-sm text-gray-500 italic">카테고리 로딩 중...</div>
-              )}
+              {categoryList.length > 0
+                ? categoryButtons
+                : // SSR 데이터가 있으면 로딩 메시지 표시하지 않음
+                  !hasSSRCategories &&
+                  (() => {
+                    console.log("📂 카테고리 로딩 메시지 표시 중!");
+                    return <div className="text-sm text-gray-500 italic">카테고리 로딩 중...</div>;
+                  })()}
             </div>
           )}
 
@@ -232,7 +295,7 @@ export function SearchBar() {
               id="limit-select"
               className="text-sm border border-gray-300 rounded px-2 py-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
               onChange={handleLimitChange}
-              defaultValue={Number(limit)}
+              value={limit}
             >
               {limitOptions}
             </select>
@@ -248,7 +311,7 @@ export function SearchBar() {
               className="text-sm border border-gray-300 rounded px-2 py-1
                            focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
               onChange={handleSortChange}
-              defaultValue={sort}
+              value={sort}
             >
               {sortOptions}
             </select>
