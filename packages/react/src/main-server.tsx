@@ -9,9 +9,16 @@ export const render = async (url: string, query: Record<string, string>) => {
   router.push(url);
   router.query = query;
 
+  const { products, categories, totalCount } = productStore.getState();
+
+  const initialData = {
+    products,
+    categories,
+    totalCount,
+  };
   return {
     head: "<title>쇼핑몰 홈</title>",
     html: renderToString(<App />),
-    initialData: productStore.getState(),
+    initialData,
   };
 };
