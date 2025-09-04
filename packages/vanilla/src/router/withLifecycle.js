@@ -32,9 +32,11 @@ const mount = (page) => {
   if (lifecycle.mounted) return;
 
   // 마운트 콜백들 실행
-  lifecycle.mount?.();
-  lifecycle.mounted = true;
-  lifecycle.deps = [];
+  if (typeof window !== "undefined") {
+    lifecycle.mount?.();
+    lifecycle.mounted = true;
+    lifecycle.deps = [];
+  }
 };
 
 // 페이지 언마운트 처리

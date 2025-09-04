@@ -1,10 +1,15 @@
+import { createServerStorage } from "./createServerStorage.js";
 /**
- * 로컬스토리지 추상화 함수
- * @param {string} key - 스토리지 키
- * @param {Storage} storage - 기본값은 localStorage
- * @returns {Object} { get, set, reset }
+ * 환경별 스토리지 추상화 함수 - 브라우저/서버 환경에서 동일한 인터페이스 제공
+ * @param {string} key - 스토리지 키 (예: "cart", "user-preferences")
+ * @param {Storage} storage - 스토리지 구현체 (기본값: 환경별 자동 선택)
+ * @returns {Object} { get, set, reset } 스토리지 조작 메서드들
  */
-export const createStorage = (key, storage = window.localStorage) => {
+export const createStorage = (
+  key,
+  storage = typeof window === "undefined" ? createServerStorage() : window.localStorage,
+) => {
+  // 데이터 조회
   const get = () => {
     try {
       const item = storage.getItem(key);
@@ -15,6 +20,7 @@ export const createStorage = (key, storage = window.localStorage) => {
     }
   };
 
+  // 데이터 저장
   const set = (value) => {
     try {
       storage.setItem(key, JSON.stringify(value));
@@ -23,6 +29,7 @@ export const createStorage = (key, storage = window.localStorage) => {
     }
   };
 
+  // 데이터 삭제
   const reset = () => {
     try {
       storage.removeItem(key);

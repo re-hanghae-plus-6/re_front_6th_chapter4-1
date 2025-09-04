@@ -1,5 +1,5 @@
 import { ProductList, SearchBar } from "../components";
-import { productStore } from "../stores";
+import { PRODUCT_ACTIONS, productStore } from "../stores";
 import { router, withLifecycle } from "../router";
 import { loadProducts, loadProductsAndCategories } from "../services";
 import { PageWrapper } from "./PageWrapper.js";
@@ -7,7 +7,38 @@ import { PageWrapper } from "./PageWrapper.js";
 export const HomePage = withLifecycle(
   {
     onMount: () => {
-      loadProductsAndCategories();
+      if (typeof window === "undefined") {
+        console.log("이 코드는 서버에서 실행이 되고 ");
+        return;
+      }
+      if (window.__INITIAL_DATA__?.products?.length > 0) {
+        console.log("이 코드는 클라이언트에서 실행이 되는데, __INITIAL_DATA__ 가 있을 때에만!");
+        const { products, categories, totalCount } = window.__INITIAL_DATA__;
+        productStore.dispatch({
+          type: PRODUCT_ACTIONS.SETUP,
+          payload: {
+            products,
+            categories,
+            totalCount,
+            loading: false,
+            status: "done",
+          },
+        });
+        return;
+      }
+      console.log("이 코드는 아무것도 없을 때!");
+
+      // SSG 서버 실행
+      if (typeof window !== "undefined") {
+        const { products, categories, status } = productStore.getState();
+        // Hydration된 데이터가 있으면 API 호출 스킵
+        if (window.__HYDRATED__ && products.length > 0 && Object.keys(categories).length > 0 && status === "done") {
+          console.log("✅ SSR 데이터 이미 있어서 API 요청 스킵");
+          return;
+        }
+
+        loadProductsAndCategories();
+      }
     },
     watches: [
       () => {
@@ -17,8 +48,17 @@ export const HomePage = withLifecycle(
       () => loadProducts(true),
     ],
   },
-  () => {
-    const productState = productStore.getState();
+  (props = {}) => {
+    const productState =
+      props.products?.length > 0
+        ? {
+            products: props.products,
+            loading: false,
+            error: null,
+            totalCount: props.totalCount,
+            categories: props.categories,
+          }
+        : productStore.getState();
     const { search: searchQuery, limit, sort, category1, category2 } = router.query;
     const { products, loading, error, totalCount, categories } = productState;
     const category = { category1, category2 };
