@@ -44,7 +44,7 @@ export const render = async (pathname: string, query: Record<string, string>) =>
           </ProductProvider>
         </RouterProvider>,
       ),
-      __INITIAL_DATA__: result.data ?? {},
+      __INITIAL_DATA__: result ?? {},
     };
   }
 
