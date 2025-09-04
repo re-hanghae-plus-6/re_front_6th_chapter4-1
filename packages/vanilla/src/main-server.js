@@ -5,33 +5,24 @@ import { PRODUCT_ACTIONS } from "./stores/actionTypes.js";
 import { uiStore } from "./stores/uiStore.js";
 import { route } from "./router/serverRouter.js";
 import { router } from "./router/router.js";
-import { mockGetProducts, mockGetProduct, mockGetCategories } from "./mocks/mockApi.js";
+import { mockGetProducts, mockGetProduct, loadHomePageData } from "./mocks/mockApi.js";
 
 route.add("/", async ({ query }) => {
-  const productsData = await mockGetProducts(query || {});
-  const categories = await mockGetCategories();
+  const data = await loadHomePageData(query || {});
 
   const stateToSetup = {
-    products: productsData.products,
-    categories,
-    totalCount: productsData.pagination.total,
+    products: data.products,
+    categories: data.categories,
+    totalCount: data.totalCount,
     currentProduct: null,
     relatedProducts: [],
     loading: false,
     error: null,
     status: "done",
   };
-  productStore.dispatch({
-    type: PRODUCT_ACTIONS.SETUP,
-    payload: stateToSetup,
-  });
+  productStore.dispatch({ type: PRODUCT_ACTIONS.SETUP, payload: stateToSetup });
 
-  return {
-    status: 200,
-    head: "<title>쇼핑몰 - 홈</title>",
-    html: HomePage(),
-    initialData: stateToSetup,
-  };
+  return { status: 200, head: "<title>쇼핑몰 - 홈</title>", html: HomePage(), initialData: stateToSetup };
 });
 
 route.add("/product/:id", async ({ params }) => {
