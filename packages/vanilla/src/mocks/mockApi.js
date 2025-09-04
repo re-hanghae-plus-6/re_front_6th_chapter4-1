@@ -1,4 +1,4 @@
-import items from "./items.json";
+import items from "./items.json" with { type: "json" };
 
 export function getUniqueCategories() {
   const categories = {};
