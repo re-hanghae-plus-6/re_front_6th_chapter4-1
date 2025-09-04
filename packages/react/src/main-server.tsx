@@ -3,6 +3,7 @@ import { createElement } from "react";
 import { route } from "./router/serverRouter";
 import { HomePage, NotFoundPage, ProductDetailPage } from "./pages";
 import { loadHomePageData, loadProductDetailData } from "./mocks/mockApi";
+import { productStore, PRODUCT_ACTIONS } from "./entities/products/productStore";
 
 route.add("/", HomePage);
 route.add("/product/:id", ProductDetailPage);
@@ -29,6 +30,8 @@ export const render = async (url: string, query: Record<string, string>) => {
         initialData: null,
       };
     }
+    productStore.dispatch({ type: PRODUCT_ACTIONS.SET_CURRENT_PRODUCT, payload: detail.currentProduct });
+    productStore.dispatch({ type: PRODUCT_ACTIONS.SET_RELATED_PRODUCTS, payload: detail.relatedProducts });
     const html = renderToString(createElement(matchedRoute.handler));
     return {
       status: 200,
@@ -39,6 +42,16 @@ export const render = async (url: string, query: Record<string, string>) => {
   }
 
   const initialData = await loadHomePageData(query || {});
+  productStore.dispatch({
+    type: PRODUCT_ACTIONS.SETUP,
+    payload: {
+      products: initialData.products,
+      categories: initialData.categories,
+      totalCount: initialData.totalCount,
+      loading: false,
+      status: "done",
+    },
+  });
   const html = renderToString(createElement(matchedRoute.handler));
   return {
     status: 200,
