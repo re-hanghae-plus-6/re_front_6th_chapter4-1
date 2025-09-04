@@ -42,6 +42,14 @@ export const initialProductState = {
 
   // 카테고리 목록
   categories: {} as Categories,
+
+  // 필터 상태
+  search: "",
+  limit: 20,
+  sort: "price_asc",
+  category1: "",
+  category2: "",
+  page: 1,
 };
 
 /**
@@ -142,6 +150,7 @@ export const hydrateProductStore = () => {
         totalCount: data.totalCount ?? 0,
         loading: false,
         status: "done",
+        ...(data.filters ?? {}),
       },
     });
     delete window.__INITIAL_DATA__;

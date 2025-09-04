@@ -16,4 +16,7 @@ const createRouter = () => ({
   },
 });
 
-export const router = typeof window !== "undefined" ? new Router<FunctionComponent>(BASE_URL) : createRouter();
+export const router =
+  typeof window !== "undefined"
+    ? new Router<FunctionComponent>(BASE_URL)
+    : (createRouter() as unknown as Router<FunctionComponent>);

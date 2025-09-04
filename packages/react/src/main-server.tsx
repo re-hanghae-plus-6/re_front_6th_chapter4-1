@@ -42,6 +42,13 @@ export const render = async (url: string, query: Record<string, string>) => {
   }
 
   const initialData = await loadHomePageData(query || {});
+  const page = Number(query?.page ?? query?.current ?? 1);
+  const limit = Number(query?.limit ?? 20);
+  const sort = query?.sort ?? "price_asc";
+  const search = query?.search ?? "";
+  const category1 = query?.category1 ?? "";
+  const category2 = query?.category2 ?? "";
+
   productStore.dispatch({
     type: PRODUCT_ACTIONS.SETUP,
     payload: {
@@ -50,6 +57,12 @@ export const render = async (url: string, query: Record<string, string>) => {
       totalCount: initialData.totalCount,
       loading: false,
       status: "done",
+      page,
+      limit,
+      sort,
+      search,
+      category1,
+      category2,
     },
   });
   const html = renderToString(createElement(matchedRoute.handler));
@@ -57,6 +70,10 @@ export const render = async (url: string, query: Record<string, string>) => {
     status: 200,
     head: "<title>쇼핑몰 - 홈</title>",
     html,
-    initialData: { ...initialData, query: { ...(query || {}) } },
+    initialData: {
+      ...initialData,
+      query: { ...(query || {}) },
+      filters: { page, limit, sort, search, category1, category2 },
+    },
   };
 };
