@@ -1,10 +1,6 @@
 import { ServerRouter } from "./lib/ServerRouter.js";
 import { registerRoutes } from "./router/routes.js";
 
-// 서버 라우터 초기화
-const serverRouter = new ServerRouter();
-registerRoutes(serverRouter);
-
 /**
  * 서버에서 데이터 프리페칭 - 새로운 SSR 메서드 사용
  */
@@ -61,7 +57,11 @@ export const render = async (pathname, query = {}) => {
   console.log("서버 렌더링:", { pathname, query });
 
   try {
-    // 1. 라우터 시작 및 라우트 매칭
+    // 1. 요청마다 새로운 서버 라우터 인스턴스 생성 (상태 격리)
+    const serverRouter = new ServerRouter();
+    registerRoutes(serverRouter);
+
+    // 2. 라우터 시작 및 라우트 매칭
     serverRouter.start(pathname, query);
     const route = serverRouter.route;
 
@@ -78,14 +78,14 @@ export const render = async (pathname, query = {}) => {
       };
     }
 
-    // 2. 데이터 프리페칭
+    // 3. 데이터 프리페칭
     console.log("라우트 매칭 결과:", route);
     const data = await prefetchData(route, route.params, query);
 
-    // 3. 메타데이터 생성
+    // 4. 메타데이터 생성
     const metadata = await generateMetadata(route, route.params, data);
 
-    // 4. 페이지 컴포넌트 렌더링 - SSR 데이터 전달
+    // 5. 페이지 컴포넌트 렌더링 - SSR 데이터 전달
     const params = { pathname, query, params: route.params, data };
     const html = route.handler(params);
 

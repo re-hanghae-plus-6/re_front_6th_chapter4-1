@@ -3,8 +3,10 @@ import { router } from "./router";
 import { registerRoutes } from "./router/routes";
 import { withBatch } from "./utils";
 
-// 라우트 등록
-registerRoutes(router);
+// 클라이언트에서만 라우트 등록
+if (typeof window !== "undefined") {
+  registerRoutes(router);
+}
 
 /**
  * 전체 애플리케이션 렌더링

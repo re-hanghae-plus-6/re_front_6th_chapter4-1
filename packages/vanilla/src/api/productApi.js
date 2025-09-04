@@ -1,7 +1,4 @@
-// jihoon님 방식: 포트에 상관없이 동작하는 URL 처리
 const withBaseUrl = (url) => {
-  // 서버 환경에서는 절대 경로를 사용해야하기 때문에 localhost 설정
-  // MSW 핸들러에서 포트 상관없이 처리함
   return typeof window === "undefined" ? new URL(url, `http://localhost`) : url;
 };
 
