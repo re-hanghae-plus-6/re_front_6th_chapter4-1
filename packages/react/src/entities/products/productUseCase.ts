@@ -9,6 +9,15 @@ const createErrorMessage = (error: unknown, defaultMessage = "알 수 없는 오
 
 export const loadProductsAndCategories = async () => {
   router.query = { current: undefined }; // 항상 첫 페이지로 초기화
+
+  // 이미 데이터가 있으면 로딩하지 않음 (SSR에서 이미 초기화됨)
+  const currentState = productStore.getState();
+
+  if (currentState.products.length > 0 && currentState.status === "done") {
+    console.log("이미 초기화된 데이터 사용:", currentState.products.length, "개 상품");
+    return;
+  }
+
   productStore.dispatch({
     type: PRODUCT_ACTIONS.SETUP,
     payload: {
@@ -112,6 +121,13 @@ export const loadProductDetailForPage = async (productId: string) => {
       }
       return;
     }
+
+    // 이미 SSR 데이터로 초기화된 상품이 있으면 사용
+    const currentState = productStore.getState();
+    if (currentState.currentProduct?.productId === productId && currentState.status === "done") {
+      return;
+    }
+
     // 현재 상품 클리어
     productStore.dispatch({
       type: PRODUCT_ACTIONS.SETUP,

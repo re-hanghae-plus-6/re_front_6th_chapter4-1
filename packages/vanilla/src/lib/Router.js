@@ -2,6 +2,7 @@
  * 간단한 SPA 라우터
  */
 import { createObserver } from "./createObserver.js";
+import { isServer } from "../utils/isServer.js";
 
 export class Router {
   #routes;
@@ -25,6 +26,9 @@ export class Router {
   }
 
   get query() {
+    if (isServer()) {
+      return "";
+    }
     return Router.parseQuery(window.location.search);
   }
 
@@ -95,6 +99,13 @@ export class Router {
   }
 
   /**
+   * URL 매칭 (SSR용)
+   */
+  match(url) {
+    return this.#findRoute(url);
+  }
+
+  /**
    * 네비게이션 실행
    * @param {string} url - 이동할 경로
    */
@@ -114,6 +125,36 @@ export class Router {
       this.#observer.notify();
     } catch (error) {
       console.error("라우터 네비게이션 오류:", error);
+    }
+  }
+
+  /**
+   * 쿼리 파라미터와 함께 네비게이션 실행
+   * @param {string} path - 경로 (예: "/" 또는 "/product/1/")
+   * @param {Object} query - 쿼리 파라미터 객체
+   */
+  navigate(path, query = {}) {
+    try {
+      const currentQuery = Router.parseQuery();
+      const updatedQuery = { ...currentQuery, ...query };
+
+      // 빈 값 제거
+      Object.keys(updatedQuery).forEach((key) => {
+        if (updatedQuery[key] === null || updatedQuery[key] === undefined || updatedQuery[key] === "") {
+          delete updatedQuery[key];
+        }
+      });
+
+      const queryString = Router.stringifyQuery(updatedQuery);
+
+      // base와 path 정규화 (이중 슬래시 방지)
+      const normalizedBase = this.#baseUrl.replace(/\/$/, "");
+      const normalizedPath = ("/" + String(path || "").replace(/^\/+/, "")).replace(/\/+$/, "/");
+
+      const fullUrl = `${normalizedBase}${normalizedPath}${queryString ? `?${queryString}` : ""}`;
+      this.push(fullUrl);
+    } catch (error) {
+      console.error("라우터 navigate 오류:", error);
     }
   }
 

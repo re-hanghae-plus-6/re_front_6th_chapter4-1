@@ -7,6 +7,7 @@ export function ProductCard(product) {
 
   return `
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden product-card" 
+         data-action="product-detail"
          data-product-id="${productId}">
       <!-- 상품 이미지 -->
       <div class="aspect-square bg-gray-100 overflow-hidden cursor-pointer product-image">
@@ -31,6 +32,7 @@ export function ProductCard(product) {
         <!-- 장바구니 버튼 -->
         <button class="w-full bg-blue-600 text-white text-sm py-2 px-3 rounded-md 
                        hover:bg-blue-700 transition-colors add-to-cart-btn"
+                data-action="add-to-cart"
                 data-product-id="${productId}">
           장바구니 담기
         </button>

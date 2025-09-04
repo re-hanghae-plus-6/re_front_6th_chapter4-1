@@ -33,19 +33,54 @@ export async function getProducts(params: StringRecord = {}): Promise<ProductsRe
     sort,
   });
 
-  const response = await fetch(`/api/products?${searchParams}`);
+  const url = `http://localhost/api/products?${searchParams}`;
 
-  return await response.json();
+  try {
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("API: Failed to fetch products:", error);
+    throw error;
+  }
 }
 
 // 상품 상세 조회
 export async function getProduct(productId: string): Promise<Product> {
-  const response = await fetch(`/api/products/${productId}`);
-  return await response.json();
+  const url = `http://localhost/api/products/${productId}`;
+
+  try {
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("API: Failed to fetch product:", error);
+    throw error;
+  }
 }
 
 // 카테고리 목록 조회
 export async function getCategories(): Promise<Categories> {
-  const response = await fetch("/api/categories");
-  return await response.json();
+  const url = "/api/categories";
+
+  try {
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("API: Failed to fetch categories:", error);
+    throw error;
+  }
 }

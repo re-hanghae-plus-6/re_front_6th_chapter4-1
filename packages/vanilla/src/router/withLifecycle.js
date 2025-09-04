@@ -79,10 +79,10 @@ export const withLifecycle = ({ onMount, onUnmount, watches } = {}, page) => {
       mount(page);
     } else if (lifecycle.watches) {
       lifecycle.watches.forEach(([getDeps, callback], index) => {
-        const newDeps = getDeps();
+        const newDeps = getDeps(...args);
 
         if (depsChanged(newDeps, lifecycle.deps[index])) {
-          callback();
+          callback(...args);
         }
 
         // deps 업데이트 (이 부분이 중요!)

@@ -17,39 +17,58 @@ export class Router<Handler extends (...args: any[]) => any> {
   readonly #routes: Map<string, Route<Handler>>;
   readonly #observer = createObserver();
   readonly #baseUrl;
-
   #route: null | (Route<Handler> & { params: StringRecord; path: string });
+  #ssrQuery: StringRecord = {};
 
   constructor(baseUrl = "") {
     this.#routes = new Map();
     this.#route = null;
     this.#baseUrl = baseUrl.replace(/\/$/, "");
 
-    window.addEventListener("popstate", () => {
-      this.#route = this.#findRoute();
-      this.#observer.notify();
-    });
+    // 브라우저 환경에서만 이벤트 리스너 등록
+    if (typeof window !== "undefined") {
+      window.addEventListener("popstate", () => {
+        this.#route = this.#findRoute();
+        this.#observer.notify();
+      });
 
-    document.addEventListener("click", (e) => {
-      const target = e.target as HTMLElement;
-      if (!target?.closest("[data-link]")) {
-        return;
-      }
-      e.preventDefault();
-      const url = target.getAttribute("href") ?? target.closest("[data-link]")?.getAttribute("href");
-      if (url) {
-        this.push(url);
-      }
-    });
+      document.addEventListener("click", (e) => {
+        const target = e.target as HTMLElement;
+        if (!target?.closest("[data-link]")) {
+          return;
+        }
+        e.preventDefault();
+        const url = target.getAttribute("href") ?? target.closest("[data-link]")?.getAttribute("href");
+        if (url) {
+          this.push(url);
+        }
+      });
+    }
   }
 
   get query(): StringRecord {
-    return Router.parseQuery(window.location.search);
+    if (typeof window !== "undefined") {
+      return Router.parseQuery(window.location.search);
+    }
+    return this.#ssrQuery;
   }
 
   set query(newQuery: QueryPayload) {
-    const newUrl = Router.getUrl(newQuery, this.#baseUrl);
-    this.push(newUrl);
+    if (typeof window === "undefined") {
+      console.log("newQuery:", newQuery);
+      // 서버에서는 #ssrQuery에 저장
+      this.#ssrQuery = Object.entries(newQuery).reduce((acc, [key, value]) => {
+        if (value !== null && value !== undefined && value !== "") {
+          acc[key] = String(value);
+        }
+        return acc;
+      }, {} as StringRecord);
+      console.log("acc:", this.#ssrQuery);
+    } else {
+      // 브라우저에서는 URL 업데이트
+      const newUrl = Router.getUrl(newQuery);
+      this.push(newUrl);
+    }
   }
 
   get params() {
@@ -85,8 +104,8 @@ export class Router<Handler extends (...args: any[]) => any> {
     });
   }
 
-  #findRoute(url = window.location.pathname) {
-    const { pathname } = new URL(url, window.location.origin);
+  #findRoute(url = typeof window !== "undefined" ? window.location.pathname : "/") {
+    const { pathname } = new URL(url, typeof window !== "undefined" ? window.location.origin : "http://localhost");
     for (const [routePath, route] of this.#routes) {
       const match = pathname.match(route.regex);
       if (match) {
@@ -111,10 +130,10 @@ export class Router<Handler extends (...args: any[]) => any> {
       // baseUrl이 없으면 자동으로 붙여줌
       const fullUrl = url.startsWith(this.#baseUrl) ? url : this.#baseUrl + (url.startsWith("/") ? url : "/" + url);
 
-      const prevFullUrl = `${window.location.pathname}${window.location.search}`;
+      const prevFullUrl = typeof window !== "undefined" ? `${window.location.pathname}${window.location.search}` : "/";
 
-      // 히스토리 업데이트
-      if (prevFullUrl !== fullUrl) {
+      // 히스토리 업데이트 (브라우저에서만)
+      if (typeof window !== "undefined" && prevFullUrl !== fullUrl) {
         window.history.pushState(null, "", fullUrl);
       }
 
@@ -130,7 +149,7 @@ export class Router<Handler extends (...args: any[]) => any> {
     this.#observer.notify();
   }
 
-  static parseQuery = (search = window.location.search) => {
+  static parseQuery = (search = typeof window !== "undefined" ? window.location.search : "") => {
     const params = new URLSearchParams(search);
     const query: StringRecord = {};
     for (const [key, value] of params) {
@@ -149,7 +168,7 @@ export class Router<Handler extends (...args: any[]) => any> {
     return params.toString();
   };
 
-  static getUrl = (newQuery: QueryPayload, baseUrl = "") => {
+  static getUrl = (newQuery: QueryPayload) => {
     const currentQuery = Router.parseQuery();
     const updatedQuery = { ...currentQuery, ...newQuery };
 
@@ -161,6 +180,8 @@ export class Router<Handler extends (...args: any[]) => any> {
     });
 
     const queryString = Router.stringifyQuery(updatedQuery);
-    return `${baseUrl}${window.location.pathname.replace(baseUrl, "")}${queryString ? `?${queryString}` : ""}`;
+    const pathname = typeof window !== "undefined" ? window.location.pathname : "/";
+    // baseUrl이 이미 pathname에 포함되어 있으므로 그대로 사용
+    return `${pathname}${queryString ? `?${queryString}` : ""}`;
   };
 }
