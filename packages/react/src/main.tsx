@@ -14,7 +14,9 @@ const enableMocking = () =>
   );
 
 function main() {
-  router.start();
+  if (typeof window !== "undefined") {
+    router.start();
+  }
 
   const rootElement = document.getElementById("root")!;
   createRoot(rootElement).render(<App />);

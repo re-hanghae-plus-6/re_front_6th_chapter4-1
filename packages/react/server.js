@@ -19,11 +19,7 @@ const setupMiddlewares = async () => {
     return viteServer;
   }
   const compression = (await import("compression")).default;
-  const sirv = (await import("sirv")).default;
-
   app.use(compression());
-  app.use(base, sirv("./dist/react", { extensions: [] }));
-
   return null;
 };
 
@@ -45,8 +41,11 @@ const get = {
   },
 };
 
-app.get("*all", async (request, response) => {
+app.use(async (request, response, next) => {
   try {
+    const accept = request.headers.accept || "";
+    if (!String(accept).includes("text/html")) return next();
+
     const url = request.originalUrl.replace(base, "");
 
     const template = await get.template(viteServer, url);
@@ -67,6 +66,11 @@ app.get("*all", async (request, response) => {
     response.status(500).end(error.stack);
   }
 });
+
+if (prod) {
+  const sirv = (await import("sirv")).default;
+  app.use(base, sirv("./dist/react", { extensions: [] }));
+}
 
 // Start http server
 app.listen(port, () => {

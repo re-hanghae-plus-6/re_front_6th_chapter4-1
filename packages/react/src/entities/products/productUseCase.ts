@@ -1,5 +1,4 @@
 import { getCategories, getProduct, getProducts } from "../../api/productApi";
-import { router } from "../../router";
 import type { StringRecord } from "../../types";
 import { initialProductState, PRODUCT_ACTIONS, productStore } from "./productStore";
 import { isNearBottom } from "../../utils";
@@ -7,7 +6,19 @@ import { isNearBottom } from "../../utils";
 const createErrorMessage = (error: unknown, defaultMessage = "알 수 없는 오류 발생") =>
   error instanceof Error ? error.message : defaultMessage;
 
+const getRouter = async () => {
+  if (typeof window === "undefined") {
+    return {
+      query: {},
+      route: { path: "/" },
+    };
+  }
+  const mod = await import("../../router");
+  return mod.router;
+};
+
 export const loadProductsAndCategories = async () => {
+  const router = await getRouter();
   router.query = { current: undefined }; // 항상 첫 페이지로 초기화
   productStore.dispatch({
     type: PRODUCT_ACTIONS.SETUP,
@@ -54,6 +65,7 @@ export const loadProducts = async (resetList = true) => {
       payload: { loading: true, status: "pending", error: null },
     });
 
+    const router = await getRouter();
     const {
       products,
       pagination: { total },
@@ -83,22 +95,27 @@ export const loadMoreProducts = async () => {
     return;
   }
 
+  const router = await getRouter();
   router.query = { current: Number(router.query.current ?? 1) + 1 };
   await loadProducts(false);
 };
-export const searchProducts = (search: string) => {
+export const searchProducts = async (search: string) => {
+  const router = await getRouter();
   router.query = { search, current: 1 };
 };
 
-export const setCategory = (categoryData: StringRecord) => {
+export const setCategory = async (categoryData: StringRecord) => {
+  const router = await getRouter();
   router.query = { ...categoryData, current: 1 };
 };
 
-export const setSort = (sort: string) => {
+export const setSort = async (sort: string) => {
+  const router = await getRouter();
   router.query = { sort, current: 1 };
 };
 
-export const setLimit = (limit: number) => {
+export const setLimit = async (limit: number) => {
+  const router = await getRouter();
   router.query = { limit, current: 1 };
 };
 
@@ -174,6 +191,7 @@ export const loadRelatedProducts = async (category2: string, excludeProductId: s
 
 export const loadNextProducts = async () => {
   // 현재 라우트가 홈이 아니면 무한 스크롤 비활성화
+  const router = await getRouter();
   if (router.route?.path !== "/") {
     return;
   }
