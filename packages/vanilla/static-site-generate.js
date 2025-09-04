@@ -78,7 +78,7 @@ async function generateStaticSite() {
 
         const productResult = await render(productUrl, {});
 
-        if (productResult.initialData.currentProduct) {
+        if (productResult.initialData.product) {
           const productHtml = replacePlaceholders(
             template,
             productResult.html,

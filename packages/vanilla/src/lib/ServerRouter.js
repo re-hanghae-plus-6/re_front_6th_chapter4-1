@@ -7,19 +7,24 @@ export class ServerRouter extends BaseRouter {
   #currentUrl = "/";
   #origin = "http://localhost";
   #routes = new Map();
+  #query = {};
 
   constructor(baseUrl = "") {
     super(baseUrl);
   }
 
-  get query() {
-    const url = new URL(this.#currentUrl, this.#origin);
-    return BaseRouter.parseQuery(url.search);
+  set query(newQuery) {
+    // 서버사이드에서는 URL 재구성하지 않고 query만 저장
+    this.#query = newQuery;
   }
 
-  set query(newQuery) {
-    const newUrl = BaseRouter.getUrl(newQuery, this.baseUrl, this.#currentUrl);
-    this.setUrl(newUrl, this.#origin);
+  get query() {
+    // query getter도 수정
+    if (this.#query) {
+      return this.#query;
+    }
+    const url = new URL(this.#currentUrl, this.#origin);
+    return BaseRouter.parseQuery(url.search);
   }
 
   getCurrentUrl() {
@@ -89,7 +94,8 @@ export class ServerRouter extends BaseRouter {
           })
           .replace(/\//g, "\\/");
 
-        const regex = new RegExp(`^${regexPath}$`);
+        // baseUrl을 고려한 정규식 생성
+        const regex = new RegExp(`^${this.baseUrl}${regexPath}$`);
         const match = pathname.match(regex);
 
         if (match) {

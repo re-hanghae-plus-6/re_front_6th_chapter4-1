@@ -46,6 +46,7 @@ export const render = async (url, query) => {
     // 전달된 query와 URL의 쿼리를 병합
     const mergedQuery = { ...urlQuery, ...query };
 
+    // 전체 URL을 사용하여 라우터 시작
     serverRouter.start(url, mergedQuery);
 
     // router 객체의 query도 설정
@@ -82,7 +83,7 @@ export const render = async (url, query) => {
 
         // withLifecycle의 metadata 함수 호출
         const metadata = HomePage.metadata ? HomePage.metadata() : {};
-        head = `<title>${metadata.title || "쇼핑몰"}</title>
+        head = `<title>${metadata.title || "쇼핑몰 - 홈"}</title>
 <meta name="description" content="${metadata.description || "다양한 상품을 만나보세요"}">`;
         initialData = {
           products: storeState.products,

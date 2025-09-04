@@ -27,6 +27,17 @@ export const HomePage = withLifecycle(
         return;
       }
       console.log("이 코드는 아무것도 없을 때!");
+      // CSR 환경에서 로딩 상태를 보기 위해 초기 상태 설정
+      productStore.dispatch({
+        type: PRODUCT_ACTIONS.SETUP,
+        payload: {
+          products: [],
+          categories: {},
+          totalCount: 0,
+          loading: true,
+          status: "pending",
+        },
+      });
       loadProductsAndCategories();
     },
     watches: [
