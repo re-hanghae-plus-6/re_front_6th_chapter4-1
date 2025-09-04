@@ -1,7 +1,9 @@
-import { productStore } from "../stores";
+import { PRODUCT_ACTIONS, productStore } from "../stores";
 import { loadProductDetailForPage } from "../services";
 import { router, withLifecycle } from "../router";
 import { PageWrapper } from "./PageWrapper.js";
+import { loadInitialData } from "../utils/loadInitialData.js";
+import { hydrateStores } from "../utils/hydrateStores.js";
 
 const loadingContent = `
   <div class="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -240,25 +242,23 @@ export const ProductDetailPage = withLifecycle(
       if (typeof window === "undefined") return;
 
       const state = productStore.getState();
-      if (state.currentProduct) return; // 이미 있으면 패스
+      const currentId = state.currentProduct?.productId;
 
-      try {
-        // ✅ product/:id.json 우선 시도
-        const res = await fetch(`/product/${router.params.id}.json`);
-        if (res.ok) {
-          const data = await res.json();
-          productStore.setState({
-            currentProduct: data.currentProduct,
-            relatedProducts: data.relatedProducts,
-            loading: false,
-            error: null,
-          });
-          return;
-        }
-      } catch (e) {
-        console.warn("product.json 로드 실패 → API fallback 실행");
-        console.error(e);
+      // 같은 상품이면 패스, 다른 상품이면 다시 불러오기
+      if (currentId === router.params.id) return;
+
+      // currentProduct 초기화
+      productStore.dispatch({
+        type: PRODUCT_ACTIONS.SET_CURRENT_PRODUCT,
+        payload: null,
+      });
+
+      const staticData = await loadInitialData(`/product/${router.params.id}/`);
+      if (staticData) {
+        hydrateStores(staticData); // 여기서 dispatch 처리
+        return;
       }
+
       // fallback: CSR API 호출
       loadProductDetailForPage(router.params.id);
     },

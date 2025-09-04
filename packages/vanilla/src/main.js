@@ -59,6 +59,7 @@ function main() {
   registerGlobalEvents();
   loadCartFromStorage();
   initRender();
+
   router.start();
 }
 
