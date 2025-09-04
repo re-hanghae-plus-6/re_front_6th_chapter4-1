@@ -67,7 +67,7 @@ export class Router {
       })
       .replace(/\//g, "\\/");
 
-    const regex = new RegExp(`^${this.#baseUrl}${regexPath}$`);
+    const regex = new RegExp(`^${regexPath}$`);
 
     this.#routes.set(path, {
       regex,
@@ -78,8 +78,12 @@ export class Router {
 
   #findRoute(url = typeof window !== "undefined" ? window.location.pathname : "/") {
     const { pathname } = new URL(url, typeof window !== "undefined" ? window.location.origin : "http://localhost");
+
+    // baseUrl 제거 (서버 라우터와 동일한 방식)
+    const normalizedPath = pathname.replace(this.#baseUrl, "") || "/";
+
     for (const [routePath, route] of this.#routes) {
-      const match = pathname.match(route.regex);
+      const match = normalizedPath.match(route.regex);
       if (match) {
         // 매치된 파라미터들을 객체로 변환
         const params = {};

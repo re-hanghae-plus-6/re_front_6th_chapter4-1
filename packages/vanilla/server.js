@@ -1,7 +1,6 @@
 import fs from "node:fs/promises";
 import express from "express";
-import { ApiRouter } from "./src/lib/ApiRouter.js";
-import { registerApiRoutes } from "./src/api/routes.js";
+import { createApiRouter } from "./src/api/routes.js";
 import { mswServer } from "./src/mocks/node.js";
 
 async function startServer() {
@@ -28,10 +27,6 @@ async function startServer() {
   // JSON 요청 본문을 파싱하는 미들웨어 추가
   app.use(express.json());
 
-  // API 라우터 초기화
-  const apiRouter = new ApiRouter("/api");
-  registerApiRoutes(apiRouter);
-
   // Add Vite or respective production middlewares
   /** @type {import('vite').ViteDevServer | undefined} */
   let vite;
@@ -50,8 +45,8 @@ async function startServer() {
     app.use(base, sirv("./dist/vanilla", { extensions: [] }));
   }
 
-  // API 라우트 - 새로운 API 라우터 사용
-  app.use("/api", apiRouter.middleware.bind(apiRouter));
+  // API 라우트 - Express Router 사용
+  app.use("/api", createApiRouter());
 
   // Serve HTML - API 경로가 아닌 경우에만
   app.use(async (req, res) => {
@@ -64,6 +59,7 @@ async function startServer() {
     try {
       // baseUrl 제거하되 앞의 /는 유지
       let url = req.originalUrl.replace(base, "");
+
       if (!url.startsWith("/")) {
         url = "/" + url;
       }

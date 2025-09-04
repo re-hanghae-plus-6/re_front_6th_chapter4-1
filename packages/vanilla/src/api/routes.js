@@ -1,6 +1,7 @@
 /**
- * API 라우트 설정 - 모든 API 엔드포인트를 중앙에서 관리
+ * API 라우트 설정 - Express Router 사용
  */
+import express from "express";
 
 /**
  * 상품 목록 API 핸들러
@@ -107,35 +108,15 @@ async function getCategoriesHandler(req, res) {
 }
 
 /**
- * API 라우트 설정
+ * Express Router로 API 라우트 생성
  */
-export const apiRoutes = [
-  {
-    method: "GET",
-    path: "/products",
-    handler: getProductsHandler,
-    name: "getProducts",
-  },
-  {
-    method: "GET",
-    path: "/products/:id",
-    handler: getProductHandler,
-    name: "getProduct",
-  },
-  {
-    method: "GET",
-    path: "/categories",
-    handler: getCategoriesHandler,
-    name: "getCategories",
-  },
-];
+export function createApiRouter() {
+  const router = express.Router();
 
-/**
- * API 라우트 설정을 기반으로 API 라우터에 라우트 등록
- * @param {ApiRouter} apiRouter - ApiRouter 인스턴스
- */
-export function registerApiRoutes(apiRouter) {
-  apiRoutes.forEach(({ method, path, handler }) => {
-    apiRouter.addRoute(method, path, handler);
-  });
+  // API 라우트 등록
+  router.get("/products", getProductsHandler);
+  router.get("/products/:id", getProductHandler);
+  router.get("/categories", getCategoriesHandler);
+
+  return router;
 }
