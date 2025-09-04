@@ -1,14 +1,23 @@
-import { getProduct, getProducts } from "../api/productApi";
-import { productStore, PRODUCT_ACTIONS } from "../stores";
+import { getCategories, getProduct, getProducts } from "../api/productApi";
+import { productStore, PRODUCT_ACTIONS, initialProductState } from "../stores";
 import { router } from "../router";
 
-export const setupProductsAndCategories = async ([
-  {
-    products,
-    pagination: { total },
-  },
-  categories,
-]) => {
+export const setupProductsAndCategories = async (data) => {
+  if (!data) {
+    return;
+  }
+
+  if (productStore.getState().status === "done") {
+    return;
+  }
+
+  productStore.dispatch({
+    type: PRODUCT_ACTIONS.SETUP,
+    payload: data,
+  });
+};
+
+export const loadProductsAndCategories = async () => {
   if (productStore.getState().status === "done") {
     return;
   }
@@ -17,13 +26,39 @@ export const setupProductsAndCategories = async ([
   productStore.dispatch({
     type: PRODUCT_ACTIONS.SETUP,
     payload: {
-      products,
-      categories,
-      totalCount: total,
-      loading: false,
-      status: "done",
+      ...initialProductState,
+      loading: true,
+      status: "pending",
     },
   });
+
+  try {
+    const [
+      {
+        products,
+        pagination: { total },
+      },
+      categories,
+    ] = await Promise.all([getProducts(router.query), getCategories()]);
+
+    // 페이지 리셋이면 새로 설정, 아니면 기존에 추가
+    productStore.dispatch({
+      type: PRODUCT_ACTIONS.SETUP,
+      payload: {
+        products,
+        categories,
+        totalCount: total,
+        loading: false,
+        status: "done",
+      },
+    });
+  } catch (error) {
+    productStore.dispatch({
+      type: PRODUCT_ACTIONS.SET_ERROR,
+      payload: error.message,
+    });
+    throw error;
+  }
 };
 
 /**
