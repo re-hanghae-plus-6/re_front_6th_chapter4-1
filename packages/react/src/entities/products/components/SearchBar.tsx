@@ -236,6 +236,7 @@ export function SearchBar() {
               className="text-sm border border-gray-300 rounded px-2 py-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
               onChange={(e) => handleLimitChange(e, router)}
               defaultValue={Number(limit)}
+              value={Number(limit)}
             >
               {limitOptions}
             </select>
@@ -252,6 +253,7 @@ export function SearchBar() {
                            focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
               onChange={(e) => handleSortChange(e, router)}
               defaultValue={sort}
+              value={sort}
             >
               {sortOptions}
             </select>
