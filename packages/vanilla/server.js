@@ -39,10 +39,16 @@ if (!isProduction) {
 }
 
 // SSR 렌더링 미들웨어
-app.use("*all", async (req, res) => {
+app.use(/^(?!.*\/api).*$/, async (req, res) => {
   try {
     // URL에서 베이스 경로 제거 (정규화)
-    const url = "/" + req.originalUrl.replace(base, "");
+    let normalizedUrl = req.originalUrl.replace(base, "");
+    // 빈 문자열이거나 슬래시로 시작하지 않는 경우 처리
+    if (!normalizedUrl || !normalizedUrl.startsWith("/")) {
+      normalizedUrl = "/" + (normalizedUrl || "");
+    }
+    // 연속된 슬래시 제거
+    const url = normalizedUrl.replace(/\/+/g, "/");
     console.log("🌐 SSR 요청:", url);
 
     if (!isProduction) {

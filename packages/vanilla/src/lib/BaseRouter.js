@@ -49,7 +49,7 @@ export class BaseRouter {
       })
       .replace(/\//g, "\\/");
 
-    const regex = new RegExp(`^${this.#baseUrl}${regexPath}$`);
+    const regex = new RegExp(`^${regexPath}$`);
 
     this.#routes.set(path, {
       regex,
@@ -59,23 +59,37 @@ export class BaseRouter {
   }
 
   findRoute(url) {
-    const { pathname } = new URL(url, this.getOrigin());
-    for (const [routePath, route] of this.#routes) {
-      const match = pathname.match(route.regex);
-      if (match) {
-        const params = {};
-        route.paramNames.forEach((name, index) => {
-          params[name] = match[index + 1];
-        });
-
-        return {
-          ...route,
-          params,
-          path: routePath,
-        };
+    try {
+      // URL이 유효하지 않거나 빈 문자열인 경우 기본값 사용
+      if (!url || url.trim() === "") {
+        url = "/";
       }
+
+      const { pathname } = new URL(url, this.getOrigin());
+      // baseUrl이 있는 경우 pathname에서 제거
+      const normalizedPath = this.#baseUrl ? pathname.replace(this.#baseUrl, "") || "/" : pathname;
+
+      for (const [routePath, route] of this.#routes) {
+        const match = normalizedPath.match(route.regex);
+        if (match) {
+          const params = {};
+          route.paramNames.forEach((name, index) => {
+            params[name] = match[index + 1];
+          });
+
+          return {
+            ...route,
+            params,
+            path: routePath,
+          };
+        }
+      }
+      return null;
+    } catch (error) {
+      console.error("라우팅 에러:", error);
+      // URL 파싱 실패 시 기본 라우트로 처리
+      return null;
     }
-    return null;
   }
 
   updateRoute(url) {
