@@ -17,8 +17,6 @@ const vite = await createServer({
 const DIST_DIR = "../../dist/vanilla";
 
 async function generateStaticSite() {
-  // HTML 템플릿 읽기
-
   // 어플리케이션 렌더링하기
   const { render } = await vite.ssrLoadModule("./src/main-server.js");
   const pages = await getPages();
