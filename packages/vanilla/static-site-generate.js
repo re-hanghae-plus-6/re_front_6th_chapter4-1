@@ -1,18 +1,24 @@
 import fs from "fs";
-
-const render = () => {
-  return `<div>안녕하세요</div>`;
-};
+import { render } from "./dist/vanilla-ssr/main-server.js";
 
 async function generateStaticSite() {
   // HTML 템플릿 읽기
   const template = fs.readFileSync("../../dist/vanilla/index.html", "utf-8");
 
-  // 어플리케이션 렌더링하기
-  const appHtml = render();
+  // 홈페이지 렌더링
+  const { html: appHtml, head, initialData } = await render("/", {});
+
+  // 초기 데이터 스크립트 생성
+  const initialDataScript = initialData
+    ? `<script>window.__INITIAL_DATA__ = ${JSON.stringify(initialData)}</script>`
+    : "";
 
   // 결과 HTML 생성하기
-  const result = template.replace("<!--app-html-->", appHtml);
+  const result = template
+    .replace("<!--app-head-->", head ?? "")
+    .replace("<!--app-html-->", appHtml ?? "")
+    .replace("</head>", `${initialDataScript}</head>`);
+
   fs.writeFileSync("../../dist/vanilla/index.html", result);
 }
 
