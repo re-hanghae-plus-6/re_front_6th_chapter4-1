@@ -1,7 +1,8 @@
+import { BaseRouter } from "../lib";
+
 /**
  * 서버사이드 라우터 - SSR 환경에서 사용
  */
-import { BaseRouter } from "./BaseRouter.js";
 
 export class ServerRouter extends BaseRouter {
   #currentUrl = "/"; // 현재 처리 중인 요청 URL

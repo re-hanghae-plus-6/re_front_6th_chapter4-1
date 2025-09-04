@@ -1,7 +1,8 @@
+import { BaseRouter } from "../lib";
+
 /**
  * 클라이언트사이드 SPA 라우터
  */
-import { BaseRouter } from "./BaseRouter.js";
 
 export class Router extends BaseRouter {
   constructor(baseUrl = "") {
