@@ -3,6 +3,7 @@ import express from "express";
 import compression from "compression";
 import sirv from "sirv";
 import { normalize } from "node:path";
+import { mswServer } from "./src/mocks/node";
 
 const prod = process.env.NODE_ENV === "production";
 const port = process.env.PORT || 5173;
@@ -11,6 +12,8 @@ const base = process.env.BASE || (prod ? "/front_6th_chapter4-1/vanilla/" : "/")
 const templateHtml = prod ? await fs.readFile("./dist/vanilla/index.html", "utf-8") : "";
 
 const app = express();
+
+mswServer.listen({ onUnhandledRequest: "bypass" });
 
 /** @type {import('vite').ViteDevServer | undefined} */
 let vite;
