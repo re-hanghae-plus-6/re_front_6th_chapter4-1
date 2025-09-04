@@ -38,10 +38,23 @@ serverRouter.addRoute("/product/:id/", async (params) => {
     };
   }
 
+  // 관련 상품 로드 (같은 카테고리의 다른 상품들)
+  const relatedProducts = await getProducts({
+    category1: product.category1,
+    category2: product.category2,
+    limit: 20,
+  });
+
+  // 현재 상품은 관련 상품에서 제외
+  const filteredRelatedProducts = relatedProducts.products.filter(
+    (relatedProduct) => relatedProduct.productId !== product.productId,
+  );
+
   return {
     type: "product-detail",
     data: {
       currentProduct: product,
+      relatedProducts: filteredRelatedProducts.slice(0, 20), // 최대 20개
     },
   };
 });
