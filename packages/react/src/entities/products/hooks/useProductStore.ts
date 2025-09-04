@@ -11,6 +11,7 @@ interface ProductProviderProps {
     categories?: Categories;
     totalCount?: number;
     currentProduct?: Product;
+    relatedProducts?: Product[];
     filters: {
       search: string;
       limit: string;
@@ -23,15 +24,20 @@ interface ProductProviderProps {
 
 export const ProductProvider = ({ children, initialData }: PropsWithChildren<ProductProviderProps>) => {
   // useEffect 대신 즉시 실행
-  console.log("데이터");
-  console.log(initialData?.filters);
 
   if (initialData?.currentProduct || (initialData?.products && initialData.products.length > 0)) {
     // 현재 스토어 상태 확인
     const currentState = productStore.getState();
+    console.log("데이터000");
+    // console.log(initialData?.currentProduct);
+    console.log(currentState.products.length);
+    console.log(currentState.currentProduct);
 
     // 아직 초기 데이터가 설정되지 않았을 때만 설정
-    if (currentState.products.length === 0 && currentState.loading !== false) {
+    if (currentState.loading === true || typeof window === "undefined") {
+      console.log("데이터");
+      console.log(initialData?.currentProduct);
+
       productStore.dispatch({
         type: PRODUCT_ACTIONS.SET_INITIAL_DATA,
         payload: {
@@ -39,6 +45,7 @@ export const ProductProvider = ({ children, initialData }: PropsWithChildren<Pro
           categories: initialData.categories || {},
           totalCount: initialData.totalCount || (initialData?.products ?? []).length,
           currentProduct: initialData.currentProduct || {},
+          relatedProducts: initialData.relatedProducts || [],
           filters: initialData.filters,
           loading: false,
         },
@@ -48,25 +55,3 @@ export const ProductProvider = ({ children, initialData }: PropsWithChildren<Pro
 
   return children;
 };
-
-// export const ProductProvider = ({ children, initialData }: PropsWithChildren<ProductProviderProps>) => {
-//   useLayoutEffect(() => {
-//     if ((initialData?.products ?? []).length > 0) {
-//       const currentState = productStore.getState();
-//       if (currentState.products.length === 0 && currentState.loading !== false) {
-//         productStore.dispatch({
-//           type: PRODUCT_ACTIONS.SET_INITIAL_DATA,
-//           payload: {
-//             products: initialData?.products,
-//             categories: initialData?.categories || {},
-//             totalCount: initialData?.totalCount || (initialData?.products?.length ?? 0),
-//             filters: initialData?.filters,
-//             loading: false,
-//           },
-//         });
-//       }
-//     }
-//   }, [initialData]);
-
-//   return children;
-// };

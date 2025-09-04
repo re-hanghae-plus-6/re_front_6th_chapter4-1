@@ -135,6 +135,8 @@ const productReducer = (state: typeof initialProductState, action: any) => {
         categories: action.payload.categories || {},
         totalCount: action.payload.totalCount || 0,
         filters: action.payload.filters || {},
+        currentProduct: action.payload.currentProduct || null,
+        relatedProducts: action.payload.relatedProducts || [],
         loading: false,
         error: null,
         status: "done",

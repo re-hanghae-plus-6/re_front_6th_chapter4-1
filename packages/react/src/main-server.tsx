@@ -11,8 +11,6 @@ import { App } from "./App";
 
 export const render = async (url: string, query: Record<string, string>) => {
   console.log("SSR render 시작:", { url, query });
-  console.log(url);
-  console.log(query);
 
   const serverRouter = new Router<FunctionComponent>(BASE_URL);
 
@@ -44,19 +42,32 @@ export const render = async (url: string, query: Record<string, string>) => {
       const productId = splitUrl[1];
       console.log("상품 상세 페이지 데이터 로딩:", productId);
 
-      const product = await getProduct(productId);
-      initialData.currentProduct = product;
+      try {
+        const product = await getProduct(productId);
+        console.log("상품 로딩 성공:", product.title);
 
-      if (product.category2) {
-        const relatedData = await getProducts({
-          category2: product.category2,
-          limit: "20",
-        });
-        initialData.relatedProducts = relatedData.products.filter((p) => p.productId !== productId);
+        initialData.currentProduct = product;
+
+        // 관련 상품 로딩
+        if (product.category2) {
+          try {
+            const relatedData = await getProducts({
+              category2: product.category2,
+              limit: "20",
+            });
+            initialData.relatedProducts = relatedData.products.filter((p) => p.productId !== productId);
+            console.log("관련 상품 로딩 성공:", initialData.relatedProducts.length, "개");
+          } catch (relatedError) {
+            console.error("관련 상품 로딩 실패:", relatedError);
+            initialData.relatedProducts = [];
+          }
+        }
+
+        const categoriesData = await getCategories();
+        initialData.categories = categoriesData;
+      } catch (productError) {
+        console.error("상품 로딩 실패:", productError);
       }
-
-      const categoriesData = await getCategories();
-      initialData.categories = categoriesData;
     } else {
       // 홈페이지
       console.log("홈페이지 데이터 로딩");
@@ -81,6 +92,8 @@ export const render = async (url: string, query: Record<string, string>) => {
       productsCount: initialData.products.length,
       categoriesCount: Object.keys(initialData.categories).length,
       totalCount: initialData.totalCount,
+      currentProduct: initialData.currentProduct,
+      relatedCount: initialData.relatedProducts.length,
     });
   } catch (error) {
     console.error("데이터 로딩 오류:", error);
@@ -90,36 +103,14 @@ export const render = async (url: string, query: Record<string, string>) => {
   let html = "";
   try {
     console.log("React 컴포넌트 렌더링 시작");
-    console.log("App 컴포넌트 타입:", typeof App);
-    console.log("ProductProvider 타입:", typeof ProductProvider);
 
-    // 단계별 렌더링 테스트
+    // 스토어 초기화
     productStore.dispatch({
       type: PRODUCT_ACTIONS.SET_INITIAL_DATA,
       payload: initialData,
     });
 
-    // 1단계: App만 렌더링
-    try {
-      const appOnly = renderToString(<App />);
-      console.log("App 단독 렌더링 성공, 길이:", appOnly.length);
-    } catch (appError) {
-      console.error("App 렌더링 오류:", appError);
-    }
-
-    // 2단계: ProductProvider만 렌더링
-    try {
-      const providerOnly = renderToString(
-        <ProductProvider initialData={{ ...initialData }}>
-          <div>Provider Test</div>
-        </ProductProvider>,
-      );
-      console.log("ProductProvider 단독 렌더링 성공, 길이:", providerOnly.length);
-    } catch (providerError) {
-      console.error("ProductProvider 렌더링 오류:", providerError);
-    }
-
-    // 3단계: 전체 렌더링
+    // 전체 렌더링
     html = renderToString(
       <ProductProvider initialData={initialData}>
         <App url={url} />
@@ -128,24 +119,17 @@ export const render = async (url: string, query: Record<string, string>) => {
 
     console.log("전체 렌더링 완료, HTML 길이:", html.length);
 
-    if (html.length > 0) {
-      //console.log("HTML 시작 부분:", html.substring(0, 200));
-      //console.log("HTML 끝 부분:", html.substring(html.length - 100));
-    } else {
+    if (html.length === 0) {
       console.error("⚠️ 렌더링된 HTML이 비어있습니다!");
-
-      // 폴백: 간단한 HTML 구조 생성
-      html = ``;
-      console.log("폴백 HTML 생성 완료, 길이:", html.length);
+      // 폴백 HTML
+      html = `<div id="root"><!-- SSR 실패, 클라이언트에서 렌더링됩니다 --></div>`;
     }
   } catch (renderError) {
-    console.error("React 렌더링 심각한 오류:", renderError);
-
-    // 최종 폴백 HTML
-    html = ``;
+    console.error("React 렌더링 오류:", renderError);
+    html = `<div id="root"><!-- 렌더링 오류: ${renderError} --></div>`;
   }
 
-  const head = "<title>쇼핑몰 - 홈</title>";
+  const head = `<title>${initialData.currentProduct ? `${initialData.currentProduct?.title} - 쇼핑몰` : "쇼핑몰 - 홈"}</title>`;
 
   console.log("SSR render 완료");
 
@@ -156,7 +140,6 @@ export const render = async (url: string, query: Record<string, string>) => {
   };
 };
 
-// 추가 디버깅 함수들
 export const debugSSR = () => {
   console.log("=== SSR 디버깅 정보 ===");
   console.log("renderToString 함수:", typeof renderToString);
