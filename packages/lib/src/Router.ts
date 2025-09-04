@@ -36,8 +36,10 @@ export class Router<Handler extends (...args: any[]) => any> {
         return;
       }
       e.preventDefault();
-      const url = target.getAttribute("href") ?? target.closest("[data-link]")?.getAttribute("href");
-      if (url) {
+      const raw = target.getAttribute("href") ?? target.closest("[data-link]")?.getAttribute("href");
+      if (raw) {
+        // baseUrl을 고려하여 절대 경로로 정규화
+        const url = raw.startsWith(this.#baseUrl) ? raw : this.#baseUrl + (raw.startsWith("/") ? raw : "/" + raw);
         this.push(url);
       }
     });
@@ -76,7 +78,7 @@ export class Router<Handler extends (...args: any[]) => any> {
       })
       .replace(/\//g, "\\/");
 
-    const regex = new RegExp(`^${this.#baseUrl}${regexPath}$`);
+    const regex = new RegExp(`^${regexPath}$`);
 
     this.#routes.set(path, {
       regex,
@@ -87,8 +89,11 @@ export class Router<Handler extends (...args: any[]) => any> {
 
   #findRoute(url = window.location.pathname) {
     const { pathname } = new URL(url, window.location.origin);
+    // baseUrl 제거 후 매칭
+    const withoutBase = pathname.startsWith(this.#baseUrl) ? pathname.slice(this.#baseUrl.length) : pathname;
+    const normalized = withoutBase === "" ? "/" : withoutBase;
     for (const [routePath, route] of this.#routes) {
-      const match = pathname.match(route.regex);
+      const match = normalized.match(route.regex);
       if (match) {
         // 매치된 파라미터들을 객체로 변환
         const params: StringRecord = {};
@@ -151,17 +156,19 @@ export class Router<Handler extends (...args: any[]) => any> {
 
   static getUrl = (newQuery: QueryPayload, baseUrl = "") => {
     const currentQuery = Router.parseQuery();
-    const updatedQuery = { ...currentQuery, ...newQuery };
+    const updatedQuery: Record<string, unknown> = { ...currentQuery, ...newQuery };
 
-    // 빈 값들 제거
+    // 빈 값 제거
     Object.keys(updatedQuery).forEach((key) => {
-      if (updatedQuery[key] === null || updatedQuery[key] === undefined || updatedQuery[key] === "") {
+      const value = updatedQuery[key];
+      if (value === null || value === undefined || value === "") {
         delete updatedQuery[key];
       }
     });
 
-    const queryString = Router.stringifyQuery(updatedQuery);
+    const queryString = Router.stringifyQuery(updatedQuery as QueryPayload);
 
+    // 경로 정규화: baseUrl 제거 후 항상 슬래시로 시작, 빈 경우 "/"
     const pathname = window.location.pathname;
     const withoutBase = pathname.startsWith(baseUrl) ? pathname.slice(baseUrl.length) : pathname;
     const normalizedPath = withoutBase === "" ? "/" : withoutBase.startsWith("/") ? withoutBase : `/${withoutBase}`;

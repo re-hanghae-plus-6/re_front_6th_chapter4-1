@@ -1,4 +1,4 @@
-import { getCategories, getProduct, getProducts } from "../../api/productApi";
+import { getCategories, getProduct, getProducts } from "../../api";
 import type { StringRecord } from "../../types";
 import { initialProductState, PRODUCT_ACTIONS, productStore } from "./productStore";
 import { isNearBottom } from "../../utils";
