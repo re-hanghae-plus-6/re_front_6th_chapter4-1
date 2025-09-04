@@ -7,6 +7,15 @@ import { PageWrapper } from "./PageWrapper.js";
 export const HomePage = withLifecycle(
   {
     onMount: () => {
+      const state = productStore.getState();
+      if (
+        state.status === "done" &&
+        (state.products?.length > 0 ||
+          state.currentProduct ||
+          (state.categories && Object.keys(state.categories).length > 0))
+      )
+        return;
+
       loadProductsAndCategories();
     },
     watches: [
