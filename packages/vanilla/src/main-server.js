@@ -4,14 +4,7 @@ import { productStore } from "./stores/productStore.js";
 import { PRODUCT_ACTIONS } from "./stores/actionTypes.js";
 import { uiStore } from "./stores/uiStore.js";
 import { route } from "./router/serverRouter.js";
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const items = JSON.parse(fs.readFileSync(path.join(__dirname, "mocks", "items.json"), "utf-8"));
+import items from "./mocks/items.json";
 
 function getUniqueCategories() {
   const categories = {};
