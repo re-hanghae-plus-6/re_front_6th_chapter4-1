@@ -2,8 +2,10 @@ const routes = [];
 
 function normalizePath(path) {
   if (!path) return "/";
-  const trimmed = path.replace(/\/$/, "");
-  return trimmed === "" ? "/" : trimmed;
+  const s = String(path);
+  const withLeading = s.startsWith("/") ? s : `/${s}`;
+  const withoutTrailing = withLeading !== "/" ? withLeading.replace(/\/$/, "") : withLeading;
+  return withoutTrailing === "" ? "/" : withoutTrailing;
 }
 
 export const route = {
