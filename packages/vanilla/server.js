@@ -5,7 +5,7 @@ const port = process.env.PORT || 5173;
 const base = process.env.BASE || (prod ? "/front_6th_chapter4-1/vanilla/" : "/");
 
 const app = express();
-
+console.log(1)
 const render = () => {
   return `<div>안녕하세요</div>`;
 };
