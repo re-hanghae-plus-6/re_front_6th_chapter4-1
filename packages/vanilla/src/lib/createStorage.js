@@ -33,3 +33,13 @@ export const createStorage = (key, storage = window.localStorage) => {
 
   return { get, set, reset };
 };
+
+export const createServerStorage = () => {
+  const storage = new Map();
+
+  const get = (key) => storage.get(key);
+  const set = (key, value) => storage.set(key, value);
+  const reset = () => storage.clear();
+
+  return { get, set, reset };
+};

@@ -64,7 +64,7 @@ export class Router {
       })
       .replace(/\//g, "\\/");
 
-    const regex = new RegExp(`^${this.#baseUrl}${regexPath}$`);
+    const regex = new RegExp(`^${this.#baseUrl}${regexPath}/?$`);
 
     this.#routes.set(path, {
       regex,
