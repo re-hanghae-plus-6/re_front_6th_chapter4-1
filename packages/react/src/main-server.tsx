@@ -4,6 +4,7 @@ import { route } from "./router/serverRouter";
 import { HomePage, NotFoundPage, ProductDetailPage } from "./pages";
 import { loadHomePageData, loadProductDetailData } from "./mocks/mockApi";
 import { productStore, PRODUCT_ACTIONS } from "./entities/products/productStore";
+import { setSsrQuery } from "./ssrContext";
 
 route.add("/", HomePage);
 route.add("/product/:id", ProductDetailPage);
@@ -42,6 +43,7 @@ export const render = async (url: string, query: Record<string, string>) => {
   }
 
   const initialData = await loadHomePageData(query || {});
+  setSsrQuery(query || {});
   productStore.dispatch({
     type: PRODUCT_ACTIONS.SETUP,
     payload: {
@@ -55,7 +57,7 @@ export const render = async (url: string, query: Record<string, string>) => {
   const html = renderToString(createElement(matchedRoute.handler));
   return {
     status: 200,
-    head: "<title>React 쇼핑몰 - 홈</title>",
+    head: "<title>쇼핑몰 - 홈</title>",
     html,
     initialData,
   };
