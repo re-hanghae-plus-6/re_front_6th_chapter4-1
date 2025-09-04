@@ -10,12 +10,23 @@ interface ProductProviderProps {
     products?: Product[];
     categories?: Categories;
     totalCount?: number;
+    currentProduct?: Product;
+    filters: {
+      search: string;
+      limit: string;
+      sort: string;
+      category1: string;
+      category2: string;
+    };
   };
 }
 
 export const ProductProvider = ({ children, initialData }: PropsWithChildren<ProductProviderProps>) => {
   // useEffect 대신 즉시 실행
-  if (initialData?.products && initialData.products.length > 0) {
+  console.log("데이터");
+  console.log(initialData?.filters);
+
+  if (initialData?.currentProduct || (initialData?.products && initialData.products.length > 0)) {
     // 현재 스토어 상태 확인
     const currentState = productStore.getState();
 
@@ -26,7 +37,9 @@ export const ProductProvider = ({ children, initialData }: PropsWithChildren<Pro
         payload: {
           products: initialData.products,
           categories: initialData.categories || {},
-          totalCount: initialData.totalCount || initialData.products.length,
+          totalCount: initialData.totalCount || (initialData?.products ?? []).length,
+          currentProduct: initialData.currentProduct || {},
+          filters: initialData.filters,
           loading: false,
         },
       });
@@ -35,3 +48,25 @@ export const ProductProvider = ({ children, initialData }: PropsWithChildren<Pro
 
   return children;
 };
+
+// export const ProductProvider = ({ children, initialData }: PropsWithChildren<ProductProviderProps>) => {
+//   useLayoutEffect(() => {
+//     if ((initialData?.products ?? []).length > 0) {
+//       const currentState = productStore.getState();
+//       if (currentState.products.length === 0 && currentState.loading !== false) {
+//         productStore.dispatch({
+//           type: PRODUCT_ACTIONS.SET_INITIAL_DATA,
+//           payload: {
+//             products: initialData?.products,
+//             categories: initialData?.categories || {},
+//             totalCount: initialData?.totalCount || (initialData?.products?.length ?? 0),
+//             filters: initialData?.filters,
+//             loading: false,
+//           },
+//         });
+//       }
+//     }
+//   }, [initialData]);
+
+//   return children;
+// };

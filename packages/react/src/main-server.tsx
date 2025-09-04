@@ -6,11 +6,13 @@ import type { FunctionComponent } from "react";
 import { BASE_URL } from "./constants";
 import { getProducts, getProduct, getCategories } from "./mocks/ssr-data";
 import { HomePage, NotFoundPage, ProductDetailPage } from "./pages";
-import { ProductProvider } from "./entities";
+import { PRODUCT_ACTIONS, ProductProvider, productStore } from "./entities";
 import { App } from "./App";
 
 export const render = async (url: string, query: Record<string, string>) => {
   console.log("SSR render 시작:", { url, query });
+  console.log(url);
+  console.log(query);
 
   const serverRouter = new Router<FunctionComponent>(BASE_URL);
 
@@ -33,6 +35,7 @@ export const render = async (url: string, query: Record<string, string>) => {
     error: null,
     currentProduct: null,
     relatedProducts: [],
+    filters: {},
   };
 
   try {
@@ -62,6 +65,16 @@ export const render = async (url: string, query: Record<string, string>) => {
       initialData.products = productsData.products;
       initialData.categories = categoriesData;
       initialData.totalCount = productsData.pagination.total;
+      initialData.filters =
+        Object.keys(query).length > 0
+          ? {
+              search: query.search || "",
+              limit: query.limit || "",
+              sort: query.sort || "",
+              category1: query.category1 || "",
+              category2: query.category2 || "",
+            }
+          : { limit: "20", sort: "price_asc" };
     }
 
     console.log("초기 데이터 준비 완료:", {
@@ -81,6 +94,10 @@ export const render = async (url: string, query: Record<string, string>) => {
     console.log("ProductProvider 타입:", typeof ProductProvider);
 
     // 단계별 렌더링 테스트
+    productStore.dispatch({
+      type: PRODUCT_ACTIONS.SET_INITIAL_DATA,
+      payload: initialData,
+    });
 
     // 1단계: App만 렌더링
     try {
@@ -93,7 +110,7 @@ export const render = async (url: string, query: Record<string, string>) => {
     // 2단계: ProductProvider만 렌더링
     try {
       const providerOnly = renderToString(
-        <ProductProvider initialData={initialData}>
+        <ProductProvider initialData={{ ...initialData }}>
           <div>Provider Test</div>
         </ProductProvider>,
       );
@@ -105,20 +122,20 @@ export const render = async (url: string, query: Record<string, string>) => {
     // 3단계: 전체 렌더링
     html = renderToString(
       <ProductProvider initialData={initialData}>
-        <App />
+        <App url={url} />
       </ProductProvider>,
     );
 
     console.log("전체 렌더링 완료, HTML 길이:", html.length);
 
     if (html.length > 0) {
-      console.log("HTML 시작 부분:", html.substring(0, 200));
-      console.log("HTML 끝 부분:", html.substring(html.length - 100));
+      //console.log("HTML 시작 부분:", html.substring(0, 200));
+      //console.log("HTML 끝 부분:", html.substring(html.length - 100));
     } else {
       console.error("⚠️ 렌더링된 HTML이 비어있습니다!");
 
       // 폴백: 간단한 HTML 구조 생성
-      html = ` `;
+      html = ``;
       console.log("폴백 HTML 생성 완료, 길이:", html.length);
     }
   } catch (renderError) {
@@ -128,7 +145,7 @@ export const render = async (url: string, query: Record<string, string>) => {
     html = ``;
   }
 
-  const head = "<title>쇼핑몰</title>";
+  const head = "<title>쇼핑몰 - 홈</title>";
 
   console.log("SSR render 완료");
 

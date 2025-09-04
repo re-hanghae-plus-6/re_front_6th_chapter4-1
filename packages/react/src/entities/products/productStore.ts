@@ -45,6 +45,13 @@ export const initialProductState = {
 
   // 카테고리 목록
   categories: {} as Categories,
+  filters: {
+    search: "",
+    limit: "",
+    sort: "",
+    category1: "",
+    category2: "",
+  },
 };
 
 /**
@@ -127,6 +134,7 @@ const productReducer = (state: typeof initialProductState, action: any) => {
         products: action.payload.products || [],
         categories: action.payload.categories || {},
         totalCount: action.payload.totalCount || 0,
+        filters: action.payload.filters || {},
         loading: false,
         error: null,
         status: "done",
