@@ -89,8 +89,11 @@ const handleSubCategoryClick = async (e: MouseEvent<HTMLButtonElement>) => {
 
 export function SearchBar() {
   const { categories, search, limit = 20, sort, category1, category2 } = useProductStore();
-  const { searchQuery } = useProductFilter();
-  const category = { category1, category2 } as const;
+  const { searchQuery, limit: routerLimit, sort: routerSort, category: routerCategory } = useProductFilter();
+  const category = {
+    category1: category1 || routerCategory.category1 || "",
+    category2: category2 || routerCategory.category2 || "",
+  } as const;
   const categoryList = Object.keys(categories).length > 0 ? Object.keys(categories) : [];
   const limitOptions = OPTION_LIMITS.map((value) => (
     <option key={value} value={value}>
@@ -232,7 +235,7 @@ export function SearchBar() {
               id="limit-select"
               className="text-sm border border-gray-300 rounded px-2 py-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
               onChange={handleLimitChange}
-              defaultValue={Number(limit)}
+              defaultValue={Number(routerLimit ?? limit)}
             >
               {limitOptions}
             </select>
@@ -248,7 +251,7 @@ export function SearchBar() {
               className="text-sm border border-gray-300 rounded px-2 py-1
                            focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
               onChange={handleSortChange}
-              defaultValue={sort}
+              defaultValue={routerSort ?? sort}
             >
               {sortOptions}
             </select>
