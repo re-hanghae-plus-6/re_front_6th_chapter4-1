@@ -1,6 +1,7 @@
 const BASE_URL = typeof window === "undefined" ? "http://localhost" : "";
 
 export async function getProducts(params = {}) {
+  console.log("[API] Fetching products with params:", params);
   const { limit = 20, search = "", category1 = "", category2 = "", sort = "price_asc" } = params;
   const page = params.current ?? params.page ?? 1;
 
@@ -19,6 +20,7 @@ export async function getProducts(params = {}) {
 }
 
 export async function getProduct(productId) {
+  console.log("[API] Fetching product with id:", productId);
   const response = await fetch(`${BASE_URL}/api/products/${productId}`);
   return await response.json();
 }

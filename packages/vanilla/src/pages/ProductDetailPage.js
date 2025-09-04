@@ -236,8 +236,30 @@ function ProductDetail({ product, relatedProducts = [] }) {
  */
 export const ProductDetailPage = withLifecycle(
   {
-    onMount: () => {
+    onMount: async () => {
       if (typeof window === "undefined") return;
+
+      const state = productStore.getState();
+      if (state.currentProduct) return; // 이미 있으면 패스
+
+      try {
+        // ✅ product/:id.json 우선 시도
+        const res = await fetch(`/product/${router.params.id}.json`);
+        if (res.ok) {
+          const data = await res.json();
+          productStore.setState({
+            currentProduct: data.currentProduct,
+            relatedProducts: data.relatedProducts,
+            loading: false,
+            error: null,
+          });
+          return;
+        }
+      } catch (e) {
+        console.warn("product.json 로드 실패 → API fallback 실행");
+        console.error(e);
+      }
+      // fallback: CSR API 호출
       loadProductDetailForPage(router.params.id);
     },
     watches: [() => [router.params.id], () => loadProductDetailForPage(router.params.id)],

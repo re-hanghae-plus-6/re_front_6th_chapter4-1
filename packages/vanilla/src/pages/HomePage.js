@@ -6,8 +6,33 @@ import { PageWrapper } from "./PageWrapper.js";
 
 export const HomePage = withLifecycle(
   {
-    onMount: () => {
+    onMount: async () => {
       if (typeof window === "undefined") return;
+      const state = productStore.getState();
+
+      // 이미 스토어에 데이터 있으면 아무 것도 안함 (SSR 하이드레이션 된 경우)
+      if (state.products && state.products.length > 0) return;
+
+      try {
+        // index.json 우선 시도
+        const res = await fetch("/index.json");
+        if (res.ok) {
+          const data = await res.json();
+          productStore.setState({
+            products: data.products,
+            categories: data.categories,
+            totalCount: data.totalCount,
+            loading: false,
+            error: null,
+          });
+          return;
+        }
+      } catch (e) {
+        console.warn("index.json 로드 실패 → API fallback 실행");
+        console.error(e);
+      }
+
+      // fallback: CSR API 호출
       loadProductsAndCategories();
     },
     watches: [
