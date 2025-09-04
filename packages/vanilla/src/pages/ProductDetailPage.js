@@ -237,12 +237,14 @@ function ProductDetail({ product, relatedProducts = [] }) {
 export const ProductDetailPage = withLifecycle(
   {
     onMount: () => {
+      if (typeof window === "undefined") return;
       loadProductDetailForPage(router.params.id);
     },
     watches: [() => [router.params.id], () => loadProductDetailForPage(router.params.id)],
   },
-  () => {
-    const { currentProduct: product, relatedProducts = [], error, loading } = productStore.getState();
+  ({ initialData = window.__INITIAL_DATA__ } = {}) => {
+    const productDetailState = typeof window === "undefined" ? initialData : productStore.getState();
+    const { currentProduct: product, relatedProducts = [], error, loading } = productDetailState;
 
     return PageWrapper({
       headerLeft: `

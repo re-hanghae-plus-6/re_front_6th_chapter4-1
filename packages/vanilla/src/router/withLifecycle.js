@@ -74,20 +74,23 @@ export const withLifecycle = ({ onMount, onUnmount, watches } = {}, page) => {
     pageState.previous = pageState.current;
     pageState.current = page;
 
-    // 새 페이지면 마운트, 기존 페이지면 업데이트
-    if (wasNewPage) {
-      mount(page);
-    } else if (lifecycle.watches) {
-      lifecycle.watches.forEach(([getDeps, callback], index) => {
-        const newDeps = getDeps();
-
-        if (depsChanged(newDeps, lifecycle.deps[index])) {
-          callback();
-        }
-
-        // deps 업데이트 (이 부분이 중요!)
-        lifecycle.deps[index] = Array.isArray(newDeps) ? [...newDeps] : [];
-      });
+    // 새 페이지면 마운트, 기존 페이지면 업데이트 (클라이언트 환경에서만 실행)
+    if (typeof window !== "undefined") {
+      // window 객체가 존재하는 클라이언트 환경에서만 생명주기 로직 실행
+      if (wasNewPage) {
+        mount(page, ...args); // 새 페이지인 경우 마운트
+      } else if (lifecycle.watches) {
+        // 기존 페이지인 경우 watches에 등록된 의존성 변화 감지 및 콜백 실행
+        lifecycle.watches.forEach(([getDeps, callback], index) => {
+          const newDeps = getDeps(...args); // 새로운 의존성 값 가져오기
+          if (depsChanged(newDeps, lifecycle.deps[index])) {
+            // 의존성 변경 여부 확인
+            callback(...args); // 변경된 경우 콜백 실행
+          }
+          // 의존성 배열 업데이트
+          lifecycle.deps[index] = Array.isArray(newDeps) ? [...newDeps] : [];
+        });
+      }
     }
 
     // 페이지 함수 실행
