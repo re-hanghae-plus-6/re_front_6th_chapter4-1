@@ -1,5 +1,5 @@
 import { ProductList, SearchBar } from "../components";
-import { productStore } from "../stores";
+import { PRODUCT_ACTIONS, productStore } from "../stores";
 import { router, withLifecycle } from "../router";
 import { loadProducts, loadProductsAndCategories } from "../services";
 import { PageWrapper } from "./PageWrapper.js";
@@ -7,6 +7,26 @@ import { PageWrapper } from "./PageWrapper.js";
 export const HomePage = withLifecycle(
   {
     onMount: () => {
+      if (typeof window === "undefined") {
+        console.log("이 코드는 서버에서 실행이 되고 ");
+        return;
+      }
+      if (window.__INITIAL_DATA__?.products?.length > 0) {
+        console.log("이 코드는 클라이언트에서 실행이 되는데, __INITIAL_DATA__ 가 있을 때에만!");
+        const { products, categories, totalCount } = window.__INITIAL_DATA__;
+        productStore.dispatch({
+          type: PRODUCT_ACTIONS.SETUP,
+          payload: {
+            products,
+            categories,
+            totalCount,
+            loading: false,
+            status: "done",
+          },
+        });
+        return;
+      }
+      console.log("이 코드는 아무것도 없을 때!");
       loadProductsAndCategories();
     },
     watches: [
@@ -17,11 +37,20 @@ export const HomePage = withLifecycle(
       () => loadProducts(true),
     ],
   },
-  () => {
-    const productState = productStore.getState();
+  (props = {}) => {
+    const productState =
+      props.products?.length > 0
+        ? {
+            products: props.products,
+            loading: false,
+            error: null,
+            totalCount: props.totalCount,
+            categories: props.categories,
+          }
+        : productStore.getState();
     const { search: searchQuery, limit, sort, category1, category2 } = router.query;
     const { products, loading, error, totalCount, categories } = productState;
-    const category = { category1, category2 };
+
     const hasMore = products.length < totalCount;
 
     return PageWrapper({
@@ -32,7 +61,16 @@ export const HomePage = withLifecycle(
       `.trim(),
       children: `
         <!-- 검색 및 필터 -->
-        ${SearchBar({ searchQuery, limit, sort, category, categories })}
+        ${SearchBar({
+          searchQuery: props.searchQuery || searchQuery || "",
+          limit: props.filters?.limit || limit || 20,
+          sort: props.filters?.sort || sort || "price_asc",
+          category: {
+            category1: props.filters?.category1 || category1 || "",
+            category2: props.filters?.category2 || category2 || "",
+          },
+          categories: props.categories || categories || {},
+        })}
         
         <!-- 상품 목록 -->
         <div class="mb-6">
