@@ -1,5 +1,5 @@
 import { ProductList, SearchBar } from "../components";
-import { PRODUCT_ACTIONS, productStore } from "../stores";
+import { productStore, PRODUCT_ACTIONS } from "../stores";
 import { router, withLifecycle } from "../router";
 import { loadProducts, loadProductsAndCategories } from "../services";
 import { PageWrapper } from "./PageWrapper.js";
@@ -13,7 +13,11 @@ export const HomePage = withLifecycle(
       }
       if (window.__INITIAL_DATA__?.products?.length > 0) {
         console.log("이 코드는 클라이언트에서 실행이 되는데, __INITIAL_DATA__ 가 있을 때에만!");
-        const { products, categories, totalCount } = window.__INITIAL_DATA__;
+        const [products, categories, totalCount] = [
+          window.__INITIAL_DATA__.products,
+          window.__INITIAL_DATA__.categories,
+          window.__INITIAL_DATA__.totalCount,
+        ];
         productStore.dispatch({
           type: PRODUCT_ACTIONS.SETUP,
           payload: {
@@ -29,24 +33,31 @@ export const HomePage = withLifecycle(
       console.log("이 코드는 아무것도 없을 때!");
       loadProductsAndCategories();
     },
-    watches: [() => loadProducts(true)],
+
+    // if (typeof window !== "undefined") {
+    //   loadProductsAndCategories();
+    // }
+    //},
+    watches: [
+      () => {
+        const { search, limit, sort, category1, category2 } = router.query;
+        return [search, limit, sort, category1, category2];
+      },
+      () => {
+        if (typeof window !== "undefined") {
+          loadProducts(true);
+        }
+      },
+    ],
   },
-  (props = {}) => {
-    const productState =
-      props.products?.length > 0
-        ? {
-            products: props.products,
-            loading: false,
-            error: null,
-            totalCount: props.totalCount,
-            categories: props.categories,
-          }
-        : productStore.getState();
+  () => {
+    const productState = productStore.getState();
     const { search: searchQuery, limit, sort, category1, category2 } = router.query;
     const { products, loading, error, totalCount, categories } = productState;
     const category = { category1, category2 };
     const hasMore = products.length < totalCount;
-
+    console.log("개수 : ", totalCount);
+    console.log("카테고리 : ", productStore.getState());
     return PageWrapper({
       headerLeft: `
         <h1 class="text-xl font-bold text-gray-900">
@@ -66,7 +77,8 @@ export const HomePage = withLifecycle(
             totalCount,
             hasMore,
           })}
-          </div>
+        
+        </div>
       `.trim(),
     });
   },
