@@ -4,9 +4,13 @@ import { productStore } from "./stores/productStore.js";
 import { PRODUCT_ACTIONS } from "./stores/actionTypes.js";
 import { uiStore } from "./stores/uiStore.js";
 import { route } from "./router/serverRouter.js";
+import { router } from "./router/router.js";
 import { mockGetProducts, mockGetProduct, loadHomePageData } from "./mocks/mockApi.js";
 
 route.add("/", async ({ query }) => {
+  // 서버사이드 라우터에 쿼리 설정
+  router.setQuery(query || {});
+
   const data = await loadHomePageData(query || {});
 
   const stateToSetup = {
@@ -24,7 +28,10 @@ route.add("/", async ({ query }) => {
   return { status: 200, head: "<title>쇼핑몰 - 홈</title>", html: HomePage(), initialData: stateToSetup };
 });
 
-route.add("/product/:id", async ({ params }) => {
+route.add("/product/:id", async ({ params, query }) => {
+  // 서버사이드 라우터에 쿼리 설정
+  router.setQuery(query || {});
+
   const product = await mockGetProduct(params.id);
   if (!product) {
     return { status: 404, head: "<title>404</title>", html: NotFoundPage(), initialData: null };
