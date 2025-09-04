@@ -1,5 +1,5 @@
 import { createContext, useContext } from "react";
-import type { UniversalRouter } from "../UniversalRouter";
+import type { UniversalRouter } from "./universal-router";
 
 export const RouterContext = createContext<UniversalRouter | null>(null);
 

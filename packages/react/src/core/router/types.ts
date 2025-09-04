@@ -12,12 +12,24 @@ export interface GetServerSidePropsContext {
   url: string;
 }
 
-export interface GetServerSidePropsResult<T = unknown> {
+export interface GetServerSidePropsResult<T = Record<string, unknown>> {
   props: T;
 }
 
-export interface GetServerSideProps<T = unknown> {
+export interface GenerateMetaDataResult {
+  metadata: Partial<{
+    title: string;
+    description: string;
+    image: string;
+  }>;
+}
+
+export interface GetServerSideProps<T = Record<string, unknown>> {
   (context: GetServerSidePropsContext): Promise<GetServerSidePropsResult<T>> | GetServerSidePropsResult<T>;
+}
+
+export interface GenerateMetaData {
+  (context: GetServerSidePropsContext): Promise<GenerateMetaDataResult> | GenerateMetaDataResult;
 }
 
 export interface RouteInfo {
@@ -25,6 +37,7 @@ export interface RouteInfo {
   paramNames: string[];
   handler: RouteHandler;
   getServerSideProps?: GetServerSideProps;
+  generateMetaData?: GenerateMetaData;
 }
 
 export interface MatchedRoute extends RouteInfo {
@@ -42,10 +55,14 @@ export interface RouterInstance {
   params: Record<string, string>;
   target: RouteHandler | undefined;
   query: Record<string, string>;
-  addRoute(path: string, handler: RouteHandler, getServerSideProps?: GetServerSideProps): void;
+  addRoute(
+    path: string,
+    handler: RouteHandler,
+    options?: { getServerSideProps?: GetServerSideProps; generateMetaData?: GenerateMetaData },
+  ): void;
 }
 
-export interface ClientRouter extends RouterInstance {
+export interface ClientRouterInstance extends RouterInstance {
   subscribe(fn: () => void): () => void;
   push(url: string): void;
   start(): void;
@@ -57,8 +74,13 @@ export interface ServerRouterInstance {
   params: Record<string, string>;
   target: RouteHandler | undefined;
   query: Record<string, string>;
-  addRoute(path: string, handler: RouteHandler, getServerSideProps?: GetServerSideProps): void;
+  addRoute(
+    path: string,
+    handler: RouteHandler,
+    options?: { getServerSideProps?: GetServerSideProps; generateMetaData?: GenerateMetaData },
+  ): void;
   match(url: string): ServerMatchedRoute | null;
   createContext(url: string): ServerMatchedRoute | null;
   prefetch(url: string): Promise<Record<string, unknown> | null>;
+  generateMetaData(url: string): Promise<GenerateMetaDataResult | null>;
 }

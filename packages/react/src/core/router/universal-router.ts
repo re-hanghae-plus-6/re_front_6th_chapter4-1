@@ -1,15 +1,22 @@
-import { Router } from "./router";
-import { ServerRouter } from "./ServerRouter";
-import type { RouteHandler, MatchedRoute, ServerMatchedRoute, GetServerSideProps } from "./types";
+import { ClientRouter } from "./client-router";
+import { ServerRouter } from "./server-router";
+import type {
+  RouteHandler,
+  MatchedRoute,
+  ServerMatchedRoute,
+  GetServerSideProps,
+  GenerateMetaData,
+  GenerateMetaDataResult,
+} from "./types";
 
 /**
  * 유니버설 라우터 (지연평가)
  * - 서버: ServerRouter 사용
- * - 클라이언트: Router 사용
+ * - 클라이언트: ClientRouter 사용
  * - 최초 사용 시점에 실제 라우터 인스턴스를 생성
  */
 export class UniversalRouter {
-  #instance: Router | ServerRouter | null;
+  #instance: ClientRouter | ServerRouter | null;
   #baseUrl: string;
 
   constructor(baseUrl: string = "") {
@@ -28,9 +35,9 @@ export class UniversalRouter {
     }
   }
 
-  #ensure(): Router | ServerRouter {
+  #ensure(): ClientRouter | ServerRouter {
     if (this.#instance) return this.#instance;
-    this.#instance = this.#isServer() ? new ServerRouter(this.#baseUrl) : new Router(this.#baseUrl);
+    this.#instance = this.#isServer() ? new ServerRouter(this.#baseUrl) : new ClientRouter(this.#baseUrl);
     return this.#instance;
   }
 
@@ -58,14 +65,20 @@ export class UniversalRouter {
     const inst = this.#ensure();
     try {
       // 클라이언트 Router는 setter가 있으며, 서버는 존재하지 않음 → 서버에서는 조용히 무시
-      (inst as unknown as Router).query = newQuery;
+      (inst as unknown as ClientRouter).query = newQuery;
     } catch {
       /* noop for server */
     }
   }
 
-  addRoute(path: string, handler: RouteHandler, getServerSideProps?: GetServerSideProps): void {
-    this.#ensure().addRoute(path, handler, getServerSideProps);
+  addRoute(
+    path: string,
+    handler: RouteHandler,
+    options?: { getServerSideProps?: GetServerSideProps; generateMetaData?: GenerateMetaData },
+  ): UniversalRouter {
+    this.#ensure().addRoute(path, handler, options);
+
+    return this;
   }
 
   // 서버 전용 매칭(클라에서는 사용하지 않음)
@@ -90,22 +103,29 @@ export class UniversalRouter {
     throw new Error("UniversalRouter.prefetch() is server-only");
   }
 
+  async generateMetaData(url: string): Promise<GenerateMetaDataResult | null> {
+    const inst = this.#ensure();
+    if (typeof (inst as unknown as ServerRouter).generateMetaData === "function")
+      return (inst as ServerRouter).generateMetaData(url);
+    throw new Error("UniversalRouter.generateMetaData() is server-only");
+  }
+
   // 클라이언트 내비게이션 (서버에서는 no-op)
   push(url: string): void {
     const inst = this.#ensure();
-    if (typeof (inst as unknown as Router).push === "function") (inst as Router).push(url);
+    if (typeof (inst as unknown as ClientRouter).push === "function") (inst as ClientRouter).push(url);
   }
 
   // 클라이언트 시작 (서버에서는 no-op)
   start(): void {
     const inst = this.#ensure();
-    if (typeof (inst as unknown as Router).start === "function") (inst as Router).start();
+    if (typeof (inst as unknown as ClientRouter).start === "function") (inst as ClientRouter).start();
   }
 
   // 클라이언트 구독 (서버에서는 no-op)
   subscribe(fn: () => void): () => void {
     const inst = this.#ensure();
-    if (typeof (inst as unknown as Router).subscribe === "function") return (inst as Router).subscribe(fn);
+    if (typeof (inst as unknown as ClientRouter).subscribe === "function") return (inst as ClientRouter).subscribe(fn);
     return () => {}; // 서버에서는 빈 unsubscribe 함수 반환
   }
 }

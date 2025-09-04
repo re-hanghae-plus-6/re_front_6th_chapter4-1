@@ -2,9 +2,16 @@
  * 간단한 SPA 라우터
  */
 import { createObserver } from "@hanghae-plus/lib";
-import type { RouteHandler, RouteInfo, MatchedRoute, ClientRouter, GetServerSideProps } from "./types";
+import type {
+  RouteHandler,
+  RouteInfo,
+  MatchedRoute,
+  ClientRouterInstance,
+  GetServerSideProps,
+  GenerateMetaData,
+} from "./types";
 
-export class Router implements ClientRouter {
+export class ClientRouter implements ClientRouterInstance {
   #routes: Map<string, RouteInfo>;
   #route: MatchedRoute | null;
   #observer = createObserver();
@@ -43,14 +50,14 @@ export class Router implements ClientRouter {
     }
 
     // 새로운 query 파싱 및 캐싱
-    this.#cachedQuery = Router.parseQuery(currentSearch);
+    this.#cachedQuery = ClientRouter.parseQuery(currentSearch);
     this.#lastSearch = currentSearch;
 
     return this.#cachedQuery;
   }
 
   set query(newQuery: Record<string, string | null | undefined>) {
-    const newUrl = Router.getUrl(newQuery, this.#baseUrl);
+    const newUrl = ClientRouter.getUrl(newQuery, this.#baseUrl);
     this.push(newUrl);
   }
 
@@ -76,7 +83,11 @@ export class Router implements ClientRouter {
    * @param handler - 라우트 핸들러
    * @param getServerSideProps - 서버사이드 props 함수 (클라이언트에서는 무시됨)
    */
-  addRoute(path: string, handler: RouteHandler, getServerSideProps?: GetServerSideProps): void {
+  addRoute(
+    path: string,
+    handler: RouteHandler,
+    options?: { getServerSideProps?: GetServerSideProps; generateMetaData?: GenerateMetaData },
+  ): void {
     // 경로 패턴을 정규식으로 변환
     const paramNames: string[] = [];
     const regexPath = path
@@ -92,7 +103,8 @@ export class Router implements ClientRouter {
       regex,
       paramNames,
       handler,
-      getServerSideProps,
+      getServerSideProps: options?.getServerSideProps,
+      generateMetaData: options?.generateMetaData,
     });
   }
 
@@ -189,7 +201,7 @@ export class Router implements ClientRouter {
   };
 
   static getUrl = (newQuery: Record<string, unknown>, baseUrl: string = ""): string => {
-    const currentQuery = Router.parseQuery();
+    const currentQuery = ClientRouter.parseQuery();
     const updatedQuery = { ...currentQuery, ...newQuery };
 
     // 빈 값들 제거
@@ -199,7 +211,7 @@ export class Router implements ClientRouter {
       }
     });
 
-    const queryString = Router.stringifyQuery(updatedQuery);
+    const queryString = ClientRouter.stringifyQuery(updatedQuery);
     const pathname = typeof window !== "undefined" ? window.location.pathname : "/";
     return `${baseUrl}${pathname.replace(baseUrl, "")}${queryString ? `?${queryString}` : ""}`;
   };

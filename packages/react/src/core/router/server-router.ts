@@ -3,7 +3,15 @@
  * - 클라이언트 Router의 매칭 규칙을 그대로 따르되, window 의존 제거
  * - URL 문자열을 입력받아 라우트를 매칭하고 params/query를 추출
  */
-import type { RouteHandler, RouteInfo, ServerMatchedRoute, ServerRouterInstance, GetServerSideProps } from "./types";
+import type {
+  RouteHandler,
+  RouteInfo,
+  ServerMatchedRoute,
+  ServerRouterInstance,
+  GetServerSideProps,
+  GenerateMetaData,
+  GenerateMetaDataResult,
+} from "./types";
 
 export class ServerRouter implements ServerRouterInstance {
   #routes: Map<string, RouteInfo>;
@@ -45,7 +53,11 @@ export class ServerRouter implements ServerRouterInstance {
    * @param handler 라우트 핸들러
    * @param getServerSideProps 서버사이드 props 함수
    */
-  addRoute(path: string, handler: RouteHandler, getServerSideProps?: GetServerSideProps): void {
+  addRoute(
+    path: string,
+    handler: RouteHandler,
+    options?: { getServerSideProps?: GetServerSideProps; generateMetaData?: GenerateMetaData },
+  ): void {
     const paramNames: string[] = [];
     const regexPath = path
       .replace(/:\w+/g, (match) => {
@@ -61,7 +73,8 @@ export class ServerRouter implements ServerRouterInstance {
       regex,
       paramNames,
       handler,
-      getServerSideProps,
+      getServerSideProps: options?.getServerSideProps,
+      generateMetaData: options?.generateMetaData,
     });
   }
 
@@ -137,6 +150,28 @@ export class ServerRouter implements ServerRouterInstance {
 
       const result = await matchedRoute.getServerSideProps(context);
       return result.props;
+    } catch (error) {
+      console.error("Prefetch error:", error);
+      return null;
+    }
+  }
+
+  async generateMetaData(url: string): Promise<GenerateMetaDataResult | null> {
+    const matchedRoute = this.match(this.#stripBase(url));
+    if (!matchedRoute?.generateMetaData) {
+      return null;
+    }
+
+    try {
+      const context = {
+        params: matchedRoute.params,
+        query: matchedRoute.query,
+        url: url,
+      };
+
+      const result = await matchedRoute.generateMetaData(context);
+
+      return result;
     } catch (error) {
       console.error("Prefetch error:", error);
       return null;

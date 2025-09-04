@@ -1,11 +1,10 @@
-import { router } from "../";
 import { useSyncExternalStore, useCallback } from "react";
-import type { RouteHandler } from "../types";
+import { router } from "../core/router";
 
 const subscribe = (callback: () => void) => router.subscribe(callback);
 
-export const useCurrentPage = (): RouteHandler | undefined => {
-  const getSnapshot = useCallback(() => router.target, []);
+export const useRouterQuery = () => {
+  const getSnapshot = useCallback(() => router.query, []);
 
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 };

@@ -1,5 +1,5 @@
-import { router } from "../";
 import { useSyncExternalStore, useCallback } from "react";
+import { router } from "../core/router";
 
 type Params = Record<string, string | undefined>;
 
