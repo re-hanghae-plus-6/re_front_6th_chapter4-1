@@ -6,6 +6,7 @@ import { BaseRouter } from "./BaseRouter.js";
 export class ServerRouter extends BaseRouter {
   #currentUrl = "/";
   #origin = "http://localhost";
+  #routes = new Map();
 
   constructor(baseUrl = "") {
     super(baseUrl);
@@ -50,7 +51,86 @@ export class ServerRouter extends BaseRouter {
   /**
    * 라우터 시작
    */
-  start() {
-    this.updateRoute(this.getCurrentUrl());
+  start(url, query = {}) {
+    this.setUrl(url, this.#origin);
+    this.query = query;
+  }
+
+  /**
+   * 라우트 등록
+   */
+  addRoute(path, handler) {
+    this.#routes.set(path, handler);
+  }
+
+  /**
+   * 현재 라우트 찾기
+   */
+  findRoute(url) {
+    const { pathname } = new URL(url, this.#origin);
+
+    // 정확한 매칭 먼저 시도
+    if (this.#routes.has(pathname)) {
+      return {
+        path: pathname,
+        handler: this.#routes.get(pathname),
+        params: {},
+      };
+    }
+
+    // 동적 라우트 매칭
+    for (const [routePath, handler] of this.#routes) {
+      if (routePath.includes(":")) {
+        const paramNames = [];
+        const regexPath = routePath
+          .replace(/:\w+/g, (match) => {
+            paramNames.push(match.slice(1));
+            return "([^/]+)";
+          })
+          .replace(/\//g, "\\/");
+
+        const regex = new RegExp(`^${regexPath}$`);
+        const match = pathname.match(regex);
+
+        if (match) {
+          const params = {};
+          paramNames.forEach((name, index) => {
+            params[name] = match[index + 1];
+          });
+
+          return {
+            path: routePath,
+            handler,
+            params,
+          };
+        }
+      }
+    }
+
+    // 와일드카드 매칭
+    if (this.#routes.has(".*")) {
+      return {
+        path: ".*",
+        handler: this.#routes.get(".*"),
+        params: {},
+      };
+    }
+
+    return null;
+  }
+
+  /**
+   * 현재 라우트 정보 가져오기
+   */
+  get route() {
+    return this.findRoute(this.#currentUrl);
+  }
+
+  /**
+   * 현재 핸들러 가져오기
+   */
+  get target() {
+    const route = this.route;
+    return route ? route.handler : null;
   }
 }
