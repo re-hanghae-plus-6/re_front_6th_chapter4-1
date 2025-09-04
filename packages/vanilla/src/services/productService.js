@@ -1,9 +1,18 @@
-import { getCategories, getProduct, getProducts } from "../api/productApi.js";
-import { initialProductState, productStore, PRODUCT_ACTIONS } from "../stores/index.js";
-import { router } from "../router/index.js";
+import { getCategories, getProduct, getProducts } from "../api/productApi";
+import { initialProductState, productStore, PRODUCT_ACTIONS } from "../stores";
+import { router } from "../router";
 
 export const loadProductsAndCategories = async () => {
-  router.query = { current: undefined }; // 항상 첫 페이지로 초기화
+  // API 호출용 쿼리: 기본값 + 현재 URL 쿼리
+  const apiQuery = {
+    sort: "price_asc",
+    limit: 20,
+    ...router.query,
+    current: undefined, // 항상 첫 페이지로 초기화
+  };
+
+  // URL은 업데이트하지 않음 (사용자가 명시적으로 변경할 때만 업데이트)
+
   productStore.dispatch({
     type: PRODUCT_ACTIONS.SETUP,
     payload: {
@@ -20,7 +29,7 @@ export const loadProductsAndCategories = async () => {
         pagination: { total },
       },
       categories,
-    ] = await Promise.all([getProducts(router.query), getCategories()]);
+    ] = await Promise.all([getProducts(apiQuery), getCategories()]);
 
     // 페이지 리셋이면 새로 설정, 아니면 기존에 추가
     productStore.dispatch({
@@ -52,10 +61,17 @@ export const loadProducts = async (resetList = true) => {
       payload: { loading: true, status: "pending", error: null },
     });
 
+    // 기본 쿼리 파라미터 설정
+    const queryWithDefaults = {
+      sort: "price_asc",
+      limit: 20,
+      ...router.query,
+    };
+
     const {
       products,
       pagination: { total },
-    } = await getProducts(router.query);
+    } = await getProducts(queryWithDefaults);
     const payload = { products, totalCount: total };
 
     // 페이지 리셋이면 새로 설정, 아니면 기존에 추가

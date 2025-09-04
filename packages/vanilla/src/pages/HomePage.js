@@ -2,7 +2,8 @@ import { ProductList, SearchBar } from "../components";
 import { productStore } from "../stores";
 import { router, withLifecycle } from "../router";
 import { loadProducts, loadProductsAndCategories } from "../services";
-import { PageWrapper } from "./PageWrapper.js";
+import { PageWrapper } from "./PageWrapper";
+import { isServer } from "../utils";
 
 export const HomePage = withLifecycle(
   {
@@ -17,9 +18,11 @@ export const HomePage = withLifecycle(
       () => loadProducts(true),
     ],
   },
-  () => {
+  (props = {}) => {
     const productState = productStore.getState();
-    const { search: searchQuery, limit, sort, category1, category2 } = router.query;
+    // 서버에서는 props로 전달받은 쿼리를 사용하고, 클라이언트에서는 라우터 쿼리 사용
+    const query = isServer() ? props.query || {} : router.query;
+    const { search: searchQuery = "", limit = 20, sort = "price_asc", category1, category2 } = query;
     const { products, loading, error, totalCount, categories } = productState;
     const category = { category1, category2 };
     const hasMore = products.length < totalCount;
