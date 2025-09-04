@@ -436,8 +436,6 @@ const SSRNotFoundPage = () => {
 };
 
 export const render = async (url: string, query: Record<string, string>) => {
-  console.log({ url, query });
-
   try {
     // 초기 데이터 로딩
     let initialData = null;
