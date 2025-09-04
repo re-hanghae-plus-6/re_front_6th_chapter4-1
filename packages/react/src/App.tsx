@@ -2,7 +2,7 @@ import { router, useCurrentPage } from "./router";
 import { HomePage, NotFoundPage, ProductDetailPage } from "./pages";
 import { PRODUCT_ACTIONS, productStore, useLoadCartStore } from "./entities";
 import { ModalProvider, ToastProvider } from "./components";
-import { getProducts, getUniqueCategories } from "./mocks/serverMock";
+import { getProducts, getUniqueCategories, getDetailProduct } from "./mocks/serverMock";
 
 // 홈 페이지 (상품 목록)
 router.addRoute("/", () => {
@@ -29,12 +29,28 @@ router.addRoute("/", () => {
 });
 router.addRoute("/product/:id/", () => {
   if (typeof window === "undefined") {
-    // data 불러오기.
+    const product = getDetailProduct(router.params.id);
+    productStore.dispatch({
+      type: PRODUCT_ACTIONS.SET_CURRENT_PRODUCT,
+      payload: product,
+    });
+
+    if (product) {
+      const response = getProducts({ category2: router.params.category2 });
+
+      // 현재 상품 제외
+      const relatedProducts = response.products.filter((product) => product.productId !== router.params.id);
+
+      productStore.dispatch({
+        type: PRODUCT_ACTIONS.SET_RELATED_PRODUCTS,
+        payload: relatedProducts,
+      });
+    }
   }
   return ProductDetailPage();
 });
 router.addRoute(".*", () => {
-  NotFoundPage();
+  return NotFoundPage();
 });
 
 const CartInitializer = () => {
