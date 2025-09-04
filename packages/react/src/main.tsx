@@ -1,7 +1,8 @@
 import { App } from "./App";
 import { router } from "./router";
 import { BASE_URL } from "./constants.ts";
-import { createRoot } from "react-dom/client";
+import { createRoot, hydrateRoot } from "react-dom/client";
+import { hasInitialData } from "./utils/hydration";
 
 const enableMocking = () =>
   import("./mocks/browser").then(({ worker }) =>
@@ -14,10 +15,18 @@ const enableMocking = () =>
   );
 
 function main() {
+  const rootElement = document.getElementById("root")!;
+
+  const hasSSRData = hasInitialData();
+  const hasServerContent = rootElement.innerHTML.trim() !== "";
+
   router.start();
 
-  const rootElement = document.getElementById("root")!;
-  createRoot(rootElement).render(<App />);
+  if (hasSSRData || hasServerContent) {
+    hydrateRoot(rootElement, <App />);
+  } else {
+    createRoot(rootElement).render(<App />);
+  }
 }
 
 // 애플리케이션 시작
