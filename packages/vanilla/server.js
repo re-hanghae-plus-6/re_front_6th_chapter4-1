@@ -45,10 +45,14 @@ app.use("*all", async (req, res) => {
       render = (await import("./dist/vanilla-ssr/main-server.js")).render;
     }
 
-    const rendered = await render(url);
+    const rendered = await render(url, req.query);
 
     const html = template
       .replace(`<!--app-head-->`, rendered.head ?? "")
+      .replace(
+        `<!--app-initial-data-->`,
+        `<script>window.__INITIAL_DATA__ = ${JSON.stringify(rendered.initialData)}</script>`,
+      )
       .replace(`<!--app-html-->`, rendered.html ?? "");
 
     res.status(200).set({ "Content-Type": "text/html" }).send(html);
