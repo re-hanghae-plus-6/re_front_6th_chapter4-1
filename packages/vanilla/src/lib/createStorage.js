@@ -1,4 +1,4 @@
-import { isServer } from "../utils/index.js";
+import { isServer } from "../utils";
 
 /**
  * @type {Storage}

@@ -1,5 +1,5 @@
-import { createStore } from "../lib/index.js";
-import { PRODUCT_ACTIONS } from "./actionTypes.js";
+import { createStore } from "../lib/index";
+import { PRODUCT_ACTIONS } from "./actionTypes";
 
 /**
  * 상품 스토어 초기 상태

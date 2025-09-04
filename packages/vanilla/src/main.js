@@ -15,27 +15,31 @@ const enableMocking = () =>
     }),
   );
 
-function restoreSSRState() {
+async function restoreSSRState() {
   if (typeof window !== "undefined" && window.__INITIAL_DATA__) {
-    const productState = window.__INITIAL_DATA__;
+    const initialState = window.__INITIAL_DATA__;
 
-    import("./stores/index.js").then(({ productStore }) => {
-      if (productStore) {
-        productStore.setState(productState);
-      }
-    });
+    // 상품 스토어 상태 복원
+    const { productStore } = await import("./stores/index.js");
+    if (productStore && initialState) {
+      productStore.setState(initialState);
+    }
 
+    // 초기 데이터 삭제
     delete window.__INITIAL_DATA__;
+    return true;
   }
+  return false;
 }
 
-function main() {
+async function main() {
   registerAllEvents();
   registerGlobalEvents();
 
-  restoreSSRState();
+  const hasSSRState = await restoreSSRState();
 
-  if (!window.__INITIAL_DATA__?.cartStore) {
+  // SSR 상태가 없는 경우에만 로컬 스토리지에서 카트 데이터 로드
+  if (!hasSSRState) {
     loadCartFromStorage();
   }
 
