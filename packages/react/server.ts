@@ -49,7 +49,7 @@ app.use("*all", async (req, res) => {
       render = (await vite.ssrLoadModule("/src/main-server.tsx")).render;
     } else {
       template = templateHtml;
-      render = (await import("./dist/react-ssr/main-server.tsx")).render;
+      render = (await import("./dist/react-ssr/main-server.js")).render;
     }
 
     const rendered = await render(pathname, req.query);
