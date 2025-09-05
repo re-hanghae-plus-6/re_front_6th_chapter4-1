@@ -1,20 +1,20 @@
 import fs from "node:fs/promises";
-import express from "express";
 import { normalize } from "node:path";
 import compression from "compression";
 import sirv from "sirv";
-import { server as mswServer } from "./src/mocks/nodeServer.js";
-import { safeSerialize } from "./src/utils/serialized.js";
+import { server as mswServer } from "./src/mocks/nodeServer";
+import { safeSerialize } from "./src/utils/serialized";
+import express from "express";
 
 const prod = process.env.NODE_ENV === "production";
 const port = process.env.PORT || 5173;
-const base = process.env.BASE || (prod ? "/front_6th_chapter4-1/vanilla/" : "/");
+const base = process.env.BASE || (prod ? "/front_6th_chapter4-1/react/" : "/");
 
 mswServer.listen({
   onUnhandledRequest: "bypass",
 });
 
-const templateHtml = prod ? await fs.readFile("./dist/vanilla/index.html", "utf-8") : "";
+const templateHtml = prod ? await fs.readFile("./dist/react/index.html", "utf-8") : "";
 
 const app = express();
 
@@ -30,7 +30,7 @@ if (!prod) {
   app.use(vite.middlewares);
 } else {
   app.use(compression());
-  app.use(base, sirv("./dist/vanilla", { extensions: [] }));
+  app.use(base, sirv("./dist/react", { extensions: [] }));
 }
 
 // Serve HTML
@@ -41,15 +41,15 @@ app.use("*all", async (req, res) => {
 
     /** @type {string} */
     let template;
-    /** @type {import('./src/main-server.js').render} */
+    /** @type {import('./src/main-server.tsx').render} */
     let render;
     if (!prod) {
       template = await fs.readFile("./index.html", "utf-8");
       template = await vite.transformIndexHtml(url, template);
-      render = (await vite.ssrLoadModule("/src/main-server.js")).render;
+      render = (await vite.ssrLoadModule("/src/main-server.tsx")).render;
     } else {
       template = templateHtml;
-      render = (await import("./dist/vanilla-ssr/main-server.js")).render;
+      render = (await import("./dist/react-ssr/main-server.js")).render;
     }
 
     const rendered = await render(pathname, req.query);
@@ -59,7 +59,7 @@ app.use("*all", async (req, res) => {
     const html = template
       .replace(`<!--app-head-->`, rendered.head ?? "")
       .replace(`<!--app-html-->`, rendered.html ?? "")
-      .replace(`<!-- app-data -->`, initialDataScript);
+      .replace(`<!--app-data-->`, initialDataScript);
 
     res.status(200).set({ "Content-Type": "text/html" }).send(html);
   } catch (e) {
@@ -71,5 +71,5 @@ app.use("*all", async (req, res) => {
 
 // Start http server
 app.listen(port, () => {
-  console.log(`React Server started at http://localhost:${port}`);
+  console.log(`React Server started at http://localhost:${port}${base}`);
 });

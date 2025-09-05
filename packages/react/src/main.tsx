@@ -1,7 +1,12 @@
+import { Router } from "@hanghae-plus/lib";
+import { createRoot, hydrateRoot } from "react-dom/client";
 import { App } from "./App";
-import { router } from "./router";
 import { BASE_URL } from "./constants.ts";
-import { createRoot } from "react-dom/client";
+import { ProductProvider } from "./entities/products/context/ProductContext.tsx";
+import { createProductStore } from "./entities/index.ts";
+import { routes } from "./router/routes.ts";
+import { hasInitialData } from "./utils/hydration.ts";
+import { RouterProvider } from "./router/RouterContext.tsx";
 
 const enableMocking = () =>
   import("./mocks/browser").then(({ worker }) =>
@@ -14,10 +19,31 @@ const enableMocking = () =>
   );
 
 function main() {
+  const router = new Router(routes, BASE_URL);
   router.start();
 
+  const initData = window.__INITIAL_DATA__;
+
+  const renderApp = () => {
+    return (
+      <RouterProvider router={router}>
+        <ProductProvider productStore={createProductStore(initData || {})}>
+          <App />
+        </ProductProvider>
+      </RouterProvider>
+    );
+  };
+
   const rootElement = document.getElementById("root")!;
-  createRoot(rootElement).render(<App />);
+
+  const hasSSRData = hasInitialData();
+  const hasServerContent = rootElement.innerHTML.trim() !== "";
+
+  if (hasSSRData || hasServerContent) {
+    hydrateRoot(rootElement, renderApp());
+  } else {
+    createRoot(rootElement).render(renderApp());
+  }
 }
 
 // 애플리케이션 시작

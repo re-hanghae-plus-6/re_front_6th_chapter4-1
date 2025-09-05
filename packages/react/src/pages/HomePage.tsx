@@ -1,6 +1,8 @@
 import { useEffect } from "react";
-import { loadNextProducts, loadProductsAndCategories, ProductList, SearchBar } from "../entities";
+import { ProductList, SearchBar, useProductStoreContext } from "../entities";
 import { PageWrapper } from "./PageWrapper";
+import { withServerSideProps } from "../utils";
+import { getProducts, getCategories } from "../api/productApi";
 
 const headerLeft = (
   <h1 className="text-xl font-bold text-gray-900">
@@ -10,39 +12,69 @@ const headerLeft = (
   </h1>
 );
 
-// 무한 스크롤 이벤트 등록
-let scrollHandlerRegistered = false;
+export const HomePage = withServerSideProps(
+  {
+    ssr: async ({ query }) => {
+      const [
+        {
+          products,
+          pagination: { total },
+        },
+        categories,
+      ] = await Promise.all([getProducts(query), getCategories()]);
 
-const registerScrollHandler = () => {
-  if (scrollHandlerRegistered) return;
+      return {
+        products,
+        categories,
+        totalCount: total,
+        loading: false,
+        status: "done",
+      };
+    },
+    metadata: async () => {
+      return {
+        title: "쇼핑몰 - 홈",
+      };
+    },
+  },
+  () => {
+    const {
+      action: { loadProductsAndCategories, loadNextProducts },
+    } = useProductStoreContext();
 
-  window.addEventListener("scroll", loadNextProducts);
-  scrollHandlerRegistered = true;
-};
+    // 무한 스크롤 이벤트 등록
+    let scrollHandlerRegistered = false;
 
-const unregisterScrollHandler = () => {
-  if (!scrollHandlerRegistered) return;
-  window.removeEventListener("scroll", loadNextProducts);
-  scrollHandlerRegistered = false;
-};
+    const registerScrollHandler = () => {
+      if (scrollHandlerRegistered) return;
 
-export const HomePage = () => {
-  useEffect(() => {
-    registerScrollHandler();
-    loadProductsAndCategories();
+      window.addEventListener("scroll", loadNextProducts);
+      scrollHandlerRegistered = true;
+    };
 
-    return unregisterScrollHandler;
-  }, []);
+    const unregisterScrollHandler = () => {
+      if (!scrollHandlerRegistered) return;
+      window.removeEventListener("scroll", loadNextProducts);
+      scrollHandlerRegistered = false;
+    };
 
-  return (
-    <PageWrapper headerLeft={headerLeft}>
-      {/* 검색 및 필터 */}
-      <SearchBar />
+    useEffect(() => {
+      registerScrollHandler();
+      loadProductsAndCategories();
 
-      {/* 상품 목록 */}
-      <div className="mb-6">
-        <ProductList />
-      </div>
-    </PageWrapper>
-  );
-};
+      return unregisterScrollHandler;
+    }, []);
+
+    return (
+      <PageWrapper headerLeft={headerLeft}>
+        {/* 검색 및 필터 */}
+        <SearchBar />
+
+        {/* 상품 목록 */}
+        <div className="mb-6">
+          <ProductList />
+        </div>
+      </PageWrapper>
+    );
+  },
+);
