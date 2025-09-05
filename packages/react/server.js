@@ -17,6 +17,11 @@ const vite = await createServer({
   base,
 });
 
+const { mswServer } = await vite.ssrLoadModule("./src/mocks/node.ts");
+mswServer.listen({
+  onUnhandledRequest: "bypass",
+});
+
 if (!prod) {
   app.use(vite.middlewares);
 } else {
@@ -56,11 +61,6 @@ app.use("*all", async (req, res) => {
     console.log(e.stack);
     res.status(500).end(e.stack);
   }
-});
-
-const { mswServer } = await vite.ssrLoadModule("./src/mocks/node.ts");
-mswServer.listen({
-  onUnhandledRequest: "bypass",
 });
 
 app.listen(port, () => {
