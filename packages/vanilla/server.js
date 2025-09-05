@@ -32,7 +32,7 @@ if (!prod) {
 }
 
 // Serve HTML
-app.use("*all", async (req, res) => {
+app.get("*all", async (req, res) => {
   try {
     const url = req.originalUrl.replace(base, "");
 

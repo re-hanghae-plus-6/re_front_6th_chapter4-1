@@ -3,6 +3,14 @@ import { initialProductState, productStore, PRODUCT_ACTIONS } from "../stores";
 import { router } from "../router";
 
 export const loadProductsAndCategories = async () => {
+  const currentState = productStore.getState();
+
+  // 이미 상품 목록과 카테고리 데이터가 있으면 API 호출 스킵 (SSR hydration)
+  if (currentState.products.length > 0 && Object.keys(currentState.categories).length > 0 && !currentState.loading) {
+    console.log("이미 상품 목록 데이터가 있어서 API 호출 스킵");
+    return;
+  }
+
   router.query = { current: undefined }; // 항상 첫 페이지로 초기화
   productStore.dispatch({
     type: PRODUCT_ACTIONS.SETUP,
@@ -120,14 +128,11 @@ export const setLimit = (limit) => {
  */
 export const loadProductDetailForPage = async (productId) => {
   try {
-    const currentProduct = productStore.getState().currentProduct;
-    if (productId === currentProduct?.productId) {
-      // 관련 상품 로드 (같은 category2 기준)
-      if (currentProduct.category2) {
-        await loadRelatedProducts(currentProduct.category2, productId);
-      }
+    // 이미 해당 상품 데이터가 있고, 관련 상품도 있으면 API 호출 스킵
+    if (import.meta.env.SSR) {
       return;
     }
+
     // 현재 상품 클리어
     productStore.dispatch({
       type: PRODUCT_ACTIONS.SETUP,
