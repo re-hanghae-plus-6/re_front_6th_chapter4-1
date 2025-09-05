@@ -239,10 +239,16 @@ export const ProductDetailPage = withLifecycle(
     onMount: () => {
       loadProductDetailForPage(router.params.id);
     },
-    watches: [() => [router.params.id], () => loadProductDetailForPage(router.params.id)],
+    watches: [
+      () => [router.params.id],
+      () => {
+        loadProductDetailForPage(router.params.id);
+      },
+    ],
   },
   () => {
-    const { currentProduct: product, relatedProducts = [], error, loading } = productStore.getState();
+    const productStoreCopy = productStore.getState();
+    const { currentProduct: product, relatedProducts = [], error, loading } = productStoreCopy;
 
     return PageWrapper({
       headerLeft: `
