@@ -60,8 +60,12 @@ export class SPARouter<Handler extends AnyFunction> {
   private readonly baseUrl;
   private currentRoute: CurrentRouter<Handler> | null = null;
 
-  constructor(baseUrl = "") {
+  constructor(initRoutes: Record<string, Handler>, baseUrl = "") {
     this.baseUrl = baseUrl.replace(/\/$/, "");
+
+    Object.entries(initRoutes).forEach(([path, page]) => {
+      this.addRoute(path, page);
+    });
 
     window.addEventListener("popstate", () => {
       this.currentRoute = this.findRoute();
@@ -105,6 +109,17 @@ export class SPARouter<Handler extends AnyFunction> {
   }
 
   public addRoute(path: string, handler: Handler) {
+    if (path === "*") {
+      const regex = new RegExp(".*");
+      this.routes.set(path, {
+        regex,
+        paramNames: [],
+        handler,
+      });
+
+      return;
+    }
+
     // 경로 패턴을 정규식으로 변환
     const paramNames: string[] = [];
     const regexPath = path
@@ -141,8 +156,8 @@ export class SPARouter<Handler extends AnyFunction> {
     }
   }
 
-  public start() {
-    this.currentRoute = this.findRoute();
+  public start(url?: string) {
+    this.currentRoute = this.findRoute(url);
     this.observer.notify();
   }
 

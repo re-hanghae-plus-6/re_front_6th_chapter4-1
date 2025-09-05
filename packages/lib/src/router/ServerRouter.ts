@@ -59,8 +59,12 @@ export class ServerRouter<Handler extends AnyFunction> {
   private currentRoute: CurrentRouter<Handler> | null = null;
   private currentUrl = "/";
 
-  constructor(baseUrl = "") {
+  constructor(initRoutes: Record<string, Handler>, baseUrl = "") {
     this.baseUrl = baseUrl.replace(/\/$/, "");
+
+    Object.entries(initRoutes).forEach(([path, page]) => {
+      this.addRoute(path, page);
+    });
   }
 
   get query(): StringRecord {
@@ -93,6 +97,17 @@ export class ServerRouter<Handler extends AnyFunction> {
   }
 
   public addRoute(path: string, handler: Handler) {
+    if (path === "*") {
+      const regex = new RegExp(".*");
+      this.routes.set(path, {
+        regex,
+        paramNames: [],
+        handler,
+      });
+
+      return;
+    }
+
     // 경로 패턴을 정규식으로 변환
     const paramNames: string[] = [];
     const regexPath = path
@@ -102,7 +117,7 @@ export class ServerRouter<Handler extends AnyFunction> {
       })
       .replace(/\//g, "\\/");
 
-    const regex = new RegExp(`^${this.baseUrl}${regexPath}$`);
+    const regex = new RegExp(`^${regexPath}$`);
 
     this.routes.set(path, {
       regex,
