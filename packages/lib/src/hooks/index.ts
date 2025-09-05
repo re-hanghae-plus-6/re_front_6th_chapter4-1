@@ -8,3 +8,4 @@ export * from "./useShallowSelector";
 export * from "./useShallowState";
 export * from "./useStorage";
 export * from "./useStore";
+export * from "./useSSRSafeExternalStore";

@@ -21,6 +21,9 @@ export const PRODUCT_ACTIONS = {
 
   // status 관리
   SET_STATUS: "products/setStatus",
+
+  // ssr 설정
+  SET_INITIAL_DATA: "products/setInitialData",
 } as const;
 
 /**
@@ -42,6 +45,13 @@ export const initialProductState = {
 
   // 카테고리 목록
   categories: {} as Categories,
+  filters: {
+    search: "",
+    limit: "",
+    sort: "",
+    category1: "",
+    category2: "",
+  },
 };
 
 /**
@@ -117,6 +127,20 @@ const productReducer = (state: typeof initialProductState, action: any) => {
 
     case PRODUCT_ACTIONS.SETUP:
       return { ...state, ...action.payload };
+
+    case PRODUCT_ACTIONS.SET_INITIAL_DATA:
+      return {
+        ...state,
+        products: action.payload.products || [],
+        categories: action.payload.categories || {},
+        totalCount: action.payload.totalCount || 0,
+        filters: action.payload.filters || {},
+        currentProduct: action.payload.currentProduct || null,
+        relatedProducts: action.payload.relatedProducts || [],
+        loading: false,
+        error: null,
+        status: "done",
+      };
 
     default:
       return state;

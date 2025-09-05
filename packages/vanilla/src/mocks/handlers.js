@@ -1,13 +1,31 @@
 import { http, HttpResponse } from "msw";
-import items from "./items.json";
+import { isServer } from "../utils";
+
+// 서버 환경에서는 동적 import로 items.json 로드
+let items = null;
+
+async function getItems() {
+  if (!items) {
+    if (isServer) {
+      // 서버 환경
+      const itemsModule = await import("./items.json", { with: { type: "json" } });
+      items = itemsModule.default;
+    } else {
+      // 클라이언트 환경 (이미 정적으로 로드됨)
+      const itemsModule = await import("./items.json");
+      items = itemsModule.default;
+    }
+  }
+  return items;
+}
 
 const delay = async () => await new Promise((resolve) => setTimeout(resolve, 200));
 
 // 카테고리 추출 함수
-function getUniqueCategories() {
+function getUniqueCategories(itemsList) {
   const categories = {};
 
-  items.forEach((item) => {
+  itemsList.forEach((item) => {
     const cat1 = item.category1;
     const cat2 = item.category2;
 
@@ -65,6 +83,7 @@ function filterProducts(products, query) {
 export const handlers = [
   // 상품 목록 API
   http.get("/api/products", async ({ request }) => {
+    const itemsList = await getItems();
     const url = new URL(request.url);
     const page = parseInt(url.searchParams.get("page") ?? url.searchParams.get("current")) || 1;
     const limit = parseInt(url.searchParams.get("limit")) || 20;
@@ -74,7 +93,7 @@ export const handlers = [
     const sort = url.searchParams.get("sort") || "price_asc";
 
     // 필터링된 상품들
-    const filteredProducts = filterProducts(items, {
+    const filteredProducts = filterProducts(itemsList, {
       search,
       category1,
       category2,
@@ -105,15 +124,19 @@ export const handlers = [
       },
     };
 
-    await delay();
+    // 서버 환경에서는 delay 건너뛰기
+    if (typeof window !== "undefined") {
+      await delay();
+    }
 
     return HttpResponse.json(response);
   }),
 
   // 상품 상세 API
-  http.get("/api/products/:id", ({ params }) => {
+  http.get("/api/products/:id", async ({ params }) => {
+    const itemsList = await getItems();
     const { id } = params;
-    const product = items.find((item) => item.productId === id);
+    const product = itemsList.find((item) => item.productId === id);
 
     if (!product) {
       return HttpResponse.json({ error: "Product not found" }, { status: 404 });
@@ -134,8 +157,14 @@ export const handlers = [
 
   // 카테고리 목록 API
   http.get("/api/categories", async () => {
-    const categories = getUniqueCategories();
-    await delay();
+    const itemsList = await getItems();
+    const categories = getUniqueCategories(itemsList);
+
+    // 서버 환경에서는 delay 건너뛰기
+    if (typeof window !== "undefined") {
+      await delay();
+    }
+
     return HttpResponse.json(categories);
   }),
 ];

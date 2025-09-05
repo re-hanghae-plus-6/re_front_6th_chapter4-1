@@ -1,4 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createObserver } from "./createObserver";
+import { isServer } from "./ssrUtils";
 import type { AnyFunction, StringRecord } from "./types";
 
 interface Route<Handler extends AnyFunction> {
@@ -11,39 +13,45 @@ interface Route<Handler extends AnyFunction> {
 type QueryPayload = Record<string, string | number | undefined>;
 
 export type RouterInstance<T extends AnyFunction> = InstanceType<typeof Router<T>>;
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export class Router<Handler extends (...args: any[]) => any> {
+  [x: string]: any;
   readonly #routes: Map<string, Route<Handler>>;
   readonly #observer = createObserver();
   readonly #baseUrl;
 
   #route: null | (Route<Handler> & { params: StringRecord; path: string });
+  readonly #isServer: boolean;
 
   constructor(baseUrl = "") {
     this.#routes = new Map();
     this.#route = null;
     this.#baseUrl = baseUrl.replace(/\/$/, "");
+    this.#isServer = isServer;
 
-    window.addEventListener("popstate", () => {
-      this.#route = this.#findRoute();
-      this.#observer.notify();
-    });
+    if (!this.#isServer) {
+      window.addEventListener("popstate", () => {
+        this.#route = this.#findRoute();
+        this.#observer.notify();
+      });
 
-    document.addEventListener("click", (e) => {
-      const target = e.target as HTMLElement;
-      if (!target?.closest("[data-link]")) {
-        return;
-      }
-      e.preventDefault();
-      const url = target.getAttribute("href") ?? target.closest("[data-link]")?.getAttribute("href");
-      if (url) {
-        this.push(url);
-      }
-    });
+      document.addEventListener("click", (e) => {
+        const target = e.target as HTMLElement;
+        if (!target?.closest("[data-link]")) {
+          return;
+        }
+        e.preventDefault();
+        const url = target.getAttribute("href") ?? target.closest("[data-link]")?.getAttribute("href");
+        if (url) {
+          this.push(url);
+        }
+      });
+    }
   }
 
   get query(): StringRecord {
+    if (this.#isServer) {
+      return {};
+    }
     return Router.parseQuery(window.location.search);
   }
 
@@ -67,7 +75,17 @@ export class Router<Handler extends (...args: any[]) => any> {
   readonly subscribe = this.#observer.subscribe;
 
   addRoute(path: string, handler: Handler) {
-    // 경로 패턴을 정규식으로 변환
+    // '*' 전용 처리
+    if (path === "*" || path === "/*") {
+      this.#routes.set(path, {
+        regex: new RegExp(`^${this.#baseUrl}.*$`),
+        paramNames: [],
+        handler,
+      });
+      return;
+    }
+
+    // 일반적인 파라미터(:id) 처리
     const paramNames: string[] = [];
     const regexPath = path
       .replace(/:\w+/g, (match) => {
@@ -85,8 +103,22 @@ export class Router<Handler extends (...args: any[]) => any> {
     });
   }
 
-  #findRoute(url = window.location.pathname) {
-    const { pathname } = new URL(url, window.location.origin);
+  #findRoute(url?: string) {
+    if (this.#isServer) {
+      // SSR에서는 기본 라우트 반환
+      const defaultRoute = this.#routes.get("/");
+      if (defaultRoute) {
+        return {
+          ...defaultRoute,
+          params: {},
+          path: "/",
+        };
+      }
+      return null;
+    }
+
+    const actualUrl = url || window.location.pathname;
+    const { pathname } = new URL(actualUrl, window.location.origin);
     for (const [routePath, route] of this.#routes) {
       const match = pathname.match(route.regex);
       if (match) {
@@ -107,6 +139,10 @@ export class Router<Handler extends (...args: any[]) => any> {
   }
 
   push(url: string) {
+    if (this.#isServer) {
+      return;
+    }
+
     try {
       // baseUrl이 없으면 자동으로 붙여줌
       const fullUrl = url.startsWith(this.#baseUrl) ? url : this.#baseUrl + (url.startsWith("/") ? url : "/" + url);
@@ -130,8 +166,13 @@ export class Router<Handler extends (...args: any[]) => any> {
     this.#observer.notify();
   }
 
-  static parseQuery = (search = window.location.search) => {
-    const params = new URLSearchParams(search);
+  static parseQuery = (search?: string) => {
+    if (isServer) {
+      return {};
+    }
+
+    const actualSearch = search || window.location.search;
+    const params = new URLSearchParams(actualSearch);
     const query: StringRecord = {};
     for (const [key, value] of params) {
       query[key] = value;
@@ -150,6 +191,10 @@ export class Router<Handler extends (...args: any[]) => any> {
   };
 
   static getUrl = (newQuery: QueryPayload, baseUrl = "") => {
+    if (isServer) {
+      return "/";
+    }
+
     const currentQuery = Router.parseQuery();
     const updatedQuery = { ...currentQuery, ...newQuery };
 
