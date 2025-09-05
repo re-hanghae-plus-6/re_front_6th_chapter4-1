@@ -21,7 +21,7 @@
     "preview:ssr-with-build": "pnpm run build:without-ssg && pnpm run preview:ssr",
     "preview:ssg": "NODE_ENV=production vite preview --outDir ../../dist/react --port 4179",
     "preview:ssg-with-build": "pnpm run build:ssg && pnpm run preview:ssg",
-    "serve:test": "pnpm run build:without-ssg && pnpm run build:ssg && (pnpm run dev & pnpm run dev:ssr & pnpm run preview:csr & pnpm run preview:ssr & pnpm run preview:ssg)",
+    "serve:test": "concurrently \"pnpm run dev\" \"pnpm run dev:ssr\" \"pnpm run preview:csr\" \"pnpm run preview:ssr\" \"pnpm run preview:ssg\"",
     "tsc": "tsc --noEmit",
     "lint:fix": "eslint --fix ./src",
     "prettier:write": "prettier --write ./src"
