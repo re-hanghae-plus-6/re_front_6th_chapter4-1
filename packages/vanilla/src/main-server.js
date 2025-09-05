@@ -1,6 +1,6 @@
 import { router } from "./router/router.js";
 import { HomePage, ProductDetailPage, NotFoundPage } from "./pages";
-import { retrieveProductDetails, retrieveProducts } from "./api/fetchDataSSR.js";
+import { retrieveProductDetails, retrieveProducts } from "./api/fetchDataApi.js";
 
 // 서버 사이드 렌더링을 위한 라우트 정의
 router.addRoute("/", HomePage);
