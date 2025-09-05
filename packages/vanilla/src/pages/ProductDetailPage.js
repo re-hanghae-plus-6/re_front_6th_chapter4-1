@@ -2,6 +2,7 @@ import { productStore } from "../stores";
 import { loadProductDetailForPage } from "../services";
 import { router, withLifecycle } from "../router";
 import { PageWrapper } from "./PageWrapper.js";
+import { PRODUCT_ACTIONS } from "../stores/actionTypes.js";
 
 const loadingContent = `
   <div class="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -231,18 +232,48 @@ function ProductDetail({ product, relatedProducts = [] }) {
   `;
 }
 
+export const getServerSideProps = async (params) => {
+  const { mockGetProduct } = await import("../api/serverApi.js");
+  const productData = await mockGetProduct(params.id);
+  return {
+    props: {
+      product: productData,
+      relatedProducts: productData.relatedProducts || [],
+    },
+  };
+};
+
 /**
  * 상품 상세 페이지 컴포넌트
  */
 export const ProductDetailPage = withLifecycle(
   {
     onMount: () => {
-      loadProductDetailForPage(router.params.id);
+      if (typeof window === "undefined") {
+        return;
+      }
+
+      if (window.__INITIAL_DATA__?.currentProduct) {
+        const { currentProduct } = window.__INITIAL_DATA__;
+        productStore.dispatch({
+          type: PRODUCT_ACTIONS.SET_CURRENT_PRODUCT,
+          payload: currentProduct,
+        });
+        return;
+      }
+
+      // 아무것도 없을 때 여기 실행
+      if (router.params?.id) {
+        loadProductDetailForPage(router.params.id);
+      }
     },
-    watches: [() => [router.params.id], () => loadProductDetailForPage(router.params.id)],
+    watches: [() => [router.params?.id], () => router.params?.id && loadProductDetailForPage(router.params.id)],
   },
-  () => {
-    const { currentProduct: product, relatedProducts = [], error, loading } = productStore.getState();
+  (props = {}) => {
+    const { product, relatedProducts: propsRelatedProducts = [] } = props;
+    const { currentProduct, relatedProducts: storeRelatedProducts = [], error, loading } = productStore.getState();
+    const productData = product || currentProduct;
+    const relatedProductsData = propsRelatedProducts.length > 0 ? propsRelatedProducts : storeRelatedProducts;
 
     return PageWrapper({
       headerLeft: `
@@ -258,9 +289,9 @@ export const ProductDetailPage = withLifecycle(
       `.trim(),
       children: loading
         ? loadingContent
-        : error && !product
+        : error && !product?.productId
           ? ErrorContent({ error })
-          : ProductDetail({ product, relatedProducts }),
+          : ProductDetail({ product: productData, relatedProducts: relatedProductsData }),
     });
   },
 );

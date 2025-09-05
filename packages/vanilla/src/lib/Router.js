@@ -64,7 +64,8 @@ export class Router {
       })
       .replace(/\//g, "\\/");
 
-    const regex = new RegExp(`^${this.#baseUrl}${regexPath}$`);
+    // baseUrl 없이 순수 라우트 패턴만 사용
+    const regex = new RegExp(`^${regexPath}$`);
 
     this.#routes.set(path, {
       regex,
@@ -75,8 +76,11 @@ export class Router {
 
   #findRoute(url = window.location.pathname) {
     const { pathname } = new URL(url, window.location.origin);
-    for (const [routePath, route] of this.#routes) {
-      const match = pathname.match(route.regex);
+    // baseUrl 제거하여 실제 라우트 패스만 추출
+    const routePath = pathname.replace(this.#baseUrl, "") || "/";
+
+    for (const [routePattern, route] of this.#routes) {
+      const match = routePath.match(route.regex);
       if (match) {
         // 매치된 파라미터들을 객체로 변환
         const params = {};
@@ -87,7 +91,7 @@ export class Router {
         return {
           ...route,
           params,
-          path: routePath,
+          path: routePattern,
         };
       }
     }

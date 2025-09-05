@@ -1,4 +1,4 @@
-import { createStore } from "../lib";
+import { createStore } from "../lib/index.js";
 import { CART_ACTIONS } from "./actionTypes";
 import { cartStorage } from "../storage/index.js";
 

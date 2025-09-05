@@ -3,10 +3,45 @@ import { productStore } from "../stores";
 import { router, withLifecycle } from "../router";
 import { loadProducts, loadProductsAndCategories } from "../services";
 import { PageWrapper } from "./PageWrapper.js";
+import { PRODUCT_ACTIONS } from "../stores/actionTypes.js";
+
+export async function getServerSideProps(queryParams = {}) {
+  const { mockGetProducts, mockGetCategories } = await import("../api/serverApi.js");
+
+  const products = await mockGetProducts(queryParams);
+  const categories = await mockGetCategories();
+
+  return {
+    props: { products: products.products, totalCount: products.pagination.total, categories },
+  };
+}
 
 export const HomePage = withLifecycle(
   {
     onMount: () => {
+      if (typeof window === "undefined") {
+        // 서버에서 실행되는 코드
+        return;
+      }
+
+      if (window.__INITIAL_DATA__?.products?.length > 0) {
+        // 클라이언트에서 실행이 되는데, initial data가 있을 때만 실행
+
+        const { products, totalCount, categories } = window.__INITIAL_DATA__;
+        productStore.dispatch({
+          type: PRODUCT_ACTIONS.SETUP,
+          payload: {
+            products,
+            totalCount,
+            categories,
+            loading: false,
+            status: "done",
+          },
+        });
+        return;
+      }
+
+      // 아무것도 없을 때 여기 실행
       loadProductsAndCategories();
     },
     watches: [
@@ -17,8 +52,17 @@ export const HomePage = withLifecycle(
       () => loadProducts(true),
     ],
   },
-  () => {
-    const productState = productStore.getState();
+  (props = {}) => {
+    const productState =
+      props.products?.length > 0
+        ? {
+            products: props.products,
+            loading: false,
+            error: null,
+            totalCount: props.totalCount,
+            categories: props.categories,
+          }
+        : productStore.getState();
     const { search: searchQuery, limit, sort, category1, category2 } = router.query;
     const { products, loading, error, totalCount, categories } = productState;
     const category = { category1, category2 };
