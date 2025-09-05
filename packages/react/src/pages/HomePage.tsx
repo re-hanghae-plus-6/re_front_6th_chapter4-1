@@ -3,7 +3,6 @@ import { ProductList, SearchBar, useProductStoreContext } from "../entities";
 import { PageWrapper } from "./PageWrapper";
 import { withServerSideProps } from "../utils";
 import { getProducts, getCategories } from "../api/productApi";
-import { hasInitialData, hasStoreData } from "../utils/hydration";
 
 const headerLeft = (
   <h1 className="text-xl font-bold text-gray-900">
@@ -61,10 +60,7 @@ export const HomePage = withServerSideProps(
 
     useEffect(() => {
       registerScrollHandler();
-
-      if (!hasInitialData() && !hasStoreData()) {
-        loadProductsAndCategories();
-      }
+      loadProductsAndCategories();
 
       return unregisterScrollHandler;
     }, []);
