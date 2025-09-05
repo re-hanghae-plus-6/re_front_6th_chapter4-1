@@ -1,27 +1,35 @@
-export async function getProducts(params = {}) {
-  const { limit = 20, search = "", category1 = "", category2 = "", sort = "price_asc" } = params;
-  const page = params.current ?? params.page ?? 1;
+const IS_SERVER = typeof window === "undefined";
+const API_ENDPOINT = IS_SERVER ? "http://localhost" : "";
 
-  const searchParams = new URLSearchParams({
-    page: page.toString(),
-    limit: limit.toString(),
-    ...(search && { search }),
-    ...(category1 && { category1 }),
-    ...(category2 && { category2 }),
-    sort,
+const apiFetch = async (path) => {
+  const response = await fetch(`${API_ENDPOINT}${path}`);
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  return response.json();
+};
+
+export const getProducts = (params = {}) => {
+  const { limit = 20, search = "", category1 = "", category2 = "", sort = "price_asc", page = 1 } = params;
+
+  const query = new URLSearchParams({
+    page: params.current || page,
+    limit,
+    _sort: sort,
   });
 
-  const response = await fetch(`/api/products?${searchParams}`);
+  if (search) query.set("q", search);
+  if (category1) query.set("category1", category1);
+  if (category2) query.set("category2", category2);
 
-  return await response.json();
-}
+  return apiFetch(`/api/products?${query}`);
+};
 
-export async function getProduct(productId) {
-  const response = await fetch(`/api/products/${productId}`);
-  return await response.json();
-}
+export const getProduct = (productId) => {
+  if (!productId) throw new Error("Product ID is required.");
+  return apiFetch(`/api/products/${productId}`);
+};
 
-export async function getCategories() {
-  const response = await fetch("/api/categories");
-  return await response.json();
-}
+export const getCategories = () => {
+  return apiFetch("/api/categories");
+};
