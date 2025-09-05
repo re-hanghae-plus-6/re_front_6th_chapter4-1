@@ -6,7 +6,7 @@ interface QueryContextType {
   updateQuery: (newQuery: StringRecord) => void;
 }
 
-const QueryContext = createContext<QueryContextType | null>(null);
+export const QueryContext = createContext<QueryContextType | null>(null);
 
 interface QueryProviderProps {
   children: ReactNode;
