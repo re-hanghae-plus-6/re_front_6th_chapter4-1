@@ -11,3 +11,10 @@ export type RouterInstance<
   T extends AnyFunction,
   R extends typeof SPARouter<T> | typeof ServerRouter<T> = typeof SPARouter<T> | typeof ServerRouter<T>,
 > = InstanceType<R>;
+
+declare global {
+  interface Window {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    __INITIAL_DATA__?: any;
+  }
+}
