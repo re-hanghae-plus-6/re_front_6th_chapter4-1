@@ -1,6 +1,6 @@
 import { useCartAddCommand } from "../../carts";
 import type { Product } from "../types";
-import { log } from "../../../utils";
+// import { log } from "../../../utils";
 
 export function ProductCard({ onClick, ...product }: Product & { onClick: (id: string) => void }) {
   const addCart = useCartAddCommand();
@@ -10,7 +10,7 @@ export function ProductCard({ onClick, ...product }: Product & { onClick: (id: s
 
   const handleClick = () => onClick(productId);
 
-  log(`ProductCard: ${productId}`);
+  // log(`ProductCard: ${productId}`);
 
   return (
     <div

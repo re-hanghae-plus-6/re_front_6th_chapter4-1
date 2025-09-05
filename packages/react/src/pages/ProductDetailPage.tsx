@@ -1,11 +1,47 @@
-import { ProductDetail, useLoadProductDetail, useProductStore } from "../entities";
+import {
+  loadProductDetailForPage,
+  PRODUCT_ACTIONS,
+  ProductDetail,
+  productStore,
+  useLoadProductDetail,
+  useProductStore,
+} from "../entities";
 import { PageWrapper } from "./PageWrapper";
 import { ErrorContent, PublicImage } from "../components";
+import type { ProductDetailSSRResult } from "../api/ssrProductApi";
+import { useEffect } from "react";
+import { hydrateStores } from "../store/hydrateStores";
+import { useRouterParams } from "../router";
 
-export const ProductDetailPage = () => {
+export interface ProductDetailPageProps {
+  initialData?: ProductDetailSSRResult | null;
+}
+
+export const ProductDetailPage = ({ initialData }: ProductDetailPageProps) => {
   const { currentProduct: product, error, loading } = useProductStore();
 
-  useLoadProductDetail();
+  const productId = useRouterParams((params) => params?.id);
+
+  useEffect(() => {
+    if (!productId) return;
+
+    const state = productStore.getState();
+
+    // ✅ SSR로 이미 같은 상품이 주입돼 있으면 fetch 스킵
+    if (state.currentProduct?.productId === productId) {
+      console.log("🔥 SSR 데이터 있음 → fetch 스킵");
+      return;
+    }
+
+    console.log("🔥 CSR 진입 or 다른 상품 → fetch 실행");
+    loadProductDetailForPage(productId as string);
+
+    // 페이지 나갈 때 스토어 초기화
+    return () => {
+      console.log("🧹 상세 페이지 언마운트 → 스토어 초기화");
+      productStore.dispatch({ type: PRODUCT_ACTIONS.ALL_RESET });
+    };
+  }, [productId]);
 
   return (
     <PageWrapper

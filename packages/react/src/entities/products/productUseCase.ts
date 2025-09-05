@@ -3,6 +3,9 @@ import { router } from "../../router";
 import type { StringRecord } from "../../types";
 import { initialProductState, PRODUCT_ACTIONS, productStore } from "./productStore";
 import { isNearBottom } from "../../utils";
+import { Router } from "@hanghae-plus/lib";
+import type { FunctionComponent } from "react";
+import { useQueryContext } from "../../contexts/QueryContext";
 
 const createErrorMessage = (error: unknown, defaultMessage = "알 수 없는 오류 발생") =>
   error instanceof Error ? error.message : defaultMessage;
@@ -75,6 +78,17 @@ export const loadProducts = async (resetList = true) => {
   }
 };
 
+// export const loadMoreProducts = async () => {
+//   const state = productStore.getState();
+//   const hasMore = state.products.length < state.totalCount;
+
+//   if (!hasMore || state.loading) {
+//     return;
+//   }
+
+//   router.query = { current: Number(router.query.current ?? 1) + 1 };
+//   await loadProducts(false);
+// };
 export const loadMoreProducts = async () => {
   const state = productStore.getState();
   const hasMore = state.products.length < state.totalCount;
@@ -83,23 +97,41 @@ export const loadMoreProducts = async () => {
     return;
   }
 
-  router.query = { current: Number(router.query.current ?? 1) + 1 };
+  // 현재 쿼리 유지하면서 페이지만 증가
+  const currentQuery = router.query;
+  const newQuery = { ...currentQuery, current: Number(currentQuery.current ?? 1) + 1 };
+  const newUrl = Router.getUrl(newQuery);
+  (router as Router<FunctionComponent>).push(newUrl);
+
   await loadProducts(false);
 };
+
+//TODO: 여기 수정함
 export const searchProducts = (search: string) => {
-  router.query = { search, current: 1 };
+  // router.query = { search, current: 1 };
+  const newUrl = Router.getUrl({ search, current: 1 });
+  (router as Router<FunctionComponent>).push(newUrl); // 👈 실제 URL 변경
 };
 
+//TODO: 여기 수정함
 export const setCategory = (categoryData: StringRecord) => {
-  router.query = { ...categoryData, current: 1 };
+  // router.query = { ...categoryData, current: 1 };
+  const newUrl = Router.getUrl({ ...categoryData, current: 1 });
+  (router as Router<FunctionComponent>).push(newUrl); // 👈 실제 URL 변경
 };
 
+//TODO: 여기 수정함
 export const setSort = (sort: string) => {
-  router.query = { sort, current: 1 };
+  // router.query = { sort, current: 1 };
+  const newUrl = Router.getUrl({ sort, current: 1 });
+  (router as Router<FunctionComponent>).push(newUrl); // 👈 실제 URL 변경
 };
 
+//TODO: 여기 수정함
 export const setLimit = (limit: number) => {
-  router.query = { limit, current: 1 };
+  // router.query = { limit, current: 1 };
+  const newUrl = Router.getUrl({ limit, current: 1 });
+  (router as Router<FunctionComponent>).push(newUrl); // 👈 실제 URL 변경
 };
 
 export const loadProductDetailForPage = async (productId: string) => {
@@ -193,4 +225,54 @@ export const loadNextProducts = async () => {
       console.error("무한 스크롤 로드 실패:", error);
     }
   }
+};
+
+// Context 기반 검색 함수들 (Hook 형태)
+export const useSearchProducts = () => {
+  const { updateQuery } = useQueryContext();
+
+  return (search: string) => {
+    updateQuery({ search, current: 1 });
+  };
+};
+
+export const useSetCategory = () => {
+  const { updateQuery } = useQueryContext();
+
+  return (categoryData: StringRecord) => {
+    updateQuery({ ...categoryData, current: 1 });
+  };
+};
+
+export const useSetSort = () => {
+  const { updateQuery } = useQueryContext();
+
+  return (sort: string) => {
+    updateQuery({ sort, current: 1 });
+  };
+};
+
+export const useSetLimit = () => {
+  const { updateQuery } = useQueryContext();
+
+  return (limit: number) => {
+    updateQuery({ limit, current: 1 });
+  };
+};
+
+export const useLoadMoreProducts = () => {
+  const { query, updateQuery } = useQueryContext();
+
+  return async () => {
+    const state = productStore.getState();
+    const hasMore = state.products.length < state.totalCount;
+
+    if (!hasMore || state.loading) {
+      return;
+    }
+
+    const newQuery = { ...query, current: Number(query.current ?? 1) + 1 };
+    updateQuery(newQuery);
+    await loadProducts(false);
+  };
 };
