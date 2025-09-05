@@ -23,8 +23,7 @@ export const render = async (url: string, query: Record<string, string>) => {
     console.error("라우터 설정 오류:", error);
   }
 
-  const cleanUrl = url.replace(BASE_URL, "").replace(/^\//, "");
-  const splitUrl = cleanUrl.split("/").filter(Boolean);
+  const splitUrl = url.split("/").filter((segment) => segment !== "");
 
   const initialData = {
     products: [],
