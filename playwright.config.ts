@@ -11,6 +11,7 @@ export default defineConfig({
   webServer: {
     command: "pnpm run serve:test",
     port: 4173,
+
     reuseExistingServer: !process.env.CI,
     stdout: "pipe",
     stderr: "pipe",

@@ -1,7 +1,9 @@
-import { productStore } from "../stores";
+import { PRODUCT_ACTIONS, productStore } from "../stores";
 import { loadProductDetailForPage } from "../services";
 import { router, withLifecycle } from "../router";
 import { PageWrapper } from "./PageWrapper.js";
+import { loadInitialData } from "../utils/loadInitialData.js";
+import { hydrateStores } from "../utils/hydrateStores.js";
 
 const loadingContent = `
   <div class="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -236,14 +238,38 @@ function ProductDetail({ product, relatedProducts = [] }) {
  */
 export const ProductDetailPage = withLifecycle(
   {
-    onMount: () => {
+    onMount: async () => {
+      if (typeof window === "undefined") return;
+
+      const state = productStore.getState();
+      const currentId = state.currentProduct?.productId;
+
+      // 같은 상품이면 패스, 다른 상품이면 다시 불러오기
+      if (currentId === router.params.id) return;
+
+      // currentProduct 초기화
+      productStore.dispatch({
+        type: PRODUCT_ACTIONS.SET_CURRENT_PRODUCT,
+        payload: null,
+      });
+
+      const staticData = await loadInitialData(`/product/${router.params.id}/`);
+      if (staticData) {
+        hydrateStores(staticData); // 여기서 dispatch 처리
+        return;
+      }
+
+      // fallback: CSR API 호출
       loadProductDetailForPage(router.params.id);
     },
     watches: [() => [router.params.id], () => loadProductDetailForPage(router.params.id)],
   },
-  () => {
-    const { currentProduct: product, relatedProducts = [], error, loading } = productStore.getState();
+  ({ initialData } = {}) => {
+    // SSR - initialData, CSR - store
+    const productDetailState = typeof window === "undefined" ? initialData : productStore.getState();
 
+    const { currentProduct: product, relatedProducts = [], error, loading } = productDetailState;
+    console.log("product", relatedProducts);
     return PageWrapper({
       headerLeft: `
         <div class="flex items-center space-x-3">

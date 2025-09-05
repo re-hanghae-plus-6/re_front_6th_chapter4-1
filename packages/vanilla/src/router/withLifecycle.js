@@ -50,6 +50,7 @@ const unmount = (pageFunction) => {
 
 export const withLifecycle = ({ onMount, onUnmount, watches } = {}, page) => {
   const lifecycle = getPageLifecycle(page);
+
   if (typeof onMount === "function") {
     lifecycle.mount = onMount;
   }
@@ -75,19 +76,18 @@ export const withLifecycle = ({ onMount, onUnmount, watches } = {}, page) => {
     pageState.current = page;
 
     // 새 페이지면 마운트, 기존 페이지면 업데이트
-    if (wasNewPage) {
-      mount(page);
-    } else if (lifecycle.watches) {
-      lifecycle.watches.forEach(([getDeps, callback], index) => {
-        const newDeps = getDeps();
-
-        if (depsChanged(newDeps, lifecycle.deps[index])) {
-          callback();
-        }
-
-        // deps 업데이트 (이 부분이 중요!)
-        lifecycle.deps[index] = Array.isArray(newDeps) ? [...newDeps] : [];
-      });
+    if (typeof window !== "undefined") {
+      if (wasNewPage) {
+        mount(page, ...args);
+      } else if (lifecycle.watches) {
+        lifecycle.watches.forEach(([getDeps, callback], index) => {
+          const newDeps = getDeps(...args);
+          if (depsChanged(newDeps, lifecycle.deps[index])) {
+            callback(...args);
+          }
+          lifecycle.deps[index] = Array.isArray(newDeps) ? [...newDeps] : [];
+        });
+      }
     }
 
     // 페이지 함수 실행

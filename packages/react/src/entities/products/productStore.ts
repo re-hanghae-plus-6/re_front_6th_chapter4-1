@@ -16,7 +16,7 @@ export const PRODUCT_ACTIONS = {
   SET_RELATED_PRODUCTS: "products/setRelatedProducts",
 
   // 리셋
-  RESET_FILTERS: "products/resetFilters",
+  ALL_RESET: "products/resetFilters",
   SETUP: "products/setup",
 
   // status 관리
@@ -117,6 +117,11 @@ const productReducer = (state: typeof initialProductState, action: any) => {
 
     case PRODUCT_ACTIONS.SETUP:
       return { ...state, ...action.payload };
+
+    case PRODUCT_ACTIONS.ALL_RESET:
+      return {
+        ...initialProductState,
+      };
 
     default:
       return state;

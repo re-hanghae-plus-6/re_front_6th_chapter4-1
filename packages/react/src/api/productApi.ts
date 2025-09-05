@@ -20,6 +20,8 @@ interface ProductsResponse {
   };
 }
 
+const BASE_URL = typeof window === "undefined" ? "http://localhost:5176" : "";
+
 export async function getProducts(params: StringRecord = {}): Promise<ProductsResponse> {
   const { limit = 20, search = "", category1 = "", category2 = "", sort = "price_asc" } = params;
   const page = params.current ?? params.page ?? 1;
@@ -33,19 +35,24 @@ export async function getProducts(params: StringRecord = {}): Promise<ProductsRe
     sort,
   });
 
-  const response = await fetch(`/api/products?${searchParams}`);
-
+  const response = await fetch(`${BASE_URL}/api/products?${searchParams}`);
+  console.log("✅ product list Response : ", response);
+  console.trace(); // 여기서 누가 호출했는지 추적
   return await response.json();
 }
 
 // 상품 상세 조회
 export async function getProduct(productId: string): Promise<Product> {
-  const response = await fetch(`/api/products/${productId}`);
+  const response = await fetch(`${BASE_URL}/api/products/${productId}`);
+  console.log("✅ product Response : ", response);
+
   return await response.json();
 }
 
 // 카테고리 목록 조회
 export async function getCategories(): Promise<Categories> {
-  const response = await fetch("/api/categories");
+  const response = await fetch(`${BASE_URL}/api/categories`);
+  console.log("✅ category Response : ", response);
+
   return await response.json();
 }
