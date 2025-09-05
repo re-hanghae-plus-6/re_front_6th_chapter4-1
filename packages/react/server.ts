@@ -71,5 +71,5 @@ app.use("*all", async (req, res) => {
 
 // Start http server
 app.listen(port, () => {
-  console.log(`React Server started at http://localhost:${port}`);
+  console.log(`React Server started at http://localhost:${port}${base}`);
 });
