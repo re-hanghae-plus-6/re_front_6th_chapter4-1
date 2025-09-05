@@ -1,3 +1,4 @@
+// server.js
 import express from "express";
 
 const prod = process.env.NODE_ENV === "production";
