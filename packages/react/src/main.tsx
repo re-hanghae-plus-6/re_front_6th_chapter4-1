@@ -1,7 +1,8 @@
-import { App } from "./App";
-import { router } from "./router";
-import { BASE_URL } from "./constants.ts";
 import { createRoot } from "react-dom/client";
+import { App } from "./App";
+import { BASE_URL } from "./constants.ts";
+import { hydrateStore } from "./lib/hydration";
+import { router } from "./router";
 
 const enableMocking = () =>
   import("./mocks/browser").then(({ worker }) =>
@@ -14,6 +15,9 @@ const enableMocking = () =>
   );
 
 function main() {
+  // 서버에서 전달받은 초기 데이터로 store 하이드레이션
+  hydrateStore();
+
   router.start();
 
   const rootElement = document.getElementById("root")!;

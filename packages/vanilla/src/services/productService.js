@@ -1,6 +1,6 @@
 import { getCategories, getProduct, getProducts } from "../api/productApi";
-import { initialProductState, productStore, PRODUCT_ACTIONS } from "../stores";
 import { router } from "../router";
+import { PRODUCT_ACTIONS, initialProductState, productStore } from "../stores";
 
 export const loadProductsAndCategories = async () => {
   router.query = { current: undefined }; // 항상 첫 페이지로 초기화
@@ -52,10 +52,9 @@ export const loadProducts = async (resetList = true) => {
       payload: { loading: true, status: "pending", error: null },
     });
 
-    const {
-      products,
-      pagination: { total },
-    } = await getProducts(router.query);
+    const response = await getProducts(router.query);
+    const { products, pagination } = response;
+    const total = pagination?.total || 0;
     const payload = { products, totalCount: total };
 
     // 페이지 리셋이면 새로 설정, 아니면 기존에 추가
