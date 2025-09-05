@@ -33,14 +33,25 @@ export class MemoryRouter<Handler extends AnyFunction> {
 
   match(url: string) {
     console.log("👉 MemoryRouter match", url);
+
+    const parsed = new URL(url, "http://localhost:5176"); // base 필요
+    const pathname = parsed.pathname;
+    const searchParams = Object.fromEntries(parsed.searchParams.entries());
+
     for (const [routePath, route] of this.routes) {
-      const match = url.match(route.regex);
+      const match = pathname.match(route.regex);
       if (match) {
         const params: StringRecord = {};
         route.paramNames.forEach((name, index) => {
           params[name] = match[index + 1];
         });
-        return { path: routePath, component: route.handler, params };
+
+        return {
+          path: routePath,
+          component: route.handler,
+          params,
+          query: searchParams, // 👈 SSR에서도 query 넘겨줌
+        };
       }
     }
     return null;

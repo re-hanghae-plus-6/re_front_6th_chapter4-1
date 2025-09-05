@@ -10,12 +10,13 @@ import {
 } from "./api/ssrProductApi";
 import { renderToString } from "react-dom/server";
 import { PRODUCT_ACTIONS, productStore } from "./entities";
+import { QueryProvider } from "./contexts/QueryContext";
 
 router.addRoute("/", HomePage);
 router.addRoute("/product/:id/", ProductDetailPage);
 router.addRoute("*", NotFoundPage);
 
-export const render = async (url: string, query: Record<string, string>) => {
+export const render = async (url: string) => {
   const matched = (router as MemoryRouter<FunctionComponent>).match(url);
 
   console.log("👉 matched", matched);
@@ -27,7 +28,7 @@ export const render = async (url: string, query: Record<string, string>) => {
     };
   }
 
-  const { path, params, component } = matched;
+  const { path, params, component, query } = matched;
   console.log("👉 path", path);
   console.log("👉 params", params);
   console.log("👉 component", component);
@@ -73,7 +74,14 @@ export const render = async (url: string, query: Record<string, string>) => {
 
   return {
     head: `<title>${pageTitle}</title>`,
-    html: renderToString(<PageComponent />),
-    initialData,
+    html: renderToString(
+      <QueryProvider initialQuery={query}>
+        <PageComponent />
+      </QueryProvider>,
+    ),
+    initialData: {
+      ...initialData,
+      query,
+    },
   };
 };

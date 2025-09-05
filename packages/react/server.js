@@ -9,6 +9,7 @@ const base = process.env.BASE || (prod ? "/front_6th_chapter4-1/react/" : "/");
 const templateHtml = prod ? fs.readFileSync("./dist/react/index.html", "utf-8") : "";
 
 const vite = await createServer({
+  // plugins: [react()],
   server: { middlewareMode: true },
   appType: "custom",
   base,
@@ -59,7 +60,7 @@ app.get("*all", async (req, res) => {
       template = templateHtml;
       render = (await import("./dist/react-ssr/main-server.tsx")).render;
     }
-    const rendered = await render(url, req.query);
+    const rendered = await render(url);
 
     const html = template
       .replace(`<!--app-head-->`, rendered.head ?? "")

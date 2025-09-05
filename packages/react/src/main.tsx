@@ -6,11 +6,13 @@ import { PRODUCT_ACTIONS, productStore } from "./entities/index.ts";
 import type { Router } from "@hanghae-plus/lib";
 import type { FunctionComponent } from "react";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-
 if (typeof window !== "undefined" && window.__INITIAL_DATA__) {
   const initialData = window.__INITIAL_DATA__;
   console.log("Hydrating with server data:", initialData);
+
+  if (initialData.query) {
+    router.query = initialData.query;
+  }
 
   // 홈(initial products)용 데이터 복원
   if (initialData.products) {
@@ -56,14 +58,22 @@ const enableMocking = () =>
     }),
   );
 
+function hasRenderableChild(root: HTMLElement) {
+  return Array.from(root.childNodes).some((node) => node.nodeType === Node.ELEMENT_NODE);
+}
 function main() {
   (router as Router<FunctionComponent>).start();
 
   const rootElement = document.getElementById("root")!;
 
-  if (rootElement.hasChildNodes()) {
+  const shouldHydrate = typeof window !== "undefined" && hasRenderableChild(rootElement);
+
+  console.log("shouldHydrate", shouldHydrate);
+  if (shouldHydrate) {
+    console.log("Hydrate");
     hydrateRoot(rootElement, <App />);
   } else {
+    console.log("Create");
     createRoot(rootElement).render(<App />);
   }
 

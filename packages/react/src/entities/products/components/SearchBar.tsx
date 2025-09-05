@@ -2,7 +2,7 @@ import { type ChangeEvent, Fragment, type KeyboardEvent, type MouseEvent } from 
 import { PublicImage } from "../../../components";
 import { useProductStore } from "../hooks";
 import { useProductFilter } from "./hooks";
-import { searchProducts, setCategory, setLimit, setSort } from "../productUseCase";
+import { useSearchProducts, useSetCategory, useSetLimit, useSetSort } from "../productUseCase";
 
 const OPTION_LIMITS = [10, 20, 50, 100];
 const OPTION_SORTS = [
@@ -13,7 +13,7 @@ const OPTION_SORTS = [
 ];
 
 // 검색 입력 (Enter 키)
-const handleSearchKeyDown = async (e: KeyboardEvent<HTMLInputElement>) => {
+const handleSearchKeyDown = async (e: KeyboardEvent<HTMLInputElement>, searchProducts: (search: string) => void) => {
   if (e.key === "Enter") {
     const query = e.currentTarget.value.trim();
     try {
@@ -91,6 +91,12 @@ export function SearchBar() {
   const { categories } = useProductStore();
   const { searchQuery, limit = "20", sort, category } = useProductFilter();
 
+  // Context 기반 Hook 사용
+  const searchProducts = useSearchProducts();
+  const setCategory = useSetCategory();
+  const setLimit = useSetLimit();
+  const setSort = useSetSort();
+
   const categoryList = Object.keys(categories).length > 0 ? Object.keys(categories) : [];
   const limitOptions = OPTION_LIMITS.map((value) => (
     <option key={value} value={value}>
@@ -127,7 +133,7 @@ export function SearchBar() {
             defaultValue={searchQuery}
             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg
                         focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            onKeyDown={handleSearchKeyDown}
+            onKeyDown={(e) => handleSearchKeyDown(e, searchProducts)}
           />
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <PublicImage src="/search-icon.svg" alt="검색" className="h-5 w-5 text-gray-400" />

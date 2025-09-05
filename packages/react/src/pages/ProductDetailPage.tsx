@@ -1,9 +1,17 @@
-import { PRODUCT_ACTIONS, ProductDetail, productStore, useLoadProductDetail, useProductStore } from "../entities";
+import {
+  loadProductDetailForPage,
+  PRODUCT_ACTIONS,
+  ProductDetail,
+  productStore,
+  useLoadProductDetail,
+  useProductStore,
+} from "../entities";
 import { PageWrapper } from "./PageWrapper";
 import { ErrorContent, PublicImage } from "../components";
 import type { ProductDetailSSRResult } from "../api/ssrProductApi";
 import { useEffect } from "react";
 import { hydrateStores } from "../store/hydrateStores";
+import { useRouterParams } from "../router";
 
 export interface ProductDetailPageProps {
   initialData?: ProductDetailSSRResult | null;
@@ -12,38 +20,28 @@ export interface ProductDetailPageProps {
 export const ProductDetailPage = ({ initialData }: ProductDetailPageProps) => {
   const { currentProduct: product, error, loading } = useProductStore();
 
-  console.log("😡 productDetailPage initialData", initialData);
+  const productId = useRouterParams((params) => params?.id);
 
-  // --SSR-- 환경에서 미리 주입하기
-  if (typeof window === "undefined" && initialData?.currentProduct) {
-    console.log("🔥 첫 번째 레슨 : SSR initialData를 스토어에 하이드레이트");
-    hydrateStores(initialData);
-  }
-
-  // --CSR-- 진입 후 window.__INITIAL_DATA__가 있으면 주입
   useEffect(() => {
-    productStore.dispatch({ type: PRODUCT_ACTIONS.ALL_RESET });
+    if (!productId) return;
 
-    if (initialData?.currentProduct) {
-      // ✅ SSR로 받아온 데이터를 CSR에서도 이어받아 사용
-      console.log("🔥 CSR: SSR initialData를 스토어에 주입");
-      hydrateStores(initialData);
-    } else {
-      // ✅ SSR 데이터가 없으면 CSR로 직접 API 호출 준비
-      console.log("🔥 CSR: SSR 데이터 없음 → 스토어 초기화 후 API 요청 대기");
-      productStore.dispatch({ type: PRODUCT_ACTIONS.RESET_FILTERS });
+    const state = productStore.getState();
+
+    // ✅ SSR로 이미 같은 상품이 주입돼 있으면 fetch 스킵
+    if (state.currentProduct?.productId === productId) {
+      console.log("🔥 SSR 데이터 있음 → fetch 스킵");
+      return;
     }
 
-    // ✅ 상세 페이지에서 나갈 때 항상 스토어 초기화
-    return () => {
-      console.log("🧹 CSR: 상세 페이지 언마운트 → 스토어 초기화");
-      productStore.dispatch({ type: PRODUCT_ACTIONS.RESET_FILTERS });
-    };
-  }, [initialData]);
+    console.log("🔥 CSR 진입 or 다른 상품 → fetch 실행");
+    loadProductDetailForPage(productId as string);
 
-  // SSR 데이터가 있으면 CSR fetch 막기
-  // 데이터가 있으면 false, 없으면 true
-  useLoadProductDetail(!initialData?.currentProduct);
+    // 페이지 나갈 때 스토어 초기화
+    return () => {
+      console.log("🧹 상세 페이지 언마운트 → 스토어 초기화");
+      productStore.dispatch({ type: PRODUCT_ACTIONS.ALL_RESET });
+    };
+  }, [productId]);
 
   return (
     <PageWrapper
