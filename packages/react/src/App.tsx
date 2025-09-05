@@ -1,9 +1,8 @@
-import { router, useCurrentPage } from "./router";
-import { HomePage, NotFoundPage, ProductDetailPage } from "./pages";
-import { useLoadCartStore } from "./entities";
 import { ModalProvider, ToastProvider } from "./components";
+import { useLoadCartStore } from "./entities";
+import { HomePage, NotFoundPage, ProductDetailPage } from "./pages";
+import { router, useCurrentPage } from "./router";
 
-// 홈 페이지 (상품 목록)
 router.addRoute("/", HomePage);
 router.addRoute("/product/:id/", ProductDetailPage);
 router.addRoute(".*", NotFoundPage);
