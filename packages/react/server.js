@@ -1,3 +1,4 @@
+import react from "@vitejs/plugin-react";
 import express from "express";
 const { createServer } = await import("vite");
 import fs from "fs";
@@ -9,7 +10,7 @@ const base = process.env.BASE || (prod ? "/front_6th_chapter4-1/react/" : "/");
 const templateHtml = prod ? fs.readFileSync("./dist/react/index.html", "utf-8") : "";
 
 const vite = await createServer({
-  // plugins: [react()],
+  plugins: [react()],
   server: { middlewareMode: true },
   appType: "custom",
   base,
@@ -58,7 +59,7 @@ app.get("*all", async (req, res) => {
     } else {
       console.log("👉 prod");
       template = templateHtml;
-      render = (await import("./dist/react-ssr/main-server.tsx")).render;
+      render = (await import("./dist/react-ssr/main-server.js")).render;
     }
     const rendered = await render(url);
 
