@@ -7,19 +7,22 @@ import { PageWrapper } from "./PageWrapper.js";
 export const HomePage = withLifecycle(
   {
     onMount: () => {
+      if (typeof window === "undefined") return;
       loadProductsAndCategories();
     },
     watches: [
-      () => {
-        const { search, limit, sort, category1, category2 } = router.query;
+      ({ query = router.query } = {}) => {
+        const { search, limit, sort, category1, category2 } = query;
         return [search, limit, sort, category1, category2];
       },
-      () => loadProducts(true),
+      ({ query = router.query } = {}) => loadProducts(true, query),
     ],
   },
-  () => {
-    const productState = productStore.getState();
-    const { search: searchQuery, limit, sort, category1, category2 } = router.query;
+  ({ query = router.query, productInfo } = {}) => {
+    // SSR 환경에서는 productInfo 사용, 클라이언트 환경에서는 store 사용
+    const productState = typeof window === "undefined" ? productInfo : productStore.getState();
+
+    const { search: searchQuery, limit, sort, category1, category2 } = query;
     const { products, loading, error, totalCount, categories } = productState;
     const category = { category1, category2 };
     const hasMore = products.length < totalCount;

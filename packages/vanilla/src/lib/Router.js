@@ -14,10 +14,13 @@ export class Router {
     this.#route = null;
     this.#baseUrl = baseUrl.replace(/\/$/, "");
 
-    window.addEventListener("popstate", () => {
-      this.#route = this.#findRoute();
-      this.#observer.notify();
-    });
+    // 뒤로가기 버튼 눌렀을 때 실행되는 이벤트
+    if (typeof window !== "undefined") {
+      window.addEventListener("popstate", () => {
+        this.#route = this.#findRoute();
+        this.#observer.notify();
+      });
+    }
   }
 
   get baseUrl() {
@@ -25,6 +28,10 @@ export class Router {
   }
 
   get query() {
+    // SSR 환경에서는 window가 없으므로 다른 방식으로 쿼리 파싱
+    if (typeof window === "undefined") {
+      return {};
+    }
     return Router.parseQuery(window.location.search);
   }
 

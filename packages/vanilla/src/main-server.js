@@ -1,4 +1,5 @@
+import { renderPage } from "./lib/serverRouter.js";
+
 export const render = async (url, query) => {
-  console.log({ url, query });
-  return "";
+  return await renderPage(url, query);
 };
