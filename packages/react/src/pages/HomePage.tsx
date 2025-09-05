@@ -29,8 +29,9 @@ const unregisterScrollHandler = () => {
 export const HomePage = () => {
   useEffect(() => {
     registerScrollHandler();
-    loadProductsAndCategories();
-
+    if (!(typeof window !== "undefined" && window.__INITIAL_DATA__)) {
+      loadProductsAndCategories();
+    }
     return unregisterScrollHandler;
   }, []);
 

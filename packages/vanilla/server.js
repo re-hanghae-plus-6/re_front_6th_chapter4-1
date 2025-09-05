@@ -1,4 +1,5 @@
 import express from "express";
+import fs from "fs";
 
 const prod = process.env.NODE_ENV === "production";
 const port = process.env.PORT || 5173;
@@ -6,26 +7,65 @@ const base = process.env.BASE || (prod ? "/front_6th_chapter4-1/vanilla/" : "/")
 
 const app = express();
 
-const render = () => {
-  return `<div>안녕하세요</div>`;
+const setupMiddlewares = async () => {
+  if (!prod) {
+    const { createServer } = await import("vite");
+    const viteServer = await createServer({
+      server: { middlewareMode: true },
+      appType: "custom",
+      base,
+    });
+    app.use(viteServer.middlewares);
+    return viteServer;
+  }
+  const compression = (await import("compression")).default;
+  const sirv = (await import("sirv")).default;
+
+  app.use(compression());
+  app.use(base, sirv("./dist/vanilla", { extensions: [] }));
+
+  return null;
 };
 
-app.get("*all", (req, res) => {
-  res.send(
-    `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Vanilla Javascript SSR</title>
-</head>
-<body>
-<div id="app">${render()}</div>
-</body>
-</html>
-  `.trim(),
-  );
+const viteServer = await setupMiddlewares();
+
+const templateHtml = prod ? fs.readFileSync("./dist/vanilla/index.html", "utf8") : "";
+
+const get = {
+  template: async (viteServer, url) => {
+    if (prod) return templateHtml;
+
+    const rawHtml = fs.readFileSync("./index.html", "utf-8");
+    const transformedHtml = await viteServer.transformIndexHtml(url, rawHtml);
+    return transformedHtml;
+  },
+  render: async (viteServer) => {
+    if (prod) return (await import("./dist/vanilla-ssr/main-server.js")).render;
+    return (await viteServer.ssrLoadModule("/src/main-server.js")).render;
+  },
+};
+
+app.get("*all", async (request, response) => {
+  try {
+    const url = request.originalUrl.replace(base, "");
+
+    const template = await get.template(viteServer, url);
+    const render = await get.render(viteServer);
+    const { head, html, initialData, status = 200 } = await render(url, request.query ?? {});
+
+    const initialDataScript = initialData
+      ? `<script>window.__INITIAL_DATA__=${JSON.stringify(initialData).replace(/</g, "\\u003c")}</script>`
+      : "";
+
+    const finalHtml = template
+      .replace(`<!--app-head-->`, head ?? "")
+      .replace(`<!--app-html-->`, html ?? "")
+      .replace("</head>", `${initialDataScript}</head>`);
+
+    response.status(status).set({ "Content-Type": "text/html" }).send(finalHtml);
+  } catch (error) {
+    response.status(500).end(error.stack);
+  }
 });
 
 // Start http server
