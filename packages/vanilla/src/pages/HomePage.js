@@ -17,9 +17,11 @@ export const HomePage = withLifecycle(
       () => loadProducts(true),
     ],
   },
-  () => {
+  (serverQuery) => {
     const productState = productStore.getState();
-    const { search: searchQuery, limit, sort, category1, category2 } = router.query;
+
+    const currentQuery = serverQuery || router.query;
+    const { search: searchQuery, limit, sort, category1, category2 } = currentQuery;
     const { products, loading, error, totalCount, categories } = productState;
     const category = { category1, category2 };
     const hasMore = products.length < totalCount;
