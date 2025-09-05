@@ -30,7 +30,7 @@ async function createServer() {
   }
 
   // --- SSR Middleware ---
-  app.use("*", async (req, res) => {
+  app.use("*all", async (req, res) => {
     // Skip static assets
     if (req.originalUrl.match(/\.(ico|png|jpg|css|js)$|favicon/)) {
       return res.status(404).end();

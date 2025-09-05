@@ -6,8 +6,8 @@
   "scripts": {
     "dev": "vite --port 5173",
     "dev:ssr": "cross-env PORT=5174 node server.js",
-    "build:client": "rimraf ./dist/vanilla && vite build --outDir ./dist/vanilla && copyfiles ./dist/vanilla/index.html ./dist/vanilla/404.html",
-    "build:client-for-ssg": "rimraf ../../dist/vanilla && vite build --outDir ../../dist/vanilla",
+    "build:client": "shx rm -rf ./dist/vanilla && vite build --outDir ./dist/vanilla && shx cp ./dist/vanilla/index.html ./dist/vanilla/404.html",
+    "build:client-for-ssg": "shx rm -rf ../../dist/vanilla && vite build --outDir ../../dist/vanilla",
     "build:server": "vite build --outDir ./dist/vanilla-ssr --ssr src/main-server.js",
     "build:ssg": "pnpm run build:client-for-ssg && node static-site-generate.js",
     "build:without-ssg": "pnpm run build:client && pnpm run build:server",
