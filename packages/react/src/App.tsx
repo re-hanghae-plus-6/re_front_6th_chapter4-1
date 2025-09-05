@@ -6,6 +6,7 @@ import { ModalProvider, ToastProvider } from "./components";
 // 홈 페이지 (상품 목록)
 router.addRoute("/", HomePage);
 router.addRoute("/product/:id", ProductDetailPage);
+router.addRoute("/product/:id/", ProductDetailPage);
 router.addRoute("*", NotFoundPage);
 
 const CartInitializer = () => {
