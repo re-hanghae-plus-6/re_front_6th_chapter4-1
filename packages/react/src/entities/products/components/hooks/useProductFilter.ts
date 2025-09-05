@@ -4,7 +4,12 @@ import { loadProducts } from "../../productUseCase";
 import { productStore } from "../../productStore";
 
 export const useProductFilter = () => {
-  const { search: searchQuery, limit, sort, category1, category2 } = useRouterQuery();
+  const routerQuery = useRouterQuery();
+  const searchQuery = routerQuery.search || "";
+  const limit = routerQuery.limit || "20";
+  const sort = routerQuery.sort || "price_asc";
+  const category1 = routerQuery.category1 || "";
+  const category2 = routerQuery.category2 || "";
   const category = { category1, category2 };
 
   const didMount = useRef(false);

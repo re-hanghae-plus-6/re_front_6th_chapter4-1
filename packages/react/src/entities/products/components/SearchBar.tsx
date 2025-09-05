@@ -97,7 +97,8 @@ export function SearchBar() {
     }
   };
 
-  const categoryList = Object.keys(categories).length > 0 ? Object.keys(categories) : [];
+  const categoryList = Object.keys(categories);
+  const isLoadingCategories = categoryList.length === 0;
   const limitOptions = OPTION_LIMITS.map((value) => (
     <option key={value} value={value}>
       {value}개
@@ -191,10 +192,10 @@ export function SearchBar() {
           {/* 1depth 카테고리 */}
           {!category.category1 && (
             <div className="flex flex-wrap gap-2">
-              {categoryList.length > 0 ? (
-                categoryButtons
-              ) : (
+              {isLoadingCategories ? (
                 <div className="text-sm text-gray-500 italic">카테고리 로딩 중...</div>
+              ) : (
+                categoryButtons
               )}
             </div>
           )}
