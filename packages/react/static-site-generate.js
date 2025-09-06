@@ -47,9 +47,10 @@ export class SSGBuilder {
 
   async #buildProductPages() {
     const { getProducts } = await this.#viteServer.ssrLoadModule("./src/api/productApi.ts");
-    const { products } = await getProducts();
+    const response = await getProducts();
+    const products = response.products || [];
 
-    const buildTasks = (products ?? []).map(({ productId }) => this.#buildPage(`/product/${productId}/`));
+    const buildTasks = products.map(({ productId }) => this.#buildPage(`/product/${productId}/`));
     await Promise.all(buildTasks);
   }
 

@@ -54,10 +54,11 @@ export class ServerRouter<Handler extends AnyFunction> {
     return url;
   }
 
-  private readonly routes = new Map<string, Route<Handler>>();
+  private readonly _routes = new Map<string, Route<Handler>>();
   private readonly baseUrl;
   private currentRoute: CurrentRouter<Handler> | null = null;
   private currentUrl = "/";
+  private _query: StringRecord = {};
 
   constructor(initRoutes: Record<string, Handler>, baseUrl = "") {
     this.baseUrl = baseUrl.replace(/\/$/, "");
@@ -68,16 +69,11 @@ export class ServerRouter<Handler extends AnyFunction> {
   }
 
   get query(): StringRecord {
-    if (!this.currentUrl) {
-      throw new Error("setter를 통해 url 값을 할당해 주세요!");
-    }
-
-    return ServerRouter.parseQuery(this.currentUrl);
+    return this._query;
   }
 
   set query(newQuery: QueryPayload) {
-    const newUrl = ServerRouter.getUrl(newQuery, this.currentUrl, this.baseUrl);
-    this.push(newUrl);
+    this._query = newQuery as StringRecord;
   }
 
   get params() {
@@ -96,10 +92,14 @@ export class ServerRouter<Handler extends AnyFunction> {
     return (fn: AnyFunction) => () => fn();
   }
 
+  get routes() {
+    return this._routes;
+  }
+
   public addRoute(path: string, handler: Handler) {
     if (path === "*") {
       const regex = new RegExp(".*");
-      this.routes.set(path, {
+      this._routes.set(path, {
         regex,
         paramNames: [],
         handler,
@@ -119,7 +119,7 @@ export class ServerRouter<Handler extends AnyFunction> {
 
     const regex = new RegExp(`^${regexPath}$`);
 
-    this.routes.set(path, {
+    this._routes.set(path, {
       regex,
       paramNames,
       handler,
@@ -144,8 +144,11 @@ export class ServerRouter<Handler extends AnyFunction> {
   private findRoute(url = this.baseUrl) {
     const { pathname } = new URL(url, "http://localhost");
 
-    for (const [routePath, route] of this.routes) {
-      const match = pathname.match(route.regex);
+    const pathToMatch =
+      this.baseUrl && pathname.startsWith(this.baseUrl) ? pathname.slice(this.baseUrl.length) || "/" : pathname;
+
+    for (const [routePath, route] of this._routes) {
+      const match = pathToMatch.match(route.regex);
       if (match) {
         // 매치된 파라미터들을 객체로 변환
         const params: StringRecord = {};
