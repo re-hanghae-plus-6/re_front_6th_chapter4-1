@@ -52,10 +52,15 @@ export class SSRService {
         },
       });
 
+      const state = productStore.getState();
       return {
         head: /* HTML */ `<title>쇼핑몰 - 홈</title>`,
         html: renderToString(<App />),
-        data: productStore.getState(),
+        data: {
+          products: state.products,
+          categories: state.categories,
+          totalCount: state.totalCount,
+        },
       };
     } catch (error) {
       console.error("홈페이지 렌더링 실패:", error);
@@ -104,10 +109,11 @@ export class SSRService {
         },
       });
 
+      const state = productStore.getState();
       return {
         head: /* HTML */ `<title>${product.title} - 쇼핑몰</title>`,
         html: renderToString(<App />),
-        data: productStore.getState(),
+        data: state,
       };
     } catch (error) {
       console.error("상품 상세 페이지 렌더링 실패:", error);
@@ -124,7 +130,7 @@ export class SSRService {
     return {
       head: /* HTML */ `<title>페이지를 찾을 수 없습니다 - 쇼핑몰</title>`,
       html: renderToString(<App />),
-      data: productStore.getState(),
+      data: null,
     };
   }
 }
