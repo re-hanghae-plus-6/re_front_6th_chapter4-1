@@ -60,9 +60,8 @@ const productReducer = (state: typeof initialProductState, action: any) => {
       return {
         ...state,
         categories: action.payload,
-        loading: false,
         error: null,
-        status: "done",
+        // loading과 status는 변경하지 않음 (다른 액션에서 관리)
       };
 
     case PRODUCT_ACTIONS.SET_PRODUCTS:

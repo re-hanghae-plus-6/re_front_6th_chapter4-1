@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { loadNextProducts, loadProductsAndCategories, ProductList, SearchBar } from "../entities";
 import { PageWrapper } from "./PageWrapper";
+import { hasServerData } from "../hydration";
 
 const headerLeft = (
   <h1 className="text-xl font-bold text-gray-900">
@@ -29,7 +30,11 @@ const unregisterScrollHandler = () => {
 export const HomePage = () => {
   useEffect(() => {
     registerScrollHandler();
-    loadProductsAndCategories();
+
+    // 서버 데이터가 없는 경우에만 데이터 로드
+    if (!hasServerData()) {
+      loadProductsAndCategories();
+    }
 
     return unregisterScrollHandler;
   }, []);
