@@ -1,3 +1,5 @@
+import { isServer } from "../utils";
+
 const lifeCycles = new WeakMap();
 const pageState = { current: null, previous: null };
 const initLifecycle = { mount: null, unmount: null, watches: [], deps: [], mounted: false };
@@ -31,8 +33,10 @@ const mount = (page) => {
   const lifecycle = getPageLifecycle(page);
   if (lifecycle.mounted) return;
 
-  // 마운트 콜백들 실행
-  lifecycle.mount?.();
+  // 서버에서는 마운트 콜백 실행하지 않음
+  if (!isServer()) {
+    lifecycle.mount?.();
+  }
   lifecycle.mounted = true;
   lifecycle.deps = [];
 };
@@ -49,6 +53,11 @@ const unmount = (pageFunction) => {
 };
 
 export const withLifecycle = ({ onMount, onUnmount, watches } = {}, page) => {
+  // 서버에서는 생명주기 로직 없이 바로 페이지 함수 반환
+  if (isServer()) {
+    return (...args) => page(...args);
+  }
+
   const lifecycle = getPageLifecycle(page);
   if (typeof onMount === "function") {
     lifecycle.mount = onMount;

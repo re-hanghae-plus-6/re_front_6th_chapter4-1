@@ -3,7 +3,7 @@ import items from "./items.json" with { type: "json" };
 import type { StringRecord } from "../types.ts";
 import type { Product } from "../entities";
 
-const delay = async () => await new Promise((resolve) => setTimeout(resolve, 200));
+const delay = async () => await new Promise((resolve) => setTimeout(resolve, 1000));
 
 // 카테고리 추출 함수
 function getUniqueCategories() {

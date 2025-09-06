@@ -1,7 +1,7 @@
 import "@testing-library/jest-dom";
 import { configure } from "@testing-library/dom";
 import { afterAll, beforeAll } from "vitest";
-import { server } from "./__tests__/mockServerHandler.js";
+import { server } from "./__tests__/mockServerHandler";
 
 configure({
   asyncUtilTimeout: 5000,

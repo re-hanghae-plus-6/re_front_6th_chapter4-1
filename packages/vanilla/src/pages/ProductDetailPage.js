@@ -1,7 +1,7 @@
 import { productStore } from "../stores";
 import { loadProductDetailForPage } from "../services";
 import { router, withLifecycle } from "../router";
-import { PageWrapper } from "./PageWrapper.js";
+import { PageWrapper } from "./PageWrapper";
 
 const loadingContent = `
   <div class="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -242,7 +242,12 @@ export const ProductDetailPage = withLifecycle(
     watches: [() => [router.params.id], () => loadProductDetailForPage(router.params.id)],
   },
   () => {
-    const { currentProduct: product, relatedProducts = [], error, loading } = productStore.getState();
+    // 서버와 클라이언트 모두 스토어 상태 사용 (이미 prefetch된 데이터가 store에 있음)
+    const storeState = productStore.getState();
+    const product = storeState.currentProduct;
+    const relatedProducts = storeState.relatedProducts || [];
+    const error = storeState.error;
+    const loading = storeState.loading;
 
     return PageWrapper({
       headerLeft: `
