@@ -1,8 +1,6 @@
 import { BaseRouter, type QueryPayload } from "./BaseRouter";
 import type { AnyFunction, StringRecord } from "../types";
 
-export type RouterInstance<T extends AnyFunction> = InstanceType<typeof Router<T>>;
-
 export class Router<Handler extends AnyFunction> extends BaseRouter<Handler> {
   constructor(baseUrl = "") {
     super(baseUrl);

@@ -1,83 +1,32 @@
-import { renderToString } from "react-dom/server";
 import { App } from "./App";
-import { router } from "./router";
-import { loadHomePageData, loadProductDetailData } from "./services/ssr-data";
-import { PRODUCT_ACTIONS, productStore } from "./entities";
-import { HomePage, ProductDetailPage } from "./pages";
-import type { QueryPayload } from "@hanghae-plus/lib";
+import { createRouter, initRoutes } from "./router";
+import { createStores, setupProductState } from "./entities";
+import { NotFoundPage } from "./pages";
+import { Providers } from "./apps";
+import { renderToString } from "react-dom/server";
 
-export const render = async (url: string, query: QueryPayload) => {
+export const render = async (url: string) => {
   // URL 보정: 빈 문자열인 경우 "/", "/"로 시작하지 않으면 "/" 추가
-  const actualUrl = url;
-
-  // SSR에서도 라우터 시작 (start 메소드는 SSR 안전하게 수정됨)
+  const router = createRouter();
+  const stores = createStores();
+  initRoutes(router);
   router.push(url);
-  router.query = { ...query };
+  router.query = { current: undefined };
+  const PageComponent = router.target ?? NotFoundPage;
+  const { head, ...initialData } = await PageComponent.getServerProps(router);
 
-  // URL에 따라 필요한 데이터 미리 로드
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let initialData: any = {};
+  setupProductState(stores.productStore, initialData);
+
+  const html = renderToString(
+    <Providers {...stores} router={router}>
+      <App />
+    </Providers>,
+  );
 
   try {
-    // URL 패턴에 따라 데이터 로드
-    if (router.target === HomePage) {
-      // 홈페이지 - 상품 목록 데이터 로드
-      const homeData = await loadHomePageData(actualUrl);
-      if (homeData) {
-        initialData = homeData;
-
-        // SSR 시 스토어를 미리 초기화
-        productStore.dispatch({
-          type: PRODUCT_ACTIONS.SETUP,
-          payload: {
-            products: homeData.products,
-            categories: homeData.categories,
-            totalCount: homeData.totalCount,
-            loading: false,
-            status: "done",
-            error: null,
-          },
-        });
-      }
-    } else if (router.target === ProductDetailPage) {
-      // 상품 상세 페이지 - 해당 상품 데이터 로드
-      const productId = router.params.id;
-      const productData = await loadProductDetailData(productId);
-      if (productData) {
-        initialData = productData;
-
-        // SSR 시 스토어를 미리 초기화
-        productStore.dispatch({
-          type: PRODUCT_ACTIONS.SET_CURRENT_PRODUCT,
-          payload: productData.currentProduct,
-        });
-
-        if (productData.relatedProducts) {
-          productStore.dispatch({
-            type: PRODUCT_ACTIONS.SET_RELATED_PRODUCTS,
-            payload: productData.relatedProducts,
-          });
-        }
-      }
-    }
-
-    // 실제 App 컴포넌트를 SSR로 렌더링
-    const html = renderToString(<App />);
-
-    // 페이지별 meta title 생성
-    let pageTitle = "React Shopping App";
-    if (router.target === HomePage) {
-      pageTitle = "쇼핑몰 - 홈";
-    } else if (router.target === ProductDetailPage) {
-      const productName = initialData?.currentProduct?.title || "상품";
-      pageTitle = `${productName} - 쇼핑몰`;
-    } else if (!router.target) {
-      pageTitle = "404 - Page Not Found";
-    }
-
     return {
       html,
-      head: `<title>${pageTitle}</title>`,
+      head,
       initialData,
     };
   } catch (error) {

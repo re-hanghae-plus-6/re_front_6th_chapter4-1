@@ -17,12 +17,7 @@ async function generateStaticSite() {
     const template = await fs.readFile(templatePath, "utf-8");
 
     // 2. SSR 렌더 함수 로드
-    const ssrModule = await import("./dist/react-ssr/main-server.js");
-    const { render } = ssrModule;
-
-    if (!render) {
-      throw new Error("render 함수를 찾을 수 없습니다");
-    }
+    const { render } = await import("./dist/react-ssr/main-server.js");
 
     // 3. 생성할 페이지 목록 정의
     const pagesToGenerate = await getPages();
@@ -66,22 +61,16 @@ async function getPages() {
   const baseUrl = "/front_6th_chapter4-1/react/";
 
   // 홈페이지
-  pages.push({
-    url: baseUrl,
-    filePath: path.join(DIST_DIR, "index.html"),
-  });
+  pages.push({ url: baseUrl, filePath: path.join(DIST_DIR, "index.html") });
 
   // 404 페이지
-  pages.push({
-    url: `${baseUrl}404`,
-    filePath: path.join(DIST_DIR, "404.html"),
-  });
+  pages.push({ url: `${baseUrl}404`, filePath: path.join(DIST_DIR, "404.html") });
 
   // 상품 상세 페이지들
   try {
     // 임시로 몇 개 상품 ID만 생성 (나중에 실제 데이터로 교체)
-    const { mockGetProducts } = await import("./src/mocks/server.js");
-    const productsData = mockGetProducts({ limit: 20 }); // 20개의 상품 가져오기
+    const { productService } = await import("./src/mocks/server.js");
+    const productsData = await productService.getProducts({ limit: 20 }); // 20개의 상품 가져오기
 
     for (const { productId } of productsData.products) {
       pages.push({

@@ -1,16 +1,6 @@
 import { createObserver } from "./createObserver.ts";
 
-// SSR 안전한 storage 기본값
-const safeStorage =
-  typeof window !== "undefined"
-    ? window.localStorage
-    : ({
-        getItem: () => null,
-        setItem: () => {},
-        removeItem: () => {},
-      } as unknown as Storage);
-
-export const createStorage = <T>(key: string, storage = safeStorage) => {
+export const createStorage = <T>(key: string, storage = window.localStorage) => {
   let data: T | null = JSON.parse(storage.getItem(key) ?? "null");
   const { subscribe, notify } = createObserver();
 
