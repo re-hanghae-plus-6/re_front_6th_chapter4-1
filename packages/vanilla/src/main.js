@@ -1,5 +1,5 @@
 import { initRender } from "./render";
-import { createRouter, initRoutes } from "./router";
+import { createRouter } from "./router";
 import { createStores, getInitStates } from "./stores";
 import { BASE_URL } from "./constants";
 
@@ -16,7 +16,6 @@ const enableMocking = () =>
 const router = createRouter();
 router.query = { current: undefined };
 const stores = createStores(getInitStates(window.__INITIAL_DATA__));
-initRoutes(router);
 
 function main() {
   initRender({ router, stores });

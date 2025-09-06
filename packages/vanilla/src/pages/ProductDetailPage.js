@@ -275,7 +275,11 @@ export const ProductDetailPage = withLifecycle(
       () => {
         const productService = useProductService();
         const params = getParams();
-        productService.loadProductDetailForPage(params.id);
+        const loadTitle = () => {
+          const product = productService.currentProduct;
+          document.title = product ? `${product.title} - 쇼핑몰` : "쇼핑몰";
+        };
+        productService.loadProductDetailForPage(params.id).then(loadTitle);
       },
     ],
   },
