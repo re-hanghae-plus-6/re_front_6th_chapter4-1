@@ -58,293 +58,311 @@ import { loadHomePageData, loadProductDetailData } from "./ssr-data";
 import type { HomePageData, ProductDetailData } from "./ssr-data";
 // 서버에서는 App과 router를 직접 import하지 않고 필요할 때 동적으로 로드
 
-// 서버용 간단한 홈페이지 컴포넌트
 // eslint-disable-next-line react-refresh/only-export-components
 const ServerHomePage: React.FC<{ data: HomePageData }> = ({ data }) => {
-  const { products, totalCount } = data;
+  const { products, categories, totalCount } = data;
 
   return (
-    <div className="bg-white">
-      <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6 sm:py-24 lg:max-w-7xl lg:px-8">
-        <h1 className="text-xl font-bold text-gray-900 mb-4">
-          <a href="/" data-link="/">
-            쇼핑몰
-          </a>
-        </h1>
-
-        {/* 검색바 */}
-        <div className="mb-6">
-          <input
-            id="search-input"
-            type="text"
-            placeholder="상품 검색..."
-            defaultValue={data.filters?.search || ""}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-
-        {/* 현재 필터 정보 표시 */}
-        {data.filters && (data.filters.category1 || data.filters.category2 || data.filters.search) && (
-          <div className="mb-4 p-3 bg-blue-50 rounded-md">
-            <h3 className="text-sm font-medium text-blue-900 mb-2">현재 필터:</h3>
-            <div className="flex flex-wrap gap-2 text-sm">
-              {data.filters.search && (
-                <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded">검색: "{data.filters.search}"</span>
-              )}
-              {data.filters.category1 && (
-                <span className="px-2 py-1 bg-green-100 text-green-800 rounded">{data.filters.category1}</span>
-              )}
-              {data.filters.category2 && (
-                <span className="px-2 py-1 bg-green-100 text-green-800 rounded">{data.filters.category2}</span>
-              )}
+    <div className="min-h-screen bg-gray-50">
+      {/* Header - CSR의 PageWrapper와 동일한 구조 */}
+      <header className="bg-white shadow-sm sticky top-0 z-40">
+        <div className="max-w-md mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <h1 className="text-xl font-bold text-gray-900">
+              <a href="/" data-link="/">
+                쇼핑몰
+              </a>
+            </h1>
+            <div className="flex items-center space-x-2">
+              {/* 장바구니 아이콘 */}
+              <button id="cart-icon-btn" className="relative p-2 text-gray-700 hover:text-gray-900 transition-colors">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.5 6M7 13l-1.5 6m9.5-6h.01M17 21a2 2 0 100-4 2 2 0 000 4z"
+                  />
+                </svg>
+              </button>
             </div>
           </div>
-        )}
+        </div>
+      </header>
 
-        {/* 헤더 컨트롤 */}
-        <div className="mb-4 flex justify-between items-center">
-          <div className="flex space-x-4">
+      {/* Main Content - CSR의 PageWrapper와 동일한 구조 */}
+      <main className="max-w-md mx-auto px-4 py-4">
+        {/* 검색 및 필터 - CSR의 SearchBar와 유사한 구조 */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4">
+          {/* 검색바 */}
+          <div className="mb-4">
+            <div className="relative">
+              <input
+                id="search-input"
+                type="text"
+                placeholder="상품 검색..."
+                defaultValue={data.filters?.search || ""}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          {/* 필터 및 정렬 옵션 */}
+          <div className="flex gap-2 items-center justify-between mb-4">
             <select
               id="limit-select"
-              className="border border-gray-300 rounded px-2 py-1"
               defaultValue={data.filters?.limit?.toString() || "20"}
+              className="px-3 py-2 border border-gray-300 rounded-md text-sm"
             >
-              <option value="10">10개씩</option>
-              <option value="20">20개씩</option>
-              <option value="50">50개씩</option>
+              <option value="10">10개</option>
+              <option value="20">20개</option>
+              <option value="50">50개</option>
             </select>
+
             <select
               id="sort-select"
-              className="border border-gray-300 rounded px-2 py-1"
               defaultValue={data.filters?.sort || "price_asc"}
+              className="px-3 py-2 border border-gray-300 rounded-md text-sm"
             >
-              <option value="price_asc">낮은 가격순</option>
-              <option value="price_desc">높은 가격순</option>
+              <option value="price_asc">가격 낮은순</option>
+              <option value="price_desc">가격 높은순</option>
               <option value="name_asc">이름순</option>
             </select>
           </div>
-          <button id="cart-icon-btn" className="relative p-2 text-gray-700 hover:text-gray-900">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.5 6h9M7 13l-1.5 6h9"
-              />
-            </svg>
-            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-              0
-            </span>
-          </button>
+
+          {/* 카테고리 필터 */}
+          <div>
+            <h3 className="text-sm font-medium text-gray-900 mb-2">카테고리</h3>
+            <div className="flex flex-wrap gap-2">
+              {Object.keys(categories).length > 0 ? (
+                Object.keys(categories).map((categoryKey) => (
+                  <button
+                    key={categoryKey}
+                    className="category1-filter-btn text-left px-3 py-2 text-sm rounded-md border transition-colors bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+                  >
+                    {categoryKey}
+                  </button>
+                ))
+              ) : (
+                <div className="text-sm text-gray-500 italic">카테고리 로딩 중...</div>
+              )}
+            </div>
+          </div>
         </div>
 
-        {/* 상품 목록 헤더 */}
-        <div className="mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">상품 목록</h2>
-          <p className="text-sm text-gray-600">총 {totalCount}개 상품이 있습니다.</p>
-        </div>
+        {/* 상품 목록 - CSR의 ProductList와 유사한 구조 */}
+        <div className="mb-6">
+          {/* 상품 개수 정보 */}
+          {totalCount > 0 && (
+            <div className="mb-4 text-sm text-gray-600">
+              총 <span className="font-medium text-gray-900">{totalCount.toLocaleString()}개</span>의 상품
+            </div>
+          )}
 
-        {/* 상품 그리드 */}
-        <div
-          className="grid grid-cols-1 gap-y-10 gap-x-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 xl:gap-x-8"
-          data-testid="products-grid"
-          id="products-grid"
-        >
-          {products.slice(0, 8).map((product, index) => (
-            <div key={product.productId || index} className="group relative product-card">
-              <div className="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-80">
-                {product.image ? (
-                  <img
-                    src={product.image}
-                    alt={product.title}
-                    className="h-full w-full object-cover object-center lg:h-full lg:w-full"
-                  />
-                ) : (
-                  <div className="h-full w-full bg-gray-300 flex items-center justify-center">
-                    <span className="text-gray-500">상품 이미지</span>
-                  </div>
-                )}
-              </div>
-              <div className="mt-4 flex justify-between">
-                <div>
-                  <h3 className="text-sm text-gray-700">
+          {/* 상품 그리드 - CSR과 동일한 2열 그리드 */}
+          <div className="grid grid-cols-2 gap-4 mb-6" id="products-grid">
+            {products.slice(0, 8).map((product, index) => (
+              <div
+                key={product.productId || index}
+                className="group relative product-card bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden"
+              >
+                <div className="aspect-square w-full bg-gray-100 relative">
+                  {product.image ? (
+                    <img
+                      src={product.image}
+                      alt={product.title}
+                      className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-200"
+                    />
+                  ) : (
+                    <div className="h-full w-full bg-gray-300 flex items-center justify-center">
+                      <span className="text-gray-500 text-sm">상품 이미지</span>
+                    </div>
+                  )}
+                </div>
+                <div className="p-3">
+                  <h3 className="text-sm font-medium text-gray-900 line-clamp-2 mb-1">
                     <a href={`/product/${product.productId}/`} data-link={`/product/${product.productId}/`}>
-                      <span aria-hidden="true" className="absolute inset-0"></span>
-                      {product.title.length > 50 ? product.title.substring(0, 50) + "..." : product.title}
+                      {product.title.length > 40 ? product.title.substring(0, 40) + "..." : product.title}
                     </a>
                   </h3>
-                  <p className="mt-1 text-sm text-gray-500">{product.category2}</p>
+                  <p className="text-xs text-gray-500 mb-2">{product.category2}</p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-bold text-gray-900">
+                      ₩{parseInt(product.lprice).toLocaleString()}
+                    </span>
+                    <button className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors add-to-cart-btn">
+                      담기
+                    </button>
+                  </div>
                 </div>
-                <p className="text-sm font-medium text-gray-900">₩{parseInt(product.lprice).toLocaleString()}</p>
               </div>
-              <button className="add-to-cart-btn mt-2 w-full bg-indigo-600 text-white py-2 px-4 rounded hover:bg-indigo-700">
-                장바구니에 담기
-              </button>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      </main>
+
+      {/* Footer */}
+      <footer className="bg-white border-t border-gray-200 py-8">
+        <div className="max-w-md mx-auto px-4">
+          <div className="text-center text-sm text-gray-600">
+            <p>&copy; 2024 쇼핑몰. All rights reserved.</p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };
 
-// 서버용 상품 상세 페이지 컴포넌트
+// 서버용 상품 상세 페이지 컴포넌트 - CSR과 동일한 스타일 적용
 // eslint-disable-next-line react-refresh/only-export-components
 const ServerProductDetailPage: React.FC<{ data: ProductDetailData }> = ({ data }) => {
   const { product, relatedProducts } = data;
 
   return (
-    <div className="bg-white">
-      <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6 sm:py-24 lg:max-w-7xl lg:px-8">
-        <h1 className="text-xl font-bold text-gray-900 mb-4">
-          <a href="/" data-link="/">
-            쇼핑몰
-          </a>
-        </h1>
-
-        {/* 헤더 컨트롤 */}
-        <div className="mb-4 flex justify-between items-center">
-          <div className="flex space-x-4">
-            <input
-              id="search-input"
-              type="text"
-              placeholder="상품 검색..."
-              className="px-3 py-1 border border-gray-300 rounded"
-            />
-            <select id="limit-select" className="border border-gray-300 rounded px-2 py-1">
-              <option value="10">10개씩</option>
-              <option value="20" selected>
-                20개씩
-              </option>
-            </select>
-            <select id="sort-select" className="border border-gray-300 rounded px-2 py-1">
-              <option value="price_asc" selected>
-                낮은 가격순
-              </option>
-              <option value="price_desc">높은 가격순</option>
-            </select>
-          </div>
-          <button id="cart-icon-btn" className="relative p-2 text-gray-700 hover:text-gray-900">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.5 6h9M7 13l-1.5 6h9"
-              />
-            </svg>
-            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-              0
-            </span>
-          </button>
-        </div>
-
-        {/* 상품 상세 */}
-        <div className="lg:grid lg:grid-cols-2 lg:gap-x-8 lg:items-start">
-          {/* 상품 이미지 */}
-          <div className="flex flex-col-reverse">
-            <div className="aspect-w-1 aspect-h-1 w-full">
-              <img
-                src={product.image}
-                alt={product.title}
-                className="w-full h-full object-center object-cover sm:rounded-lg"
-              />
+    <div className="min-h-screen bg-gray-50">
+      {/* Header - CSR의 PageWrapper와 동일한 구조 */}
+      <header className="bg-white shadow-sm sticky top-0 z-40">
+        <div className="max-w-md mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <button className="p-2 text-gray-700 hover:text-gray-900 transition-colors">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <h1 className="text-lg font-bold text-gray-900">상품 상세</h1>
             </div>
+            <div className="flex items-center space-x-2">
+              {/* 장바구니 아이콘 */}
+              <button className="relative p-2 text-gray-700 hover:text-gray-900 transition-colors">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.5 6M7 13l-1.5 6m9.5-6h.01M17 21a2 2 0 100-4 2 2 0 000 4z"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="max-w-md mx-auto px-4 py-4">
+        {/* 상품 상세 정보 */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6">
+          {/* 상품 이미지 */}
+          <div className="aspect-square w-full bg-gray-100 relative">
+            {product.image ? (
+              <img src={product.image} alt={product.title} className="h-full w-full object-cover" />
+            ) : (
+              <div className="h-full w-full bg-gray-300 flex items-center justify-center">
+                <span className="text-gray-500">상품 이미지</span>
+              </div>
+            )}
           </div>
 
           {/* 상품 정보 */}
-          <div className="mt-10 px-4 sm:px-0 sm:mt-16 lg:mt-0">
-            <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">{product.title}</h1>
-            <h2 className="text-lg font-semibold text-gray-900 mt-2">상품 상세</h2>
+          <div className="p-4">
+            <h1 className="text-lg font-bold text-gray-900 mb-2">{product.title}</h1>
 
-            <div className="mt-3">
-              <p className="text-3xl text-gray-900">₩{parseInt(product.lprice).toLocaleString()}</p>
+            <div className="mb-4">
+              <p className="text-2xl font-bold text-blue-600 mb-1">₩{parseInt(product.lprice).toLocaleString()}</p>
               <p className="text-lg text-gray-700">{parseInt(product.lprice)}원</p>
-            </div>
-
-            <div className="mt-6">
-              <div>
-                <h3 className="sr-only">상품 정보</h3>
-                <div className="space-y-6 text-base text-gray-700">
-                  <p>
-                    <strong>브랜드:</strong> {product.brand || "정보 없음"}
-                  </p>
-                  <p>
-                    <strong>판매처:</strong> {product.mallName}
-                  </p>
-                  <p>
-                    <strong>카테고리:</strong> {product.category1} &gt; {product.category2}
-                  </p>
-                </div>
+              <div className="text-sm text-gray-600 space-y-1">
+                <p>
+                  <span className="font-medium">브랜드:</span> {product.brand || "정보 없음"}
+                </p>
+                <p>
+                  <span className="font-medium">판매처:</span> {product.mallName}
+                </p>
+                <p>
+                  <span className="font-medium">카테고리:</span> {product.category1} &gt; {product.category2}
+                </p>
               </div>
             </div>
 
             {/* 수량 선택 */}
-            <div className="mt-6">
-              <div className="flex items-center space-x-3">
-                <label htmlFor="quantity-input" className="text-sm font-medium text-gray-900">
-                  수량:
-                </label>
-                <div className="flex items-center border border-gray-300 rounded">
-                  <button type="button" id="quantity-decrease" className="px-3 py-1 text-gray-600 hover:text-gray-800">
-                    -
-                  </button>
-                  <input
-                    type="number"
-                    id="quantity-input"
-                    min="1"
-                    defaultValue="1"
-                    className="w-16 px-2 py-1 text-center border-0 focus:ring-0"
-                  />
-                  <button type="button" id="quantity-increase" className="px-3 py-1 text-gray-600 hover:text-gray-800">
-                    +
-                  </button>
-                </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-900 mb-2">수량</label>
+              <div className="flex items-center border border-gray-300 rounded-md w-32">
+                <button
+                  type="button"
+                  id="quantity-decrease"
+                  className="px-3 py-2 text-gray-600 hover:text-gray-800 border-r border-gray-300"
+                >
+                  -
+                </button>
+                <input
+                  type="number"
+                  id="quantity-input"
+                  min="1"
+                  defaultValue="1"
+                  className="flex-1 px-3 py-2 text-center border-0 focus:ring-0 focus:outline-none"
+                />
+                <button
+                  type="button"
+                  id="quantity-increase"
+                  className="px-3 py-2 text-gray-600 hover:text-gray-800 border-l border-gray-300"
+                >
+                  +
+                </button>
               </div>
             </div>
 
-            <div className="mt-6">
-              <button
-                type="button"
-                id="add-to-cart-btn"
-                className="w-full bg-indigo-600 border border-transparent rounded-md py-3 px-8 flex items-center justify-center text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              >
-                장바구니에 담기
-              </button>
-            </div>
+            {/* 장바구니 담기 버튼 */}
+            <button
+              type="button"
+              id="add-to-cart-btn"
+              className="w-full bg-blue-500 text-white py-3 px-4 rounded-md hover:bg-blue-600 transition-colors font-medium"
+            >
+              장바구니에 추가
+            </button>
           </div>
         </div>
 
         {/* 관련 상품 */}
         {relatedProducts.length > 0 && (
-          <div className="mt-16">
-            <h2 className="text-lg font-medium text-gray-900">관련 상품</h2>
-            <div className="mt-6 grid grid-cols-1 gap-y-10 gap-x-6 sm:grid-cols-2 lg:grid-cols-4 xl:gap-x-8">
+          <div className="mb-6">
+            <h2 className="text-lg font-medium text-gray-900 mb-4">관련 상품</h2>
+            <div className="grid grid-cols-2 gap-4">
               {relatedProducts.map((relatedProduct: ProductDetailData["relatedProducts"][0]) => (
-                <div key={relatedProduct.productId} className="group relative related-product-card">
-                  <div className="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-80">
+                <div
+                  key={relatedProduct.productId}
+                  className="group relative related-product-card bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden"
+                >
+                  <div className="aspect-square w-full bg-gray-100 relative">
                     <img
                       src={relatedProduct.image}
                       alt={relatedProduct.title}
-                      className="h-full w-full object-cover object-center lg:h-full lg:w-full"
+                      className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-200"
                     />
                   </div>
-                  <div className="mt-4 flex justify-between">
-                    <div>
-                      <h3 className="text-sm text-gray-700">
-                        <a
-                          href={`/product/${relatedProduct.productId}/`}
-                          data-link={`/product/${relatedProduct.productId}/`}
-                        >
-                          <span aria-hidden="true" className="absolute inset-0"></span>
-                          {relatedProduct.title.length > 30
-                            ? relatedProduct.title.substring(0, 30) + "..."
-                            : relatedProduct.title}
-                        </a>
-                      </h3>
-                      <p className="mt-1 text-sm text-gray-500">{relatedProduct.category2}</p>
-                    </div>
-                    <p className="text-sm font-medium text-gray-900">
+                  <div className="p-3">
+                    <h3 className="text-sm font-medium text-gray-900 line-clamp-2 mb-1">
+                      <a
+                        href={`/product/${relatedProduct.productId}/`}
+                        data-link={`/product/${relatedProduct.productId}/`}
+                      >
+                        {relatedProduct.title.length > 30
+                          ? relatedProduct.title.substring(0, 30) + "..."
+                          : relatedProduct.title}
+                      </a>
+                    </h3>
+                    <p className="text-xs text-gray-500 mb-2">{relatedProduct.category2}</p>
+                    <p className="text-sm font-bold text-gray-900">
                       ₩{parseInt(relatedProduct.lprice).toLocaleString()}
                     </p>
                   </div>
@@ -353,7 +371,16 @@ const ServerProductDetailPage: React.FC<{ data: ProductDetailData }> = ({ data }
             </div>
           </div>
         )}
-      </div>
+      </main>
+
+      {/* Footer */}
+      <footer className="bg-white border-t border-gray-200 py-8">
+        <div className="max-w-md mx-auto px-4">
+          <div className="text-center text-sm text-gray-600">
+            <p>&copy; 2024 쇼핑몰. All rights reserved.</p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };

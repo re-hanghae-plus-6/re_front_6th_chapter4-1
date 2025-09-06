@@ -88,7 +88,7 @@ const handleSubCategoryClick = async (e: MouseEvent<HTMLButtonElement>) => {
 };
 
 export function SearchBar() {
-  const { categories } = useProductStore();
+  const { categories, loading } = useProductStore();
   const { searchQuery, limit = "20", sort, category } = useProductFilter();
 
   const categoryList = Object.keys(categories).length > 0 ? Object.keys(categories) : [];
@@ -187,8 +187,10 @@ export function SearchBar() {
             <div className="flex flex-wrap gap-2">
               {categoryList.length > 0 ? (
                 categoryButtons
-              ) : (
+              ) : loading && Object.keys(categories).length === 0 ? (
                 <div className="text-sm text-gray-500 italic">카테고리 로딩 중...</div>
+              ) : (
+                <div className="text-sm text-gray-500 italic">카테고리가 없습니다.</div>
               )}
             </div>
           )}
