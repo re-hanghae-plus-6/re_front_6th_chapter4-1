@@ -1,7 +1,10 @@
-import { productStore } from "../stores";
-import { loadProductDetailForPage } from "../services";
-import { router, withLifecycle } from "../router";
-import { PageWrapper } from "./PageWrapper.js";
+import { useProductService } from "../services";
+import { PageWrapper } from "./PageWrapper";
+import { withLifecycle } from "../lib";
+import { RouterContext, StoreContext } from "../contexts";
+
+const getParams = () => RouterContext.use().params;
+const getProductState = () => StoreContext.use().productStore.getState();
 
 const loadingContent = `
   <div class="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -236,34 +239,48 @@ function ProductDetail({ product, relatedProducts = [] }) {
  */
 export const ProductDetailPage = withLifecycle(
   {
+    async getServerProps({ router }) {
+      const { productService } = await import("../mocks/server");
+      const productId = router.params.id;
+      const product = await productService.getProduct(productId);
+      const relatedProducts = await productService.getRelatedProducts(productId, product.category2);
+
+      const head = `<title>${product ? product.title : "상품 상세"} - 쇼핑몰</title>`;
+
+      return { product, relatedProducts, head };
+    },
     onMount: () => {
-      const currentRouter = typeof window === "undefined" ? global.router : router;
-      const currentState = productStore.getState();
+      const productService = useProductService();
+      const params = getParams();
+      const currentState = getProductState();
+      const productStore = StoreContext.use().productStore;
+      const loadTitle = () => {
+        const product = productStore.getState().currentProduct;
+        document.title = product ? `${product.title} - 쇼핑몰` : "쇼핑몰";
+      };
 
       // 서버에서 하이드레이션된 데이터가 있고, 같은 상품이면 로딩하지 않음
-      const isSameProduct = currentState.currentProduct?.productId === currentRouter.params.id;
+      const isSameProduct = currentState.currentProduct?.productId === params.id;
       if (!isSameProduct || !currentState.currentProduct) {
-        loadProductDetailForPage(currentRouter.params.id);
+        productService.loadProductDetailForPage(params.id).then(loadTitle);
+      } else {
+        loadTitle();
       }
     },
     watches: [
       () => {
-        const currentRouter = typeof window === "undefined" ? global.router : router;
-        return [currentRouter.params.id];
+        const params = getParams();
+        return [params.id];
       },
       () => {
-        const currentRouter = typeof window === "undefined" ? global.router : router;
-        loadProductDetailForPage(currentRouter.params.id);
+        const productService = useProductService();
+        const params = getParams();
+        productService.loadProductDetailForPage(params.id);
       },
     ],
   },
   () => {
-    const {
-      currentProduct: product = null,
-      relatedProducts = [],
-      error = null,
-      loading = false,
-    } = productStore.getState();
+    const { currentProduct: product = null, relatedProducts = [], error = null, loading = false } = getProductState();
 
     return PageWrapper({
       headerLeft: `

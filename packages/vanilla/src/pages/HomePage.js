@@ -1,46 +1,55 @@
 import { ProductList, SearchBar } from "../components";
-import { productStore } from "../stores";
-import { router, withLifecycle } from "../router";
-import { loadProducts, loadProductsAndCategories } from "../services";
-import { PageWrapper } from "./PageWrapper.js";
+import { useProductService } from "../services";
+import { PageWrapper } from "./PageWrapper";
+import { withLifecycle } from "../lib";
+import { RouterContext, StoreContext } from "../contexts";
+
+const getProductState = () => StoreContext.use().productStore.getState();
+const getQuery = () => RouterContext.use().query;
 
 export const HomePage = withLifecycle(
   {
+    async getServerProps({ router }) {
+      const { productService } = await import("../mocks/server");
+      const {
+        products,
+        pagination: { total: totalCount },
+      } = await productService.getProducts(router.query);
+
+      const categories = await productService.getCategories();
+
+      const head = "<title>쇼핑몰 - 홈</title>";
+
+      return { products, categories, totalCount, head };
+    },
     onMount: () => {
       // 서버에서 하이드레이션된 데이터가 있으면 로딩하지 않음
-      const currentState = productStore.getState();
-      console.log("🏠 HomePage onMount:", {
-        productsLength: currentState.products.length,
-        status: currentState.status,
-      });
+      const productService = useProductService();
+      const currentState = getProductState();
+      document.title = "쇼핑몰 - 홈";
 
       if (currentState.products.length === 0 || currentState.status !== "done") {
-        console.log("📡 새로운 데이터 로드 시작");
-        loadProductsAndCategories();
-      } else {
-        console.log("✅ 서버 데이터 재사용");
+        productService.loadProductsAndCategories();
       }
     },
     watches: [
       () => {
-        const { search, limit, sort, category1, category2 } = router.query;
+        const { search, limit, sort, category1, category2 } = getQuery();
         return [search, limit, sort, category1, category2];
       },
-      () => loadProducts(true),
+      () => useProductService().loadProducts(true),
     ],
   },
   () => {
-    const productState = productStore.getState();
+    const productState = getProductState();
 
-    // SSR 환경에서는 global.router 사용, 브라우저에서는 router 모듈 사용
-    const currentRouter = typeof window === "undefined" ? global.router : router;
     const {
       search: searchQuery = "",
-      limit = "10",
+      limit = "20",
       sort = "recent",
       category1 = "",
       category2 = "",
-    } = currentRouter?.query || {};
+    } = getQuery() || {};
 
     const { products = [], loading = false, error = null, totalCount = 0, categories = [] } = productState;
     const category = { category1, category2 };

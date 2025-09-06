@@ -9,7 +9,6 @@ process.env.NODE_ENV = "development";
 
 // Constants
 const DIST_DIR = path.resolve(__dirname, "../../dist/vanilla");
-const SSR_DIR = path.resolve(__dirname, "./dist/vanilla-ssr");
 
 async function generateStaticSite() {
   console.log("🚀 Static Site Generation 시작...");
@@ -21,15 +20,7 @@ async function generateStaticSite() {
     console.log("📄 템플릿 로드 완료");
 
     // 2. SSR 렌더 함수 로드
-    const ssrModulePath = path.join(SSR_DIR, "main-server.js");
-    console.log("SSR 모듈 경로:", ssrModulePath);
-
-    const ssrModule = await import(`file://${ssrModulePath}`);
-    const { render } = ssrModule;
-
-    if (!render) {
-      throw new Error("render 함수를 찾을 수 없습니다");
-    }
+    const { render } = await import("./dist/vanilla-ssr/main-server.js");
     console.log("⚙️ SSR 모듈 로드 완료");
 
     // 3. 생성할 페이지 목록 정의
@@ -51,7 +42,7 @@ async function generateStaticSite() {
         const html = template
           .replace(`<!--app-head-->`, rendered.head ?? "")
           .replace(`<!--app-html-->`, rendered.html ?? "")
-          .replace(`</head>`, `${initialDataScript}</head>`);
+          .replace(`<!--app-data-->`, initialDataScript);
 
         // HTML 파일 저장
         await saveHtmlFile(page.filePath, html);
@@ -72,21 +63,15 @@ async function getPages() {
   const pages = [];
 
   // 홈페이지
-  pages.push({
-    url: "/",
-    filePath: path.join(DIST_DIR, "index.html"),
-  });
+  pages.push({ url: "/", filePath: path.join(DIST_DIR, "index.html") });
 
   // 404 페이지
-  pages.push({
-    url: "/404",
-    filePath: path.join(DIST_DIR, "404.html"),
-  });
+  pages.push({ url: "/404", filePath: path.join(DIST_DIR, "404.html") });
 
   // 상품 상세 페이지들
   try {
-    const { mockGetProducts } = await import("./src/mocks/server.js");
-    const productsData = mockGetProducts({ limit: 20 }); // 20개의 상품 가져오기
+    const { productService } = await import("./src/mocks/server.js");
+    const productsData = await productService.getProducts({ limit: 20 }); // 20개의 상품 가져오기
 
     for (const product of productsData.products) {
       pages.push({
