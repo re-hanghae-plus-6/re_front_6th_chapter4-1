@@ -1,5 +1,6 @@
-// 글로벌 라우터 인스턴스
-import { Router } from "../lib";
-import { BASE_URL } from "../constants.js";
+import { BASE_URL } from "../constants";
+import { SPARouter, ServerRouter } from "../lib";
+import { isServer } from "../utils";
 
-export const router = new Router(BASE_URL);
+/** 글로벌 라우터 인스턴스 */
+export const routerInstance = isServer() ? new ServerRouter() : new SPARouter(BASE_URL);

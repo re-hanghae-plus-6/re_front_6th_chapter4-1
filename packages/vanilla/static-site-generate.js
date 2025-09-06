@@ -1,20 +1,88 @@
-import fs from "fs";
+import { readFile, writeFile, mkdir } from "node:fs/promises";
+import path from "node:path";
+import { createServer } from "vite";
 
-const render = () => {
-  return `<div>안녕하세요</div>`;
-};
+import { mswServer } from "./src/mocks/node.js";
 
-async function generateStaticSite() {
-  // HTML 템플릿 읽기
-  const template = fs.readFileSync("../../dist/vanilla/index.html", "utf-8");
+export class SSGBuilder {
+  #distRoot = path.resolve("../../dist/vanilla");
+  #template;
+  #viteServer;
+  #ssrService;
 
-  // 어플리케이션 렌더링하기
-  const appHtml = render();
+  constructor() {
+    this.#template = null;
+    this.#viteServer = null;
+    this.#ssrService = null;
+  }
 
-  // 결과 HTML 생성하기
-  const result = template.replace("<!--app-html-->", appHtml);
-  fs.writeFileSync("../../dist/vanilla/index.html", result);
+  async build() {
+    await this.#initBuildSetting();
+
+    try {
+      const templatePath = path.join(this.#distRoot, "index.html");
+      this.#template = await readFile(templatePath, "utf-8");
+
+      const { SSRService } = await this.#viteServer.ssrLoadModule("./src/main-server.js");
+      this.#ssrService = new SSRService();
+
+      await this.#createStaticPages();
+    } finally {
+      await this.#cleanup();
+    }
+  }
+
+  async #initBuildSetting() {
+    mswServer.listen({
+      onUnhandledRequest: "bypass",
+    });
+
+    this.#viteServer = await createServer({
+      server: { middlewareMode: true },
+      appType: "custom",
+    });
+  }
+
+  async #createStaticPages() {
+    await this.#buildPage("/404.html");
+    await this.#buildPage("/");
+    await this.#buildProductPages();
+  }
+
+  async #buildProductPages() {
+    const { getProducts } = await this.#viteServer.ssrLoadModule("./src/api/productApi.js");
+    const { products } = await getProducts();
+
+    const buildTasks = (products ?? []).map(({ productId }) => this.#buildPage(`/product/${productId}/`));
+    await Promise.all(buildTasks);
+  }
+
+  async #buildPage(pathname) {
+    const outputPath = this.#getOutputPath(pathname);
+    await mkdir(path.dirname(outputPath), { recursive: true });
+
+    const rendered = await this.#ssrService.render(pathname, {});
+    const html = this.#template
+      .replace("<!--app-head-->", rendered.head ?? "")
+      .replace("<!--app-html-->", rendered.html ?? "")
+      .replace("<!--app-data-->", `<script>window.__INITIAL_DATA__ = ${JSON.stringify(rendered.data)};</script>`);
+
+    await writeFile(outputPath, html);
+  }
+
+  #getOutputPath(pathname) {
+    const fileName = pathname.endsWith(".html")
+      ? pathname.replace(/^\//, "")
+      : path.join(pathname, "index.html").replace(/^\//, "");
+
+    return path.join(this.#distRoot, fileName);
+  }
+
+  async #cleanup() {
+    mswServer.close();
+    await this.#viteServer?.close();
+  }
 }
 
-// 실행
-generateStaticSite();
+const ssgBuilder = new SSGBuilder();
+await ssgBuilder.build();

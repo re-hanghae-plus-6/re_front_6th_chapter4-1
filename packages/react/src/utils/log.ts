@@ -1,17 +1,23 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import { isClient } from "@hanghae-plus/lib";
+
 declare global {
   interface Window {
-    __spyCalls: any[];
+    __spyCalls: Parameters<typeof console.log>[0][];
     __spyCallsClear: () => void;
   }
 }
 
-window.__spyCalls = [];
-window.__spyCallsClear = () => {
-  window.__spyCalls = [];
-};
+if (isClient()) {
+  window.__spyCalls = window.__spyCalls || [];
+  window.__spyCallsClear = () => {
+    window.__spyCalls = [];
+  };
+}
 
 export const log: typeof console.log = (...args) => {
-  window.__spyCalls.push(args);
+  if (isClient()) {
+    window.__spyCalls.push(args);
+  }
+
   return console.log(...args);
 };

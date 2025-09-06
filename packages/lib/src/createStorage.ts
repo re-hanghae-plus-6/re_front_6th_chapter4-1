@@ -1,6 +1,25 @@
 import { createObserver } from "./createObserver.ts";
+import type { StringRecord } from "./types.ts";
 
-export const createStorage = <T>(key: string, storage = window.localStorage) => {
+export const createMemoryStorage = (): Storage => {
+  let storage: StringRecord = {};
+
+  return {
+    getItem: (key: string) => storage[key] ?? null,
+    setItem: (key: string, value: string) => (storage[key] = value),
+    removeItem: (key: string) => delete storage[key],
+    clear: () => (storage = {}),
+    key: (index: number) => Object.keys(storage)[index] ?? null,
+    get length() {
+      return Object.keys(storage).length;
+    },
+  };
+};
+
+export const createStorage = <T>(
+  key: string,
+  storage = typeof window === "undefined" ? createMemoryStorage() : window.localStorage,
+) => {
   let data: T | null = JSON.parse(storage.getItem(key) ?? "null");
   const { subscribe, notify } = createObserver();
 

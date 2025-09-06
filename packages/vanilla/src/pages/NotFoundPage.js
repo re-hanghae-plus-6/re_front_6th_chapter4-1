@@ -1,10 +1,10 @@
-import { PageWrapper } from "./PageWrapper";
 import { Logo } from "../components";
+import { PageWrapper } from "./PageWrapper";
 
 export const NotFoundPage = () =>
   PageWrapper({
     headerLeft: Logo(),
-    children: `
+    children: /* HTML */ `
       <div class="text-center my-4 py-20 shadow-md p-6 bg-white rounded-lg">
         <svg viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg">
           <defs>

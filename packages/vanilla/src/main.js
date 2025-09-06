@@ -1,9 +1,9 @@
-import { registerGlobalEvents } from "./utils";
-import { initRender } from "./render";
+import { BASE_URL } from "./constants";
 import { registerAllEvents } from "./events";
+import { initRender } from "./render";
+import { routerInstance } from "./router";
 import { loadCartFromStorage } from "./services";
-import { router } from "./router";
-import { BASE_URL } from "./constants.js";
+import { registerGlobalEvents } from "./utils";
 
 const enableMocking = () =>
   import("./mocks/browser.js").then(({ worker }) =>
@@ -20,7 +20,7 @@ function main() {
   registerGlobalEvents();
   loadCartFromStorage();
   initRender();
-  router.start();
+  routerInstance.start();
 }
 
 if (import.meta.env.MODE !== "test") {
