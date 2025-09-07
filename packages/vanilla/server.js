@@ -1,13 +1,16 @@
 import express from "express";
+import fs from "fs/promises";
 
-const prod = process.env.NODE_ENV === "production";
+const isProduction = process.env.NODE_ENV === "production";
 const port = process.env.PORT || 5173;
-const base = process.env.BASE || (prod ? "/front_6th_chapter4-1/vanilla/" : "/");
+const base = process.env.BASE || (isProduction ? "/front_6th_chapter4-1/vanilla/" : "/");
+
+const templateHtml = isProduction ? await fs.readFile("./dist/vanilla/index.html", "utf-8") : "";
 
 const app = express();
 
 let vite;
-if (!prod) {
+if (!isProduction) {
   // 개발환경이 아닐때 vite 서버를 미들웨어로 등록
   // 번들링된 파일 제공
   // HMR 제공
@@ -33,26 +36,40 @@ if (!prod) {
   app.use(base, sirv("./dist/vanilla", { extensions: [] }));
 }
 
-const render = () => {
-  return `<div>안녕하세요</div>`;
-};
+app.get("*all", async (req, res) => {
+  try {
+    const url = req.originalUrl.replace(base, "/");
 
-app.get("*all", (req, res) => {
-  res.send(
-    `
-  <!DOCTYPE html>
-  <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vanilla Javascript SSR</title>
-  </head>
-  <body>
-  <div id="app">${render()}</div>
-  </body>
-  </html>
-    `.trim(),
-  );
+    let template;
+    let render;
+
+    if (!isProduction) {
+      // Always read fresh template in development
+      template = await fs.readFile("./index.html", "utf-8");
+      template = await vite.transformIndexHtml(url, template);
+      render = (await vite.ssrLoadModule("/src/main-server.js")).render;
+    } else {
+      template = templateHtml;
+      render = (await import("./dist/vanilla-ssr/main-server.js")).render;
+    }
+
+    const rendered = await render(url);
+
+    const initialDataScript = rendered.initialData
+      ? `<script>window.__INITIAL_DATA__ = ${JSON.stringify(rendered.initialData)};</script>`
+      : "";
+
+    const html = template
+      .replace(`<!--app-head-->`, rendered.head ?? "")
+      .replace(`<!--app-html-->`, rendered.html ?? "")
+      .replace(`<!--app-data-->`, initialDataScript);
+
+    res.status(200).set({ "Content-Type": "text/html" }).send(html);
+  } catch (e) {
+    vite?.ssrFixStacktrace(e);
+    console.log(e.stack);
+    res.status(500).end(e.stack);
+  }
 });
 
 // Start http server
