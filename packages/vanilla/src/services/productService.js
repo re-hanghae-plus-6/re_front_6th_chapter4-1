@@ -8,23 +8,9 @@ export const setupProductsAndCategories = async (data) => {
     return;
   }
 
-  const [
-    {
-      products,
-      pagination: { total },
-    },
-    categories,
-  ] = data;
-
   productStore.dispatch({
     type: PRODUCT_ACTIONS.SETUP,
-    payload: {
-      products,
-      categories,
-      totalCount: total,
-      loading: false,
-      status: "done",
-    },
+    payload: data,
   });
 };
 
