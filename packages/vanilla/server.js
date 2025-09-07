@@ -36,6 +36,7 @@ if (!prod) {
 app.use("*all", async (req, res) => {
   try {
     const url = req.originalUrl.replace(base, "");
+    const pathname = url.split("?")[0] || "/";
 
     /** @type {string} */
     let template;
@@ -51,11 +52,13 @@ app.use("*all", async (req, res) => {
       render = (await import("./dist/vanilla-ssr/main-server.js")).render;
     }
 
-    const rendered = await render(url, req.query);
+    const rendered = await render(pathname, req.query);
 
     const html = template
       .replace(`<!--app-head-->`, rendered.head ?? "")
-      .replace(`<!--app-html-->`, rendered.html ?? "");
+      .replace(`<!--app-html-->`, rendered.html ?? "")
+      .replace(`APP_DATA`, JSON.stringify(rendered.__INITIAL_DATA__));
+
     res.status(200).set({ "Content-Type": "text/html" }).send(html);
   } catch (e) {
     vite?.ssrFixStacktrace(e);
