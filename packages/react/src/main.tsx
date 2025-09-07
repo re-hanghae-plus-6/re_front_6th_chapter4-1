@@ -2,6 +2,7 @@ import { App } from "./App";
 import { router } from "./router";
 import { BASE_URL } from "./constants.ts";
 import { createRoot } from "react-dom/client";
+import { initializeStoresFromSSR } from "./utils/hydration";
 
 const enableMocking = () =>
   import("./mocks/browser").then(({ worker }) =>
@@ -14,6 +15,9 @@ const enableMocking = () =>
   );
 
 function main() {
+  // SSR 데이터로 스토어 초기화
+  initializeStoresFromSSR();
+
   router.start();
 
   const rootElement = document.getElementById("root")!;

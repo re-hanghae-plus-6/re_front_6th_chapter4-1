@@ -1,7 +1,7 @@
 ## 과제 체크포인트
 
 ### 배포 링크
-
+ 
 <!--
 배포 링크를 적어주세요
 예시: https://<username>.github.io/front-6th-chapter4-1/
@@ -241,7 +241,7 @@ const pathPattern = path.replace(/:([^/]+)/g, (match, paramName) => {
 SSR/SSG 구현과 관련된 구체적인 피드백을 요청해주세요.
 
 구체적인 질문 예시:
-- "packages/vanilla/src/main-server.js의 라우터 매개변수 추출 로직에서 정규식 패턴이 복잡한 URL에도 안정적으로 동작할지 검토 부탁드립니다."
+- "packages/vanilla/src/entry-server.js의 라우터 매개변수 추출 로직에서 정규식 패턴이 복잡한 URL에도 안정적으로 동작할지 검토 부탁드립니다."
 - "React SSR에서 서버와 클라이언트의 상태 동기화 로직이 대용량 데이터에서도 성능상 문제없을지 조언 부탁드립니다."
 - "현재 구현한 SSG 빌드 과정이 상품 개수가 1000개 이상으로 늘어날 때도 효율적으로 동작할지, 최적화 방안이 있다면 제안해주세요."
 - "TypeScript SSR 모듈의 타입 정의에서 놓친 부분이나 더 안전하게 개선할 수 있는 부분이 있는지 검토해주세요."

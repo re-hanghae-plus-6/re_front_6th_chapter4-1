@@ -4,7 +4,7 @@ import items from "./items.json";
 const delay = async () => await new Promise((resolve) => setTimeout(resolve, 200));
 
 // 카테고리 추출 함수
-function getUniqueCategories() {
+export function getUniqueCategories() {
   const categories = {};
 
   items.forEach((item) => {
@@ -16,6 +16,41 @@ function getUniqueCategories() {
   });
 
   return categories;
+}
+
+// 상품을 ID로 가져오는 함수
+export function getProductById(productId) {
+  const product = items.find((item) => item.productId === productId);
+
+  if (!product) {
+    return null;
+  }
+
+  // 상세 정보에 추가 데이터 포함
+  return {
+    ...product,
+    description: `${product.title}에 대한 상세 설명입니다. ${product.brand} 브랜드의 우수한 품질을 자랑하는 상품으로, 고객 만족도가 높은 제품입니다.`,
+    rating: Math.floor(Math.random() * 2) + 4, // 4~5점 랜덤
+    reviewCount: Math.floor(Math.random() * 1000) + 50, // 50~1050개 랜덤
+    stock: Math.floor(Math.random() * 100) + 10, // 10~110개 랜덤
+    images: [product.image, product.image.replace(".jpg", "_2.jpg"), product.image.replace(".jpg", "_3.jpg")],
+  };
+}
+
+// 관련 상품을 가져오는 함수 (같은 category2의 다른 상품들)
+export function getRelatedProducts(category2, excludeProductId, limit = 5) {
+  if (!category2) return [];
+
+  return items
+    .filter((item) => item.category2 === category2 && item.productId !== excludeProductId)
+    .slice(0, limit)
+    .map((item) => ({
+      ...item,
+      description: `${item.title}에 대한 상세 설명입니다. ${item.brand} 브랜드의 우수한 품질을 자랑하는 상품으로, 고객 만족도가 높은 제품입니다.`,
+      rating: Math.floor(Math.random() * 2) + 4,
+      reviewCount: Math.floor(Math.random() * 1000) + 50,
+      stock: Math.floor(Math.random() * 100) + 10,
+    }));
 }
 
 // 상품 검색 및 필터링 함수
@@ -62,56 +97,50 @@ function filterProducts(products, query) {
   return filtered;
 }
 
-export const handlers = [
-  // 상품 목록 API
-  http.get("*/api/products", async ({ request }) => {
-    const url = new URL(request.url);
-    const page = parseInt(url.searchParams.get("page") ?? url.searchParams.get("current")) || 1;
-    const limit = parseInt(url.searchParams.get("limit")) || 20;
-    const search = url.searchParams.get("search") || "";
-    const category1 = url.searchParams.get("category1") || "";
-    const category2 = url.searchParams.get("category2") || "";
-    const sort = url.searchParams.get("sort") || "price_asc";
+export function getProductsOnServer(query = {}) {
+  const page = parseInt(query.page ?? query.current) || 1;
+  const limit = parseInt(query.limit) || 20;
+  const search = query.search || "";
+  const category1 = query.category1 || "";
+  const category2 = query.category2 || "";
+  const sort = query.sort || "price_asc";
 
-    // 필터링된 상품들
-    const filteredProducts = filterProducts(items, {
+  // 필터링된 상품들
+  const filteredProducts = filterProducts(items, {
+    search,
+    category1,
+    category2,
+    sort,
+  });
+
+  // 페이지네이션
+  const startIndex = (page - 1) * limit;
+  const endIndex = startIndex + limit;
+  const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
+
+  // 응답 데이터
+  return {
+    products: paginatedProducts,
+    pagination: {
+      page,
+      limit,
+      total: filteredProducts.length,
+      totalPages: Math.ceil(filteredProducts.length / limit),
+      hasNext: endIndex < filteredProducts.length,
+      hasPrev: page > 1,
+    },
+    filters: {
       search,
       category1,
       category2,
       sort,
-    });
+    },
+  };
+}
 
-    // 페이지네이션
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit;
-    const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
-
-    // 응답 데이터
-    const response = {
-      products: paginatedProducts,
-      pagination: {
-        page,
-        limit,
-        total: filteredProducts.length,
-        totalPages: Math.ceil(filteredProducts.length / limit),
-        hasNext: endIndex < filteredProducts.length,
-        hasPrev: page > 1,
-      },
-      filters: {
-        search,
-        category1,
-        category2,
-        sort,
-      },
-    };
-
-    await delay();
-
-    return HttpResponse.json(response);
-  }),
-
+export const handlers = [
   // 상품 상세 API
-  http.get("*/api/products/:id", ({ params }) => {
+  http.get("/api/products/:id", ({ params }) => {
     const { id } = params;
     const product = items.find((item) => item.productId === id);
 
@@ -133,7 +162,7 @@ export const handlers = [
   }),
 
   // 카테고리 목록 API
-  http.get("*/api/categories", async () => {
+  http.get("/api/categories", async () => {
     const categories = getUniqueCategories();
     await delay();
     return HttpResponse.json(categories);

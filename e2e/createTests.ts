@@ -64,6 +64,9 @@ export const createCSRTest = (baseUrl: string) => {
 
         await page.goto(baseUrl);
 
+        // 컴포넌트 마운트와 API 호출이 시작될 때까지 잠깐 대기
+        await page.waitForTimeout(100);
+
         // 로딩 상태 확인
         await expect(page.locator("text=카테고리 로딩 중...")).toBeVisible();
 
