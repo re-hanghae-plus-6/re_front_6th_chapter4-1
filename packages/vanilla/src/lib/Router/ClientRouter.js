@@ -1,7 +1,7 @@
 /**
  * 간단한 SPA 라우터
  */
-import { createObserver } from "./createObserver.js";
+import { createObserver } from "../createObserver.js";
 
 export class ClientRouter {
   #routes;
