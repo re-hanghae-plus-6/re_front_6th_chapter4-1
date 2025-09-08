@@ -1,15 +1,20 @@
-export const withServer = ({ ssr }, page) => {
-  const pageWithSSR = (...args) => {
-    if (typeof window === "undefined") {
-      return page(...args);
-    }
-    return page(...args, {
-      url: window.location.pathname,
-      query: Object.fromEntries(new URLSearchParams(window.location.search)),
-      data: window.__INITIAL_DATA__,
-    });
+import { isServer } from "../utils";
+import { router } from "./router";
+
+export const withServer = (options, page) => {
+  const pageWithSSR = ({ pathname, query, params, data } = {}) => {
+    const pageParams = isServer
+      ? { pathname, query, params, data }
+      : {
+          pathname: window.location.pathname,
+          query: router.query,
+          params: router.params,
+          data: window.__INITIAL_DATA__,
+        };
+    return page(pageParams);
   };
-  pageWithSSR.ssr = ssr;
+
+  Object.assign(pageWithSSR, options);
 
   return pageWithSSR;
 };

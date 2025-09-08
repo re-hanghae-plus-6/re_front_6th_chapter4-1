@@ -1,10 +1,10 @@
 import { getCategories, getProduct, getProducts } from "../api/productApi";
 import { productStore, PRODUCT_ACTIONS, initialProductState } from "../stores";
-import { router } from "../router";
+import { router } from "../router/router";
 
 // 상품 목록 초기 설정
-export const setupProductsAndCategories = async (data) => {
-  if (!data || productStore.getState().status === "done") {
+export const initProductsAndCategories = async (data) => {
+  if (!data) {
     return;
   }
 
