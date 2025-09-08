@@ -1,5 +1,6 @@
 import express from "express";
 import fs from "node:fs/promises";
+import path from "node:path";
 import { mswServer } from "./src/mocks/node.js";
 
 const prod = process.env.NODE_ENV === "production";
@@ -44,7 +45,7 @@ if (!prod) {
 app.use("*all", async (req, res) => {
   try {
     const url = req.originalUrl.replace(base, "");
-    const pathname = url.split("?")[0] || "/";
+    const pathname = path.normalize(`/${url.split("?")[0]}`);
 
     /** @type {string} */
     let template;
