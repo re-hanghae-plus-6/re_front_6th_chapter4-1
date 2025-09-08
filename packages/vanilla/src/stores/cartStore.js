@@ -44,7 +44,9 @@ const findCartItem = (items, productId) => {
  * @param {CartAction} action - 액션 객체
  */
 const cartReducer = (_, action) => {
-  const state = cartStorage.get() ?? initialState;
+  const savedState = cartStorage.get();
+  const state = savedState && Array.isArray(savedState.items) ? { ...initialState, ...savedState } : initialState;
+
   switch (action.type) {
     case CART_ACTIONS.ADD_ITEM: {
       const { product, quantity = 1 } = action.payload;

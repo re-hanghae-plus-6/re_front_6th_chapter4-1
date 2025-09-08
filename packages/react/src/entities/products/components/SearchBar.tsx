@@ -87,9 +87,32 @@ const handleSubCategoryClick = async (e: MouseEvent<HTMLButtonElement>) => {
   }
 };
 
-export function SearchBar() {
+interface SearchBarProps {
+  initialSearchQuery?: string;
+  initialLimit?: string;
+  initialSort?: string;
+  initialCategory1?: string;
+  initialCategory2?: string;
+}
+
+export function SearchBar({
+  initialSearchQuery,
+  initialLimit,
+  initialSort,
+  initialCategory1,
+  initialCategory2,
+}: SearchBarProps = {}) {
   const { categories } = useProductStore();
   const { searchQuery, limit = "20", sort, category } = useProductFilter();
+
+  // SSR에서 전달받은 초기값 사용, 클라이언트에서는 훅 값 사용
+  const currentSearchQuery = initialSearchQuery ?? searchQuery;
+  const currentLimit = initialLimit ?? limit;
+  const currentSort = initialSort ?? sort;
+  const currentCategory = {
+    category1: initialCategory1 ?? category.category1,
+    category2: initialCategory2 ?? category.category2,
+  };
 
   const categoryList = Object.keys(categories).length > 0 ? Object.keys(categories) : [];
   const limitOptions = OPTION_LIMITS.map((value) => (
@@ -124,7 +147,7 @@ export function SearchBar() {
             type="text"
             id="search-input"
             placeholder="상품명을 검색해보세요..."
-            defaultValue={searchQuery}
+            defaultValue={currentSearchQuery}
             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg
                         focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             onKeyDown={handleSearchKeyDown}
@@ -141,7 +164,7 @@ export function SearchBar() {
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <label className="text-sm text-gray-600">카테고리:</label>
-            {["전체", category.category1, category.category2]
+            {["전체", currentCategory.category1, currentCategory.category2]
               .filter((cat, index) => index === 0 || Boolean(cat))
               .map((cat, index) => {
                 if (index == 0) {
@@ -183,7 +206,7 @@ export function SearchBar() {
           </div>
 
           {/* 1depth 카테고리 */}
-          {!category.category1 && (
+          {!currentCategory.category1 && (
             <div className="flex flex-wrap gap-2">
               {categoryList.length > 0 ? (
                 categoryButtons
@@ -194,15 +217,15 @@ export function SearchBar() {
           )}
 
           {/* 2depth 카테고리 */}
-          {category.category1 && categories[category.category1] && (
+          {currentCategory.category1 && categories[currentCategory.category1] && (
             <div className="space-y-2">
               <div className="flex flex-wrap gap-2">
-                {Object.keys(categories[category.category1]).map((category2) => {
-                  const isSelected = category.category2 === category2;
+                {Object.keys(categories[currentCategory.category1]).map((category2) => {
+                  const isSelected = currentCategory.category2 === category2;
                   return (
                     <button
                       key={category2}
-                      data-category1={category.category1}
+                      data-category1={currentCategory.category1}
                       data-category2={category2}
                       className={`category2-filter-btn text-left px-3 py-2 text-sm rounded-md border transition-colors
                                ${
@@ -232,7 +255,7 @@ export function SearchBar() {
               id="limit-select"
               className="text-sm border border-gray-300 rounded px-2 py-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
               onChange={handleLimitChange}
-              defaultValue={Number(limit)}
+              defaultValue={Number(currentLimit)}
             >
               {limitOptions}
             </select>
@@ -248,7 +271,7 @@ export function SearchBar() {
               className="text-sm border border-gray-300 rounded px-2 py-1
                            focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
               onChange={handleSortChange}
-              defaultValue={sort}
+              defaultValue={currentSort}
             >
               {sortOptions}
             </select>

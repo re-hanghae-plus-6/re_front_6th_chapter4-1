@@ -1,12 +1,8 @@
-import { router, useCurrentPage } from "./router";
-import { HomePage, NotFoundPage, ProductDetailPage } from "./pages";
+import { useCurrentPage } from "./router";
+import { HomePage } from "./pages";
 import { useLoadCartStore } from "./entities";
 import { ModalProvider, ToastProvider } from "./components";
-
-// 홈 페이지 (상품 목록)
-router.addRoute("/", HomePage);
-router.addRoute("/product/:id/", ProductDetailPage);
-router.addRoute(".*", NotFoundPage);
+import { useRouterQuery } from "./router";
 
 const CartInitializer = () => {
   useLoadCartStore();
@@ -18,11 +14,24 @@ const CartInitializer = () => {
  */
 export const App = () => {
   const PageComponent = useCurrentPage();
+  const query = useRouterQuery();
 
   return (
     <>
       <ToastProvider>
-        <ModalProvider>{PageComponent ? <PageComponent /> : null}</ModalProvider>
+        <ModalProvider>
+          {PageComponent ? (
+            <PageComponent />
+          ) : (
+            <HomePage
+              searchQuery={query.search}
+              limit={query.limit}
+              sort={query.sort}
+              category1={query.category1}
+              category2={query.category2}
+            />
+          )}
+        </ModalProvider>
       </ToastProvider>
       <CartInitializer />
     </>
